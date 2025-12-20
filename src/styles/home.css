@@ -1,0 +1,84 @@
+/* ============================================
+   Home Page
+   ============================================ */
+
+.home-page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: var(--space-6);
+}
+
+.header-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  position: relative;
+}
+
+/* ============================================
+   Toolbox Toggle Button
+   ============================================ */
+
+.toolbox-sidebar-toggle {
+  position: absolute;
+  left: var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  padding: var(--space-2);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.toolbox-sidebar-toggle:hover {
+  background: var(--bg-hover-light);
+  border-color: var(--accent-muted);
+  transform: scale(1.05);
+}
+
+.toolbox-sidebar-toggle img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+/* ============================================
+   Welcome Header (Minimal)
+   ============================================ */
+
+.welcome-header {
+  text-align: center;
+  padding: var(--space-4) 0;
+}
+
+.welcome-header h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.welcome-header p {
+  font-size: 0.9375rem;
+  color: var(--text-secondary);
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* ============================================
+   Chat Section (Hero)
+   ============================================ */
+
+.chat-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}

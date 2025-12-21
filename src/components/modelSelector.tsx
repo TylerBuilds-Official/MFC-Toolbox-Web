@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useApi } from "../auth/useApi";
+import { useApi } from "../auth";
 
 type ModelSelectorProps = {
     value: string;

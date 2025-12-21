@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { type Tool } from "../types/tools";
-import { useApi } from "../auth/useApi";
-import { useAuth } from "../auth/AuthContext";
-import { transformOpenAITools, formatToolName } from "../services/api";
+import { useApi } from "../auth";
+import { useAuth } from "../auth";
+import { transformOpenAITools } from "../services/api";
 import "../styles/toolboxSidebar.css";
 import Icons from "../assets/svg/toolbox/toolboxIcons.tsx";
 import HeaderWrenchIcon from "../assets/svg/toolbox/headerWrench.tsx";

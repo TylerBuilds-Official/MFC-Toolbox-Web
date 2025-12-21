@@ -1,4 +1,4 @@
-import { useAuth } from "../auth/AuthContext";
+import { useAuth } from "../auth";
 
 interface AuthButtonProps {
     className?: string;

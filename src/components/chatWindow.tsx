@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
-import { useApi } from "../auth/useApi";
-import { useAuth } from "../auth/AuthContext";
+import { useApi } from "../auth";
+import { useAuth } from "../auth";
 import "../styles/chatWindow.css";
 import ModelSelector from "./modelSelector";
 

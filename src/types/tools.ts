@@ -13,7 +13,3 @@ export interface Tool {
     icon?: string;
     parameters: ToolParameter[];
 }
-
-export interface ToolsResponse {
-    tools: Tool[];
-}

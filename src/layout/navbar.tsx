@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink } from "react-router-dom";
+import { AuthButton } from '../components/AuthButton';
 import '../styles/navbar.css';
 
 const Navbar: React.FC = () => {
@@ -49,6 +50,7 @@ const Navbar: React.FC = () => {
                     >
                         Settings
                     </NavLink>
+                    <AuthButton className="nav-auth-btn" />
                 </nav>
             </div>
         </header>

@@ -33,6 +33,19 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ externalPrompt, onPromptConsume
     const [isTyping, setIsTyping] = useState(false);
     const [selectedModel, setSelectedModel] = useState<string>("");  // Empty until loaded
     const [currentProvider, setCurrentProvider] = useState<string>("openai");
+
+    // Helper to infer provider from model name
+    const inferProviderFromModel = (model: string): string => {
+        if (model.startsWith("claude")) return "anthropic";
+        if (model.startsWith("gpt")) return "openai";
+        return currentProvider; // Fallback to current
+    };
+
+    // Handle model change with provider sync
+    const handleModelChange = (newModel: string) => {
+        setSelectedModel(newModel);
+        setCurrentProvider(inferProviderFromModel(newModel));
+    };
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
@@ -86,10 +99,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ externalPrompt, onPromptConsume
         setIsTyping(true);
 
         try {
-            // Build query params for GET request
+            // Build query params for GET request - include provider for proper routing
             const params = new URLSearchParams({
                 message: messageContent,
-                model: selectedModel
+                model: selectedModel,
+                provider: currentProvider
             });
 
             const response = await api.get<{ response: string }>(`/chat?${params.toString()}`);
@@ -251,7 +265,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ externalPrompt, onPromptConsume
                         <div className="chat-input-actions">
                             <ModelSelector
                                 value={selectedModel}
-                                onChange={setSelectedModel}
+                                onChange={handleModelChange}
                                 provider={currentProvider}
                                 disabled={isTyping}
                             />

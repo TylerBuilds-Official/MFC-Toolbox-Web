@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { type Tool, type ToolParameter } from "../types/tools";
+import { type Tool } from "../types/tools";
 import { useApi } from "../auth/useApi";
 import { useAuth } from "../auth/AuthContext";
+import { transformOpenAITools, formatToolName } from "../services/api";
 import "../styles/toolboxSidebar.css";
 import Icons from "../assets/svg/toolbox/toolboxIcons.tsx";
 import HeaderWrenchIcon from "../assets/svg/toolbox/headerWrench.tsx";
@@ -11,65 +12,20 @@ import EmptyToolboxIcon from "../assets/svg/toolbox/emptyToolbox.tsx";
 import ToolExpandIcon from "../assets/svg/toolbox/toolExpand.tsx";
 import ParamSubmitIcon from "../assets/svg/toolbox/paramSubmit.tsx";
 
-// Add these interfaces to handle the OpenAI format from backend
-interface OpenAIToolParameter {
-    type: string;
-    description?: string;
-}
-
-interface OpenAITool {
-    type: "function";
-    function: {
-        name: string;
-        description: string;
-        parameters: {
-            type: "object";
-            properties: Record<string, OpenAIToolParameter>;
-            required: string[];
-        };
-    };
-}
-
+// Interface for API response
 interface ToolsApiResponse {
-    open_ai_tools: OpenAITool[];
-}
-
-// Transform function (same logic as in api.ts)
-function transformOpenAITools(openAITools: OpenAITool[]): Tool[] {
-    return openAITools.map(tool => {
-        const fn = tool.function;
-        const properties = fn.parameters?.properties || {};
-        const required = fn.parameters?.required || [];
-
-        const parameters: ToolParameter[] = Object.entries(properties).map(
-            ([name, prop]) => ({
-                name,
-                type: prop.type === "number" ? "number" : "string",
-                required: required.includes(name),
-                description: prop.description
-            })
-        );
-
-        const formatToolName = (name: string): string => {
-            return name.split("_").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
+    open_ai_tools: Array<{
+        type: "function";
+        function: {
+            name: string;
+            description: string;
+            parameters: {
+                type: "object";
+                properties: Record<string, { type: string; description?: string }>;
+                required: string[];
+            };
         };
-
-        let prompt: string;
-        if (parameters.length === 0) {
-            prompt = formatToolName(fn.name);
-        } else {
-            const paramPlaceholders = parameters.map(p => `{${p.name}}`).join(", ");
-            prompt = `${formatToolName(fn.name)} ${paramPlaceholders}`;
-        }
-
-        return {
-            id: fn.name,
-            name: formatToolName(fn.name),
-            description: fn.description,
-            prompt,
-            parameters
-        };
-    });
+    }>;
 }
 
 interface ToolboxSidebarProps {
@@ -96,7 +52,7 @@ const ToolboxSidebar = ({ isOpen, onClose, onToolSelect }: ToolboxSidebarProps) 
             }
 
             try {
-                // Fetch with proper response type, then transform
+                // Fetch with proper response type, then transform using shared function
                 const response = await api.get<ToolsApiResponse>('/tools');
                 const fetchedTools = transformOpenAITools(response.open_ai_tools || []);
                 console.log("[ToolboxSidebar] Transformed tools:", fetchedTools);

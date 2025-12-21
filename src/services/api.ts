@@ -52,10 +52,10 @@ export interface ModelsResponse {
 }
 
 // ============================================
-// HELPER FUNCTIONS
+// HELPER FUNCTIONS (exported for use in components)
 // ============================================
 
-function transformOpenAITools(openAITools: OpenAITool[]): Tool[] {
+export function transformOpenAITools(openAITools: OpenAITool[]): Tool[] {
     return openAITools.map(tool => {
         const fn = tool.function;
         const properties = fn.parameters?.properties || {};
@@ -88,7 +88,7 @@ function transformOpenAITools(openAITools: OpenAITool[]): Tool[] {
     });
 }
 
-function formatToolName(name: string): string {
+export function formatToolName(name: string): string {
     return name
         .split("_")
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
@@ -103,143 +103,10 @@ function generateDefaultPrompt(name: string): string {
     return prompts[name] || formatToolName(name);
 }
 
+// ============================================
+// PUBLIC API - No authentication required
+// ============================================
 
-// API Factory for authenticated endpoints
-export function createAuthenticatedApi(getToken: () => Promise<string | null>) {
-    const authFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
-        const token = await getToken();
-        const headers: HeadersInit = {
-            ...options.headers,
-        };
-        
-        if (token) {
-            (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
-        }
-        
-        return fetch(url, { ...options, headers });
-    };
-
-    return {
-    // Chat Endpoints (requires authentication)
-        sendMessage: async (message: string, model?: string, provider?: string): Promise<string> => {
-            let url = `${API_BASE_URL}/chat?message=${encodeURIComponent(message)}`;
-            if (model) url += `&model=${encodeURIComponent(model)}`;
-            if (provider) url += `&provider=${encodeURIComponent(provider)}`;
-            
-            console.log("[API] Sending authenticated request to:", url);
-            
-            const response = await authFetch(url);
-            console.log("[API] Response status:", response.status);
-            
-            if (response.status === 401) {
-                throw new Error("Session expired. Please log in again.");
-            }
-            
-            if (response.status === 403) {
-                throw new Error("Access denied. Your account may not be activated.");
-            }
-            
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error("[API] Error response:", errorText);
-                throw new Error(`Chat request failed! status: ${response.status}`);
-            }
-            
-            const data = await response.json();
-            console.log("[API] Response data:", data);
-            return data.response;
-        },
-
-        resetConversation: async (): Promise<void> => {
-            console.log("[API] Resetting conversation");
-            const response = await authFetch(`${API_BASE_URL}/reset`, { method: "POST" });
-            if (!response.ok) {
-                throw new Error(`Failed to reset conversation: ${response.status}`);
-            }
-        },
-
-    // Protected Settings Endpoints
-        getSettings: async (): Promise<Settings> => {
-            console.log("[API] Fetching settings");
-            const response = await authFetch(`${API_BASE_URL}/settings`);
-            if (!response.ok) {
-                throw new Error(`Failed to fetch settings: ${response.status}`);
-            }
-            const data = await response.json();
-            console.log("[API] Settings received:", data);
-            return data;
-        },
-
-        updateSettings: async (settings: Partial<Settings>): Promise<void> => {
-            console.log("[API] Updating settings:", settings);
-            const response = await authFetch(`${API_BASE_URL}/settings`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(settings)
-            });
-            if (!response.ok) {
-                throw new Error(`Failed to update settings: ${response.status}`);
-            }
-            console.log("[API] Settings updated successfully");
-        },
-
-        getProvider: async (): Promise<ProviderInfo> => {
-            console.log("[API] Fetching provider");
-            const response = await authFetch(`${API_BASE_URL}/settings/provider`);
-            if (!response.ok) {
-                throw new Error(`Failed to fetch provider: ${response.status}`);
-            }
-            const data = await response.json();
-            console.log("[API] Provider received:", data);
-            return data;
-        },
-
-        setProvider: async (provider: string, defaultModel?: string): Promise<ProviderInfo> => {
-            console.log("[API] Setting provider:", provider, defaultModel);
-            let url = `${API_BASE_URL}/settings/provider?provider=${provider}`;
-            if (defaultModel) url += `&default_model=${defaultModel}`;
-            
-            const response = await authFetch(url, { method: "POST" });
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Failed to set provider: ${response.status} - ${errorText}`);
-            }
-            const data = await response.json();
-            console.log("[API] Provider set successfully:", data);
-            return data;
-        },
-
-    // Admin endpoints (requires admin privileges)
-        getUsers: async () => {
-            console.log("[API] Fetching all users (admin)");
-            const response = await authFetch(`${API_BASE_URL}/admin/users`);
-            if (response.status === 403) {
-                throw new Error("Access denied. Admin privileges required.");
-            }
-            if (!response.ok) {
-                throw new Error(`Failed to fetch users: ${response.status}`);
-            }
-            return response.json();
-        },
-
-        setUserRole: async (userId: string, role: string) => {
-            console.log("[API] Setting user role (admin):", userId, role);
-            const response = await authFetch(
-                `${API_BASE_URL}/admin/users/${userId}/role?role=${role}`,
-                { method: "POST" }
-            );
-            if (response.status === 403) {
-                throw new Error("Access denied. Admin privileges required.");
-            }
-            if (!response.ok) {
-                throw new Error(`Failed to set user role: ${response.status}`);
-            }
-            return response.json();
-        },
-    };
-}
-
-// Public Endpoints - No authentication required
 export const publicApi = {
     healthCheck: async (): Promise<boolean> => {
         try {
@@ -274,29 +141,4 @@ export const publicApi = {
         console.log("[API] Transformed tools:", tools);
         return tools;
     }
-};
-
-// Legacy API
-
-export const chatApi = {
-    sendMessage: async (_message: string, _model?: string, _provider?: string): Promise<string> => {
-        throw new Error("chatApi.sendMessage requires authentication. Use createAuthenticatedApi() instead.");
-    },
-    resetConversation: async (): Promise<void> => {
-        throw new Error("chatApi.resetConversation requires authentication. Use createAuthenticatedApi() instead.");
-    },
-    getSettings: async (): Promise<Settings> => {
-        throw new Error("chatApi.getSettings requires authentication. Use createAuthenticatedApi() instead.");
-    },
-    updateSettings: async (_settings: Partial<Settings>): Promise<void> => {
-        throw new Error("chatApi.updateSettings requires authentication. Use createAuthenticatedApi() instead.");
-    },
-    getProvider: async (): Promise<ProviderInfo> => {
-        throw new Error("chatApi.getProvider requires authentication. Use createAuthenticatedApi() instead.");
-    },
-    setProvider: async (_provider: string, _defaultModel?: string): Promise<ProviderInfo> => {
-        throw new Error("chatApi.setProvider requires authentication. Use createAuthenticatedApi() instead.");
-    },
-    getModels: publicApi.getModels,
-    getTools: publicApi.getTools
 };

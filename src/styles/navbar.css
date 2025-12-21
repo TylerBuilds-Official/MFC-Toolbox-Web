@@ -156,6 +156,53 @@
 }
 
 /* ============================================
+   Auth Button in Navbar
+   ============================================ */
+
+.auth-user-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-left: var(--space-3);
+  margin-left: var(--space-2);
+  border-left: 1px solid var(--border-subtle);
+}
+
+.auth-user-info .user-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.auth-user-info .user-role {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-left: var(--space-1);
+}
+
+.nav-auth-btn {
+  padding: var(--space-2) var(--space-4);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.nav-auth-btn:hover {
+  background-color: var(--bg-hover);
+  border-color: var(--border-default);
+}
+
+.nav-auth-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================
    Mobile Responsive
    ============================================ */
 
@@ -197,5 +244,21 @@
 
   .nav-menu a.active::after {
     display: none;
+  }
+
+  .auth-user-info {
+    flex-direction: column;
+    align-items: flex-start;
+    padding-left: 0;
+    margin-left: 0;
+    border-left: none;
+    padding-top: var(--space-3);
+    margin-top: var(--space-2);
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .nav-auth-btn {
+    width: 100%;
+    margin-top: var(--space-2);
   }
 }

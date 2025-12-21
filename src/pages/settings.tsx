@@ -48,9 +48,10 @@ const SettingsPage: React.FC = () => {
 
         setSaving(true);
         try {
-            const result = await api.post<{ provider: string; default_model: string }>('/settings', {
-                provider: newProvider
-            });
+            // Use the dedicated provider endpoint with query params
+            const result = await api.post<{ status: string; provider: string; default_model: string }>(
+                `/settings/provider?provider=${encodeURIComponent(newProvider)}`
+            );
             setSettings({
                 ...settings,
                 provider: result.provider,
@@ -70,13 +71,13 @@ const SettingsPage: React.FC = () => {
 
         setSaving(true);
         try {
-            await api.post('/settings', {
-                provider: settings.provider,
-                model: newModel
-            });
+            // Use the dedicated provider endpoint with default_model param
+            const result = await api.post<{ status: string; provider: string; default_model: string }>(
+                `/settings/provider?provider=${encodeURIComponent(settings.provider)}&default_model=${encodeURIComponent(newModel)}`
+            );
             setSettings({
                 ...settings,
-                default_model: newModel
+                default_model: result.default_model
             });
             showMessage('success', 'Default model updated');
         } catch (error) {
@@ -148,7 +149,7 @@ const SettingsPage: React.FC = () => {
             {/* Page Header */}
             <div className="settings-header">
                 <h1>Settings</h1>
-                <p>Configure your MFC Toolbox experience and manage API connections.</p>
+                <p>Configure your MFC Toolbox experience.</p>
             </div>
 
             {/* Message Notifications */}
@@ -193,108 +194,6 @@ const SettingsPage: React.FC = () => {
                             disabled={saving}
                         />
                     </div>
-                </div>
-            </div>
-
-            {/* API Keys Section */}
-            <div className="settings-section">
-                <h2 className="settings-section-title">API Keys</h2>
-
-                <div className="settings-card">
-                    <div className="settings-card-header">
-                        <div className="settings-card-info">
-                            <h3 className="settings-card-title">Anthropic API Key</h3>
-                            <p className="settings-card-description">Used for Claude model access.</p>
-                        </div>
-                        <span className="settings-status settings-status-warning">Not Set</span>
-                    </div>
-
-                    <div className="api-key-display">
-                        <code>sk-ant-••••••••••••••••</code>
-                        <div className="api-key-actions">
-                            <button className="api-key-btn" aria-label="Copy">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                </svg>
-                            </button>
-                            <button className="api-key-btn" aria-label="Edit">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="settings-card">
-                    <div className="settings-card-header">
-                        <div className="settings-card-info">
-                            <h3 className="settings-card-title">OpenAI API Key</h3>
-                            <p className="settings-card-description">Used for GPT model access and embeddings.</p>
-                        </div>
-                        <span className="settings-status settings-status-warning">Not Set</span>
-                    </div>
-
-                    <div className="settings-input-group">
-                        <label className="settings-label">API Key</label>
-                        <input
-                            type="password"
-                            className="settings-input"
-                            placeholder="sk-proj-..."
-                        />
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '0.75rem' }}>
-                        <button className="settings-btn settings-btn-primary">Save Key</button>
-                        <button className="settings-btn settings-btn-secondary">Test Connection</button>
-                    </div>
-                </div>
-            </div>
-
-            {/* MCP Servers Section */}
-            <div className="settings-section">
-                <h2 className="settings-section-title">MCP Server Connections</h2>
-
-                <div className="settings-card">
-                    <div className="settings-card-header">
-                        <div className="settings-card-info">
-                            <h3 className="settings-card-title">Drawing Coordinator</h3>
-                            <p className="settings-card-description">Handles transmittal processing and document management.</p>
-                        </div>
-                        <span className="settings-status settings-status-success">Connected</span>
-                    </div>
-
-                    <div className="settings-input-group">
-                        <label className="settings-label">Server URL</label>
-                        <input
-                            type="text"
-                            className="settings-input"
-                            defaultValue="http://localhost:8080"
-                        />
-                    </div>
-                </div>
-
-                <div className="settings-card">
-                    <div className="settings-card-header">
-                        <div className="settings-card-info">
-                            <h3 className="settings-card-title">PDF Classifier</h3>
-                            <p className="settings-card-description">Classifies construction drawings by discipline.</p>
-                        </div>
-                        <span className="settings-status settings-status-error">Disconnected</span>
-                    </div>
-
-                    <div className="settings-input-group">
-                        <label className="settings-label">Server URL</label>
-                        <input
-                            type="text"
-                            className="settings-input"
-                            defaultValue="http://localhost:8081"
-                        />
-                    </div>
-
-                    <button className="settings-btn settings-btn-secondary">Reconnect</button>
                 </div>
             </div>
 

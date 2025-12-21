@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useApi } from "../auth/useApi";
 
 type ModelSelectorProps = {
     value: string;
     onChange: (model: string) => void;
-    provider?: string; // Optional: if provided, shows only models for that provider
+    provider?: string;
     disabled?: boolean;
 }
 
@@ -12,20 +12,10 @@ const ModelSelector = ({ value, onChange, provider, disabled }: ModelSelectorPro
     const api = useApi();
     const [models, setModels] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(true);
-    const [currentProvider, setCurrentProvider] = useState<string>("openai");
 
     useEffect(() => {
         loadModels();
-        if (!provider) {
-            loadCurrentProvider();
-        }
     }, []);
-
-    useEffect(() => {
-        if (provider) {
-            setCurrentProvider(provider);
-        }
-    }, [provider]);
 
     const loadModels = async () => {
         try {
@@ -35,20 +25,20 @@ const ModelSelector = ({ value, onChange, provider, disabled }: ModelSelectorPro
                     claude_models: string[];
                 }
             }>('/models');
-            
+
             // Combine all models with friendly names
             const allModels: Record<string, string> = {};
-            
+
             // OpenAI Models
             data.models.openai_models.forEach(model => {
                 allModels[getModelDisplayName(model)] = model;
             });
-            
-            // Anthropic Models  
+
+            // Anthropic Models
             data.models.claude_models.forEach(model => {
                 allModels[getModelDisplayName(model)] = model;
             });
-            
+
             setModels(allModels);
         } catch (error) {
             console.error("Failed to load models:", error);
@@ -63,15 +53,6 @@ const ModelSelector = ({ value, onChange, provider, disabled }: ModelSelectorPro
         }
     };
 
-    const loadCurrentProvider = async () => {
-        try {
-            const providerInfo = await api.get<{ provider: string }>('/settings');
-            setCurrentProvider(providerInfo.provider);
-        } catch (error) {
-            console.error("Failed to load provider:", error);
-        }
-    };
-
     const getModelDisplayName = (modelId: string): string => {
         // OpenAI models
         if (modelId === "gpt-3.5-turbo") return "GPT 3.5 Turbo";
@@ -81,7 +62,7 @@ const ModelSelector = ({ value, onChange, provider, disabled }: ModelSelectorPro
         if (modelId === "gpt-5") return "GPT 5";
         if (modelId === "gpt-5.1") return "GPT 5.1";
         if (modelId === "gpt-5.2-chat-latest") return "GPT 5.2";
-        
+
         // Anthropic models - Updated for latest naming
         if (modelId === "claude-3-opus-latest") return "Claude Opus 3";
         if (modelId === "claude-3-5-haiku-latest") return "Claude Haiku 3.5";
@@ -89,26 +70,26 @@ const ModelSelector = ({ value, onChange, provider, disabled }: ModelSelectorPro
         if (modelId === "claude-haiku-4-5") return "Claude Haiku 4.5";
         if (modelId === "claude-sonnet-4-5-20250929") return "Claude Sonnet 4.5";
         if (modelId === "claude-opus-4-5-20251101") return "Claude Opus 4.5";
-        
+
         return modelId; // Fallback to model ID
     };
 
-    const getFilteredModels = (): Record<string, string> => {
-        if (!provider && !currentProvider) return models;
-        
-        const activeProvider = provider || currentProvider;
+    // Use useMemo to recalculate filtered models when provider or models change
+    const filteredModels = useMemo(() => {
+        if (!provider) return models;
+
         const filtered: Record<string, string> = {};
-        
+
         Object.entries(models).forEach(([name, id]) => {
-            if (activeProvider === "openai" && id.startsWith("gpt")) {
+            if (provider === "openai" && id.startsWith("gpt")) {
                 filtered[name] = id;
-            } else if (activeProvider === "anthropic" && id.startsWith("claude")) {
+            } else if (provider === "anthropic" && id.startsWith("claude")) {
                 filtered[name] = id;
             }
         });
-        
+
         return filtered;
-    };
+    }, [provider, models]);  // Recalculate when provider or models change
 
     if (loading) {
         return (
@@ -117,8 +98,6 @@ const ModelSelector = ({ value, onChange, provider, disabled }: ModelSelectorPro
             </select>
         );
     }
-
-    const filteredModels = getFilteredModels();
 
     return (
         <select

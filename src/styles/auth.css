@@ -1,0 +1,69 @@
+/* Auth Button Styles */
+.auth-user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.user-name {
+    font-weight: 500;
+}
+
+.user-role {
+    font-size: 0.875rem;
+    opacity: 0.7;
+}
+
+/* Auth States */
+.auth-loading,
+.auth-required,
+.auth-pending,
+.auth-forbidden {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 50vh;
+    padding: 2rem;
+    text-align: center;
+}
+
+.auth-required h2,
+.auth-pending h2,
+.auth-forbidden h2 {
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.auth-required p,
+.auth-pending p,
+.auth-forbidden p {
+    margin-bottom: 1.5rem;
+    color: #666;
+}
+
+.auth-error {
+    color: #dc3545;
+    margin-bottom: 1rem;
+}
+
+.auth-required button,
+.auth-pending button {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    background-color: #0078d4;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.auth-required button:hover {
+    background-color: #006cc1;
+}
+
+.auth-required button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}

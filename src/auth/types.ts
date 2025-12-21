@@ -1,0 +1,18 @@
+export interface User {
+    id: string;
+    email: string;
+    display_name: string;
+    role: "pending" | "user" | "admin";
+    is_active: boolean;
+}
+
+export interface AuthContextType {
+    user: User | null;
+    isLoading: boolean;
+    error: string | null;
+    isAuthenticated: boolean;
+    isPendingActivation: boolean;
+    login: () => Promise<void>;
+    logout: () => void;
+    refreshUser: () => Promise<void>;
+}

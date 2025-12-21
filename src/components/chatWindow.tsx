@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
-import { chatApi } from "../services/api";
+import { useApi } from "../auth/useApi";
+import { useAuth } from "../auth/AuthContext";
 import "../styles/chatWindow.css";
+import ModelSelector from "./modelSelector";
 
 type Message = {
     id: number;
@@ -23,9 +25,14 @@ const WELCOME_MESSAGE: Message = {
 };
 
 const ChatWindow: React.FC<ChatWindowProps> = ({ externalPrompt, onPromptConsumed }) => {
+    const { user } = useAuth();
+    const api = useApi();
+
     const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
     const [input, setInput] = useState("");
     const [isTyping, setIsTyping] = useState(false);
+    const [selectedModel, setSelectedModel] = useState<string>("");  // Empty until loaded
+    const [currentProvider, setCurrentProvider] = useState<string>("openai");
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
@@ -36,6 +43,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ externalPrompt, onPromptConsume
         scrollToBottom();
     }, [messages, isTyping]);
 
+    // Load default model from backend on mount
+    useEffect(() => {
+        if (user) {
+            loadDefaultModel();
+        }
+    }, [user]);
+
     // Handle external prompts from toolbox
     useEffect(() => {
         if (externalPrompt && !isTyping) {
@@ -43,6 +57,20 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ externalPrompt, onPromptConsume
             onPromptConsumed?.();
         }
     }, [externalPrompt]);
+
+    const loadDefaultModel = async () => {
+        try {
+            const providerInfo = await api.get<{ provider: string; default_model: string; }>('/settings');
+            setSelectedModel(providerInfo.default_model);
+            setCurrentProvider(providerInfo.provider);
+            console.log("[ChatWindow] Loaded default model:", providerInfo);
+        } catch (error) {
+            console.error("[ChatWindow] Failed to load default model:", error);
+            // Fallback to a safe default
+            setSelectedModel("gpt-4o");
+            setCurrentProvider("openai");
+        }
+    };
 
     const sendMessageInternal = async (messageContent: string) => {
         const timestamp = Date.now();
@@ -58,14 +86,20 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ externalPrompt, onPromptConsume
         setIsTyping(true);
 
         try {
-            const response = await chatApi.sendMessage(messageContent);
+            // Build query params for GET request
+            const params = new URLSearchParams({
+                message: messageContent,
+                model: selectedModel
+            });
+
+            const response = await api.get<{ response: string }>(`/chat?${params.toString()}`);
 
             setMessages(prev => [
                 ...prev,
                 {
                     id: Date.now(),
                     role: "assistant",
-                    content: response,
+                    content: response.response,
                     timestamp: new Date().toISOString()
                 }
             ]);
@@ -86,7 +120,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ externalPrompt, onPromptConsume
     };
 
     const sendMessage = async () => {
-        if (!input.trim()) return;
+        if (!input.trim() || !selectedModel) return;
         const messageContent = input.trim();
         setInput("");
         await sendMessageInternal(messageContent);
@@ -94,12 +128,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ externalPrompt, onPromptConsume
 
     const handleNewChat = async () => {
         try {
-            await chatApi.resetConversation();
+            await api.post('/reset', {});
             setMessages([{
                 ...WELCOME_MESSAGE,
                 id: Date.now(),
                 timestamp: new Date().toISOString()
             }]);
+            // Reload default model in case it changed
+            await loadDefaultModel();
         } catch (error) {
             console.error("Reset API error:", error);
         }
@@ -113,11 +149,24 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ externalPrompt, onPromptConsume
     };
 
     const formatTime = (timestamp: string) => {
-        return new Date(timestamp).toLocaleTimeString([], { 
-            hour: '2-digit', 
-            minute: '2-digit' 
+        return new Date(timestamp).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit'
         });
     };
+
+    // Show loading state until model is loaded
+    if (!selectedModel) {
+        return (
+            <div className="chat-window-container">
+                <div className="chat-window">
+                    <div className="loading-state">
+                        <p>Loading chat interface...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="chat-window-container">
@@ -135,9 +184,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ externalPrompt, onPromptConsume
                         </div>
                     </div>
                     <div className="chat-header-actions">
-                        <button 
-                            className="chat-header-btn" 
-                            aria-label="New Chat" 
+                        <button
+                            className="chat-header-btn"
+                            aria-label="New Chat"
                             title="New Chat"
                             onClick={handleNewChat}
                         >
@@ -172,7 +221,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ externalPrompt, onPromptConsume
                             </div>
                         </div>
                     ))}
-                    
+
                     {/* Typing Indicator */}
                     {isTyping && (
                         <div className="chat-message assistant">
@@ -183,12 +232,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ externalPrompt, onPromptConsume
                             </div>
                         </div>
                     )}
-                    
+
                     <div ref={messagesEndRef} />
                 </div>
 
                 {/* Input Area */}
                 <div className="chat-input-area">
+                    {/* Input Row */}
                     <div className="chat-input-wrapper">
                         <input
                             className="chat-input"
@@ -199,8 +249,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ externalPrompt, onPromptConsume
                             disabled={isTyping}
                         />
                         <div className="chat-input-actions">
-                            <button 
-                                className="send-btn" 
+                            <ModelSelector
+                                value={selectedModel}
+                                onChange={setSelectedModel}
+                                provider={currentProvider}
+                                disabled={isTyping}
+                            />
+                            <button
+                                className="send-btn"
                                 onClick={sendMessage}
                                 disabled={!input.trim() || isTyping}
                                 aria-label="Send message"

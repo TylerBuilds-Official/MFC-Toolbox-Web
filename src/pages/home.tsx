@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import '../styles/home.css';
+import '../styles/auth.css';
 import ChatWindow from "../components/chatWindow.tsx";
 import ToolboxSidebar from "../components/ToolboxSidebar.tsx";
 import WrenchIcon from "../assets/svg/toolbox/buttonWrench.tsx";

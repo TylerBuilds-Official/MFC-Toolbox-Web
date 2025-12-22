@@ -2,10 +2,11 @@ import React, { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import { useApi } from "../auth";
 import { useAuth } from "../auth";
+import type { Message } from "../types/conversation";
 import "../styles/chatWindow.css";
 import ModelSelector from "./modelSelector";
 
-type Message = {
+type DisplayMessage = {
     id: number;
     role: "user" | "assistant";
     content: string;
@@ -15,30 +16,75 @@ type Message = {
 type ChatWindowProps = {
     externalPrompt?: string | null;
     onPromptConsumed?: () => void;
+    activeConversationId: number | null;
+    initialMessages: Message[];
+    onConversationCreated: (id: number) => void;
+    onMessagesUpdated: (messages: Message[]) => void;
 };
 
-const WELCOME_MESSAGE: Message = {
+const WELCOME_MESSAGE: DisplayMessage = {
     id: Date.now(),
     role: "assistant",
     content: "Welcome to the MFC Toolbox! I'm here to help with fabrication workflows, document processing, and more. What can I assist you with today?",
     timestamp: new Date().toISOString()
 };
 
-const ChatWindow: React.FC<ChatWindowProps> = ({ externalPrompt, onPromptConsumed }) => {
+interface ChatResponse {
+    response: string;
+    conversation_id: number;
+}
+
+const ChatWindow: React.FC<ChatWindowProps> = ({
+                                                   externalPrompt,
+                                                   onPromptConsumed,
+                                                   activeConversationId,
+                                                   initialMessages,
+                                                   onConversationCreated,
+                                                   onMessagesUpdated
+                                               }) => {
     const { user } = useAuth();
     const api = useApi();
 
-    const [messages, setMessages] = useState<Message[]>([WELCOME_MESSAGE]);
+    const [displayMessages, setDisplayMessages] = useState<DisplayMessage[]>([WELCOME_MESSAGE]);
     const [input, setInput] = useState("");
     const [isTyping, setIsTyping] = useState(false);
-    const [selectedModel, setSelectedModel] = useState<string>("");  // Empty until loaded
+    const [selectedModel, setSelectedModel] = useState<string>("");
     const [currentProvider, setCurrentProvider] = useState<string>("openai");
+    const [conversationId, setConversationId] = useState<number | null>(null);
+
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    // Sync conversationId with prop
+    useEffect(() => {
+        setConversationId(activeConversationId);
+    }, [activeConversationId]);
+
+    // Convert and display initial messages when they change
+    useEffect(() => {
+        if (initialMessages.length > 0) {
+            const converted: DisplayMessage[] = initialMessages.map(msg => ({
+                id: msg.id,
+                role: msg.role,
+                content: msg.content,
+                timestamp: msg.created_at
+            }));
+            setDisplayMessages(converted);
+
+        } else if (activeConversationId === null) {
+            // New conversation - show welcome message
+            setDisplayMessages([{
+                ...WELCOME_MESSAGE,
+                id: Date.now(),
+                timestamp: new Date().toISOString()
+            }]);
+        }
+    }, [initialMessages, activeConversationId]);
 
     // Helper to infer provider from model name
     const inferProviderFromModel = (model: string): string => {
         if (model.startsWith("claude")) return "anthropic";
         if (model.startsWith("gpt")) return "openai";
-        return currentProvider; // Fallback to current
+        return currentProvider;
     };
 
     // Handle model change with provider sync
@@ -46,7 +92,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ externalPrompt, onPromptConsume
         setSelectedModel(newModel);
         setCurrentProvider(inferProviderFromModel(newModel));
     };
-    const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -54,7 +99,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ externalPrompt, onPromptConsume
 
     useEffect(() => {
         scrollToBottom();
-    }, [messages, isTyping]);
+    }, [displayMessages, isTyping]);
 
     // Load default model from backend on mount
     useEffect(() => {
@@ -79,7 +124,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ externalPrompt, onPromptConsume
             console.log("[ChatWindow] Loaded default model:", providerInfo);
         } catch (error) {
             console.error("[ChatWindow] Failed to load default model:", error);
-            // Fallback to a safe default
             setSelectedModel("gpt-4o");
             setCurrentProvider("openai");
         }
@@ -88,38 +132,47 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ externalPrompt, onPromptConsume
     const sendMessageInternal = async (messageContent: string) => {
         const timestamp = Date.now();
 
-        const userMessage: Message = {
+        const userMessage: DisplayMessage = {
             id: timestamp,
             role: "user",
             content: messageContent,
             timestamp: new Date(timestamp).toISOString()
         };
 
-        setMessages(prev => [...prev, userMessage]);
+        setDisplayMessages(prev => [...prev, userMessage]);
         setIsTyping(true);
 
         try {
-            // Build query params for GET request - include provider for proper routing
             const params = new URLSearchParams({
                 message: messageContent,
                 model: selectedModel,
                 provider: currentProvider
             });
 
-            const response = await api.get<{ response: string }>(`/chat?${params.toString()}`);
+            if (conversationId !== null) {
+                params.append("conversation_id", conversationId.toString());
+            }
 
-            setMessages(prev => [
-                ...prev,
-                {
-                    id: Date.now(),
-                    role: "assistant",
-                    content: response.response,
-                    timestamp: new Date().toISOString()
-                }
-            ]);
+            const response = await api.get<ChatResponse>(`/chat?${params.toString()}`);
+
+            // Handle new conversation created
+            if (response.conversation_id && response.conversation_id !== conversationId) {
+                setConversationId(response.conversation_id);
+                onConversationCreated(response.conversation_id);
+            }
+
+            const assistantMessage: DisplayMessage = {
+                id: Date.now(),
+                role: "assistant",
+                content: response.response,
+                timestamp: new Date().toISOString()
+            };
+
+            setDisplayMessages(prev => [...prev, assistantMessage]);
+
         } catch (error) {
             console.error("Chat API error:", error);
-            setMessages(prev => [
+            setDisplayMessages(prev => [
                 ...prev,
                 {
                     id: Date.now(),
@@ -140,19 +193,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ externalPrompt, onPromptConsume
         await sendMessageInternal(messageContent);
     };
 
-    const handleNewChat = async () => {
-        try {
-            await api.post('/reset', {});
-            setMessages([{
-                ...WELCOME_MESSAGE,
-                id: Date.now(),
-                timestamp: new Date().toISOString()
-            }]);
-            // Reload default model in case it changed
-            await loadDefaultModel();
-        } catch (error) {
-            console.error("Reset API error:", error);
-        }
+    const handleNewChat = () => {
+        setConversationId(null);
+        setDisplayMessages([{
+            ...WELCOME_MESSAGE,
+            id: Date.now(),
+            timestamp: new Date().toISOString()
+        }]);
+        onConversationCreated(-1); // Signal parent to clear active conversation
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -169,7 +217,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ externalPrompt, onPromptConsume
         });
     };
 
-    // Show loading state until model is loaded
     if (!selectedModel) {
         return (
             <div className="chat-window-container">
@@ -220,7 +267,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ externalPrompt, onPromptConsume
 
                 {/* Messages */}
                 <div className="chat-messages">
-                    {messages.map(message => (
+                    {displayMessages.map(message => (
                         <div
                             key={message.id}
                             className={`chat-message ${message.role}`}
@@ -236,7 +283,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ externalPrompt, onPromptConsume
                         </div>
                     ))}
 
-                    {/* Typing Indicator */}
                     {isTyping && (
                         <div className="chat-message assistant">
                             <div className="typing-indicator">
@@ -252,7 +298,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ externalPrompt, onPromptConsume
 
                 {/* Input Area */}
                 <div className="chat-input-area">
-                    {/* Input Row */}
                     <div className="chat-input-wrapper">
                         <input
                             className="chat-input"

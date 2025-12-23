@@ -6,6 +6,7 @@ export interface Conversation {
     user_id: number;
     title: string;
     summary: string;
+    last_message_preview: string | null;
     created_at: string;
     updated_at: string;
     is_active: boolean;

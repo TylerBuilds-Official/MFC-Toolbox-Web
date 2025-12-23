@@ -1,10 +1,13 @@
 import React, { useState, useRef, useEffect } from "react";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, {type Components } from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useApi } from "../auth";
 import { useAuth } from "../auth";
 import type { Message } from "../types/conversation";
 import "../styles/chatWindow.css";
 import ModelSelector from "./modelSelector";
+import CodeBlock from "./CodeBlock";
+
 
 type DisplayMessage = {
     id: number;
@@ -40,7 +43,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                                                    activeConversationId,
                                                    initialMessages,
                                                    onConversationCreated,
-                                                   onMessagesUpdated
                                                }) => {
     const { user } = useAuth();
     const api = useApi();
@@ -146,7 +148,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             const params = new URLSearchParams({
                 message: messageContent,
                 model: selectedModel,
-                provider: currentProvider
+                provider: currentProvider,
+
             });
 
             if (conversationId !== null) {
@@ -217,6 +220,33 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         });
     };
 
+    const markdownComponents: Components = {
+        code({ className, children, ...props }) {
+            const match = /language-(\w+)/.exec(className || "");
+            const isInline = !className && !String(children).includes("\n");
+
+            if (isInline) {
+                return <code className="inline-code" {...props}>{children}</code>;
+            }
+
+            return (
+                <CodeBlock language={match?.[1]}>
+                    {String(children).replace(/\n$/, "")}
+                </CodeBlock>
+            );
+        },
+        pre({ children }) {
+            return <>{children}</>;
+        },
+        table({ children, ...props }) {
+            return (
+                <div className="table-wrapper">
+                    <table {...props}>{children}</table>
+                </div>
+            );
+        },
+    };
+
     if (!selectedModel) {
         return (
             <div className="chat-window-container">
@@ -265,20 +295,22 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                     </div>
                 </div>
 
-                {/* Messages */}
                 <div className="chat-messages">
                     {displayMessages.map(message => (
                         <div
                             key={message.id}
                             className={`chat-message ${message.role}`}
                         >
-                            <div className="message-bubble">
-                                <ReactMarkdown>{message.content}</ReactMarkdown>
+                            <div className="message-bubble markdown-content">
+                                <ReactMarkdown components={markdownComponents}
+                                               remarkPlugins={[remarkGfm]}>
+                                    {message.content}
+                                </ReactMarkdown>
                             </div>
                             <div className="message-meta">
-                                <span className="message-timestamp">
-                                    {formatTime(message.timestamp)}
-                                </span>
+                                    <span className="message-timestamp">
+                                        {formatTime(message.timestamp)}
+                                    </span>
                             </div>
                         </div>
                     ))}

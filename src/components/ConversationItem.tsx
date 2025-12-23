@@ -27,6 +27,13 @@ const ConversationItem = ({ conversation, isActive, onSelect, onDelete }: Conver
         return date.toLocaleDateString();
     };
 
+    const getPreviewText = (preview: string | null): string => {
+        if (!preview || preview.trim() === '') {
+            return "No messages yet";
+        }
+        return preview;
+    }
+
     const handleDeleteClick = (e: React.MouseEvent) => {
         e.stopPropagation();
         if (confirm("Are you sure you want to delete this conversation?")) {
@@ -42,6 +49,7 @@ const ConversationItem = ({ conversation, isActive, onSelect, onDelete }: Conver
             <div className="conversation-icon">💬</div>
             <div className="conversation-info">
                 <span className="conversation-title">{conversation.title}</span>
+                <span className="conversation-preview">{getPreviewText(conversation.last_message_preview)}</span>
                 <span className="conversation-date">{formatDate(conversation.updated_at)}</span>
             </div>
             <button

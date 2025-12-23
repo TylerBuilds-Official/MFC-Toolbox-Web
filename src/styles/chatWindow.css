@@ -469,6 +469,42 @@
   height: 20px;
 }
 
+.stop-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  animation: pulse-red 2s ease-in-out infinite;
+}
+
+.stop-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+}
+
+.stop-btn:active {
+  transform: scale(0.98);
+}
+
+.stop-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+@keyframes pulse-red {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.6);
+  }
+}
+
 /* ============================================
    6. SPECIAL STATES
    ============================================ */

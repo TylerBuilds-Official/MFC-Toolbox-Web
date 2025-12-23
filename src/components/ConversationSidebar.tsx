@@ -1,6 +1,7 @@
 import type { Conversation } from "../types/conversation.ts";
 import ConversationItem from "./ConversationItem.tsx";
 import '../styles/conversationSidebar.css';
+import LoadingDots from "./LoadingDots.tsx";
 
 
 interface ConversationSidebarProps {
@@ -64,8 +65,7 @@ const ConversationSidebar = ({ isOpen, onClose, conversations, activeConversatio
                 <div className="conversation-sidebar-content">
                     {loading && (
                         <div className="conversation-sidebar-loading">
-                            <div className="loading-spinner"></div>
-                            <span>Loading conversations...</span>
+                            <LoadingDots variant="primary" message="Loading conversations..." size='small' />
                         </div>
                     )}
 

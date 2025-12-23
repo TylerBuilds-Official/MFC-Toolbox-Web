@@ -9,6 +9,7 @@ import ModelSelector from "./modelSelector";
 import CodeBlock from "./CodeBlock";
 import MessageCopyButton from "./MessageCopyButton";
 import RegenResponseButton from "./RegenResponseButton.tsx";
+import LoadingSpinner from "./loading.tsx";
 
 
 type DisplayMessage = {
@@ -61,7 +62,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     const [isRegenerating, setIsRegenerating] = useState<boolean>(false);
     const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
     const [editedContent, setEditedContent] = useState<string>("");
+    const [isStreaming, setIsStreaming] = useState<boolean>(false);
 
+    const abortControllerRef = useRef<AbortController | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -181,10 +184,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
         setEditingMessageId(null);
         setEditedContent("");
-
         setDisplayMessages(messageBeforeEdit);
-
         setIsTyping(true);
+        setIsStreaming(true);
+
+        abortControllerRef.current = new AbortController();
 
         try {
             const params = new URLSearchParams({
@@ -197,7 +201,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                 params.append("conversation_id", conversationId.toString());
             }
 
-            const response = await api.get<ChatResponse>(`/chat?${params.toString()}`);
+            const response = await api.get<ChatResponse>(`/chat?${params.toString()}`, { signal: abortControllerRef.current.signal });
 
             if (response.conversation_id && response.conversation_id !== conversationId) {
                 setConversationId(response.conversation_id);
@@ -219,10 +223,24 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             };
 
             setDisplayMessages(prev => [...prev, newUserMessage, newAssistantMessage]);
-        } catch (error) {
-            console.error("Error sending edited message:", error);
-            setDisplayMessages(displayMessages);
-            alert("Failed to send edited message. Please try again.")
+        } catch (error: unknown) {
+            if (error instanceof Error && error.name === 'AbortError') {
+                console.log("Aborted editing request.");
+                setDisplayMessages(prev => [
+                    ...prev,
+                    {
+                        id: Date.now(),
+                        role: "assistant",
+                        content: "_Generation cancelled by user._",
+                        timestamp: new Date().toISOString()
+                    }
+                ]);
+            } else {
+
+                console.error("Error sending edited message:", error);
+                setDisplayMessages(displayMessages);
+                alert("Failed to send edited message. Please try again.")
+            }
         } finally {
             setIsTyping(false);
         }
@@ -238,6 +256,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     };
 
 
+    const stopGeneration = () => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            abortControllerRef.current = null;
+        }
+        setIsStreaming(false);
+        setIsTyping(false);
+        setIsRegenerating(false);
+    };
+
+
+
     const sendMessageInternal = async (messageContent: string) => {
         const timestamp = Date.now();
 
@@ -250,6 +280,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
         setDisplayMessages(prev => [...prev, userMessage]);
         setIsTyping(true);
+        setIsStreaming(true);
+
+        abortControllerRef.current = new AbortController();
 
         try {
             const params = new URLSearchParams({
@@ -263,7 +296,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                 params.append("conversation_id", conversationId.toString());
             }
 
-            const response = await api.get<ChatResponse>(`/chat?${params.toString()}`);
+            const response = await api.get<ChatResponse>(`/chat?${params.toString()}`, { signal: abortControllerRef.current.signal });
 
             // Handle new conversation created
             if (response.conversation_id && response.conversation_id !== conversationId) {
@@ -280,19 +313,36 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
             setDisplayMessages(prev => [...prev, assistantMessage]);
 
-        } catch (error) {
-            console.error("Chat API error:", error);
-            setDisplayMessages(prev => [
-                ...prev,
-                {
-                    id: Date.now(),
-                    role: "assistant",
-                    content: "Sorry, I couldn't connect to the server. Please make sure the API is running and try again.",
-                    timestamp: new Date().toISOString()
-                }
-            ]);
+        } catch (error: unknown) {
+            if (error instanceof Error && error.name === 'AbortError') {
+                console.log("Aborted generation request.");
+                setDisplayMessages(prev => [
+                    ...prev,
+                    {
+                        id: Date.now(),
+                        role: "assistant",
+                        //TODO - Refactor after text streaming has been implemented - leave text as what has been generated so far.
+                        content: "_Answer generation cancelled by user._",
+                        timestamp: new Date().toISOString()
+                    }
+                ]);
+            } else {
+                console.error("Chat API error:", error);
+                setDisplayMessages(prev => [
+                    ...prev,
+                    {
+                        id: Date.now(),
+                        role: "assistant",
+                        content: "Sorry, I couldn't connect to the server. Please make sure the API is running and try again.",
+                        timestamp: new Date().toISOString()
+                    }
+
+                ]);
+            }
         } finally {
             setIsTyping(false);
+            setIsStreaming(false);
+            abortControllerRef.current = null;
         }
     };
 
@@ -325,6 +375,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
         setIsRegenerating(true);
         setIsTyping(true);
+        setIsStreaming(false);
+
+        abortControllerRef.current = new AbortController();
 
         try {
             const messagesBeforeRegenerate = displayMessages.slice(0, messageIndex);
@@ -340,7 +393,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                 params.append("conversation_id", conversationId.toString());
             }
 
-            const response = await api.get<ChatResponse>(`/chat?${params.toString()}`);
+            const response = await api.get<ChatResponse>(`/chat?${params.toString()}`, { signal: abortControllerRef.current.signal });
 
             const newAssistantMessage: DisplayMessage = {
                 id: Date.now(),
@@ -350,14 +403,30 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             };
 
             setDisplayMessages(prev => [...prev, newAssistantMessage]);
-        } catch ( error ) {
-            console.error("Regenerate API error:", error);
-            setDisplayMessages(displayMessages)
-            alert("Failed to regenerate response. Please try again.");
+        } catch (error: unknown) {
+            if (error instanceof Error && error.name === 'AbortError') {
+                console.log("Aborted regeneration request.");
+                setDisplayMessages(prev => [
+                    ...prev,
+                    {
+                        id: Date.now(),
+                        role: "assistant",
+                        content: "_Regeneration cancelled by user._",
+                        timestamp: new Date().toISOString()
+                    }
+                ]);
+            } else {
+                console.error("Regenerate API error:", error);
+                setDisplayMessages(displayMessages)
+                alert("Failed to regenerate response. Please try again.");
+            }
 
         } finally {
             setIsRegenerating(false);
             setIsTyping(false);
+            setIsStreaming(false);
+            abortControllerRef.current = null;
+            abortControllerRef.current = null;
         }
     };
 
@@ -422,9 +491,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         return (
             <div className="chat-window-container">
                 <div className="chat-window">
-                    <div className="loading-state">
-                        <p>Loading chat interface...</p>
-                    </div>
+                    <LoadingSpinner size='small' message='Loading coversations..' variant="minimal"/>
                 </div>
             </div>
         );
@@ -602,17 +669,30 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                                 provider={currentProvider}
                                 disabled={isTyping}
                             />
-                            <button
-                                className="send-btn"
-                                onClick={sendMessage}
-                                disabled={!input.trim() || isTyping}
-                                aria-label="Send message"
-                            >
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <line x1="22" y1="2" x2="11" y2="13"></line>
-                                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                                </svg>
-                            </button>
+                            {isStreaming ? (
+                                <button
+                                    className="stop-btn"
+                                    onClick={stopGeneration}
+                                    aria-label="Stop generation"
+                                    title="Stop generation"
+                                >
+                                    <svg viewBox="0 0 24 24" fill="currentColor">
+                                        <rect x="6" y="6" width="12" height="12" rx="2"/>
+                                    </svg>
+                                </button>
+                            ) : (
+                                <button
+                                    className="send-btn"
+                                    onClick={sendMessage}
+                                    disabled={!input.trim() || isTyping}
+                                    aria-label="Send message"
+                                >
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                                    </svg>
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

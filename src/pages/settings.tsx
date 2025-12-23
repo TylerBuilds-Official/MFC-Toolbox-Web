@@ -3,6 +3,7 @@ import { useApi } from '../auth/useApi';
 import { useAuth } from '../auth/AuthContext';
 import ModelSelector from '../components/modelSelector';
 import '../styles/settings.css';
+import LoadingSpinner from "../components/loading.tsx";
 
 type Settings = {
     provider: string;
@@ -127,7 +128,7 @@ const SettingsPage: React.FC = () => {
             <div className="settings-page">
                 <div className="settings-header">
                     <h1>Settings</h1>
-                    <p>Loading settings...</p>
+                    <LoadingSpinner size='small' message="Loading settings..." variant="secondary"/>
                 </div>
             </div>
         );

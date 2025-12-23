@@ -7,7 +7,7 @@ interface ConversationItemProps {
     isActive: boolean;
     onSelect: () => void;
     onDelete: () => void;
-    onRename: (newTitle: string) => void; // NEW
+    onRename: (newTitle: string) => void;
 }
 
 const ConversationItem = ({
@@ -15,7 +15,7 @@ const ConversationItem = ({
                               isActive,
                               onSelect,
                               onDelete,
-                              onRename // NEW
+                              onRename
                           }: ConversationItemProps) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editedTitle, setEditedTitle] = useState(conversation.title);

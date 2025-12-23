@@ -61,6 +61,7 @@ export function useApi() {
                     ...options.headers,
                     Authorization: `Bearer ${token}`,
                 },
+                signal: options.signal,
             });
 
             // Response Error handling
@@ -128,7 +129,7 @@ export function useApi() {
 
     // Convenience methods for common HTTP verbs
     const get = useCallback(
-        <T>(endpoint: string) => fetchWithAuth<T>(endpoint, { method: "GET" }),
+        <T>(endpoint: string, options?: RequestInit) => fetchWithAuth<T>(endpoint, { method: "GET", ...options }),
         [fetchWithAuth]
     );
 

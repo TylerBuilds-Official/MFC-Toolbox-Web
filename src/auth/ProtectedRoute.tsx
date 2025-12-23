@@ -1,5 +1,6 @@
 import type {ReactNode} from "react";
 import { useAuth } from "./AuthContext";
+import LoadingSpinner from "../components/loading.tsx";
 
 interface ProtectedRouteProps {
     children: ReactNode;
@@ -10,11 +11,7 @@ export function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) 
     const { isAuthenticated, isLoading, user, isPendingActivation, login, error } = useAuth();
 
     if (isLoading) {
-        return (
-            <div className="auth-loading">
-                <p>Loading...</p>
-            </div>
-        );
+        return <LoadingSpinner size="large" message="Authenticating..." variant="primary"/>;
     }
 
     if (!isAuthenticated) {

@@ -7,6 +7,8 @@ import type { Message } from "../types/conversation";
 import "../styles/chatWindow.css";
 import ModelSelector from "./modelSelector";
 import CodeBlock from "./CodeBlock";
+import MessageCopyButton from "./MessageCopyButton";
+import RegenResponseButton from "./RegenResponseButton.tsx";
 
 
 type DisplayMessage = {
@@ -15,6 +17,7 @@ type DisplayMessage = {
     content: string;
     timestamp: string;
 };
+
 
 type ChatWindowProps = {
     externalPrompt?: string | null;
@@ -25,6 +28,7 @@ type ChatWindowProps = {
     onMessagesUpdated: (messages: Message[]) => void;
 };
 
+
 const WELCOME_MESSAGE: DisplayMessage = {
     id: Date.now(),
     role: "assistant",
@@ -32,18 +36,19 @@ const WELCOME_MESSAGE: DisplayMessage = {
     timestamp: new Date().toISOString()
 };
 
+
 interface ChatResponse {
     response: string;
     conversation_id: number;
 }
+
 
 const ChatWindow: React.FC<ChatWindowProps> = ({
                                                    externalPrompt,
                                                    onPromptConsumed,
                                                    activeConversationId,
                                                    initialMessages,
-                                                   onConversationCreated,
-                                               }) => {
+                                                   onConversationCreated}) => {
     const { user } = useAuth();
     const api = useApi();
 
@@ -53,15 +58,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     const [selectedModel, setSelectedModel] = useState<string>("");
     const [currentProvider, setCurrentProvider] = useState<string>("openai");
     const [conversationId, setConversationId] = useState<number | null>(null);
+    const [isRegenerating, setIsRegenerating] = useState<boolean>(false);
+    const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
+    const [editedContent, setEditedContent] = useState<string>("");
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-    // Sync conversationId with prop
     useEffect(() => {
         setConversationId(activeConversationId);
     }, [activeConversationId]);
 
-    // Convert and display initial messages when they change
+
     useEffect(() => {
         if (initialMessages.length > 0) {
             const converted: DisplayMessage[] = initialMessages.map(msg => ({
@@ -73,7 +81,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             setDisplayMessages(converted);
 
         } else if (activeConversationId === null) {
-            // New conversation - show welcome message
             setDisplayMessages([{
                 ...WELCOME_MESSAGE,
                 id: Date.now(),
@@ -82,6 +89,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         }
     }, [initialMessages, activeConversationId]);
 
+
     // Helper to infer provider from model name
     const inferProviderFromModel = (model: string): string => {
         if (model.startsWith("claude")) return "anthropic";
@@ -89,19 +97,23 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         return currentProvider;
     };
 
+
     // Handle model change with provider sync
     const handleModelChange = (newModel: string) => {
         setSelectedModel(newModel);
         setCurrentProvider(inferProviderFromModel(newModel));
     };
 
+
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     };
 
+
     useEffect(() => {
         scrollToBottom();
     }, [displayMessages, isTyping]);
+
 
     // Load default model from backend on mount
     useEffect(() => {
@@ -110,6 +122,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         }
     }, [user]);
 
+
     // Handle external prompts from toolbox
     useEffect(() => {
         if (externalPrompt && !isTyping) {
@@ -117,6 +130,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             onPromptConsumed?.();
         }
     }, [externalPrompt]);
+
 
     const loadDefaultModel = async () => {
         try {
@@ -130,6 +144,99 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             setCurrentProvider("openai");
         }
     };
+
+
+    const autoResizeTextarea = () => {
+        const textarea = textareaRef.current;
+        if (textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
+        }
+    };
+
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        setInput(e.target.value);
+        autoResizeTextarea();
+    };
+
+
+    const startEditingMessage = (message_id: number, currentContent: string) => {
+        setEditingMessageId(message_id);
+        setEditedContent(currentContent);
+    };
+
+    const cancelEditingMessage = () => {
+        setEditingMessageId(null);
+        setEditedContent("");
+    };
+
+    const saveEditedMessage = async (messageIndex: number) => {
+        if (!editedContent.trim()) return;
+
+        const editedMessage = displayMessages[messageIndex];
+        if (!editedMessage || editedMessage.role !== "user") return;
+
+        const messageBeforeEdit = displayMessages.slice(0, messageIndex);
+
+        setEditingMessageId(null);
+        setEditedContent("");
+
+        setDisplayMessages(messageBeforeEdit);
+
+        setIsTyping(true);
+
+        try {
+            const params = new URLSearchParams({
+                message: editedContent.trim(),
+                model: selectedModel,
+                provider: currentProvider,
+            });
+
+            if (conversationId !== null) {
+                params.append("conversation_id", conversationId.toString());
+            }
+
+            const response = await api.get<ChatResponse>(`/chat?${params.toString()}`);
+
+            if (response.conversation_id && response.conversation_id !== conversationId) {
+                setConversationId(response.conversation_id);
+                onConversationCreated(response.conversation_id);
+            }
+
+            const newUserMessage: DisplayMessage = {
+                id: Date.now(),
+                role: "user",
+                content: editedContent.trim(),
+                timestamp: new Date().toISOString()
+            };
+
+            const newAssistantMessage: DisplayMessage = {
+                id: Date.now() + 1,
+                role: "assistant",
+                content: response.response,
+                timestamp: new Date().toISOString()
+            };
+
+            setDisplayMessages(prev => [...prev, newUserMessage, newAssistantMessage]);
+        } catch (error) {
+            console.error("Error sending edited message:", error);
+            setDisplayMessages(displayMessages);
+            alert("Failed to send edited message. Please try again.")
+        } finally {
+            setIsTyping(false);
+        }
+    };
+
+    const handleEditKeyDown = (e: React.KeyboardEvent, messageIndex: number) => {
+        if (e.key === "Enter" && e.ctrlKey && !e.shiftKey) {
+            e.preventDefault();
+            saveEditedMessage(messageIndex);
+        } else if (e.key === "Escape") {
+            cancelEditingMessage();
+        }
+    };
+
 
     const sendMessageInternal = async (messageContent: string) => {
         const timestamp = Date.now();
@@ -189,12 +296,71 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         }
     };
 
+
     const sendMessage = async () => {
         if (!input.trim() || !selectedModel) return;
         const messageContent = input.trim();
         setInput("");
+        
+        // Reset textarea height after sending
+        if (textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+        }
+        
         await sendMessageInternal(messageContent);
     };
+
+
+    const regenerateResponse = async (messageIndex: number)=> {
+
+        const previousUserMessage = displayMessages
+            .slice(0, messageIndex)
+            .reverse()
+            .find(msg => msg.role === "user");
+
+        if (!previousUserMessage) {
+            console.error("Failed to find previous user message to regenerate response for.");
+            return;
+        }
+
+        setIsRegenerating(true);
+        setIsTyping(true);
+
+        try {
+            const messagesBeforeRegenerate = displayMessages.slice(0, messageIndex);
+            setDisplayMessages(messagesBeforeRegenerate);
+
+            const params = new URLSearchParams({
+                message: previousUserMessage.content,
+                model: selectedModel,
+                provider: currentProvider,
+            });
+
+            if (conversationId !== null) {
+                params.append("conversation_id", conversationId.toString());
+            }
+
+            const response = await api.get<ChatResponse>(`/chat?${params.toString()}`);
+
+            const newAssistantMessage: DisplayMessage = {
+                id: Date.now(),
+                role: "assistant",
+                content: response.response,
+                timestamp: new Date().toISOString()
+            };
+
+            setDisplayMessages(prev => [...prev, newAssistantMessage]);
+        } catch ( error ) {
+            console.error("Regenerate API error:", error);
+            setDisplayMessages(displayMessages)
+            alert("Failed to regenerate response. Please try again.");
+
+        } finally {
+            setIsRegenerating(false);
+            setIsTyping(false);
+        }
+    };
+
 
     const handleNewChat = () => {
         setConversationId(null);
@@ -206,6 +372,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         onConversationCreated(-1); // Signal parent to clear active conversation
     };
 
+
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
@@ -213,12 +380,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         }
     };
 
+
     const formatTime = (timestamp: string) => {
         return new Date(timestamp).toLocaleTimeString([], {
             hour: '2-digit',
             minute: '2-digit'
         });
     };
+
 
     const markdownComponents: Components = {
         code({ className, children, ...props }) {
@@ -235,9 +404,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                 </CodeBlock>
             );
         },
+
         pre({ children }) {
             return <>{children}</>;
         },
+
         table({ children, ...props }) {
             return (
                 <div className="table-wrapper">
@@ -259,6 +430,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         );
     }
 
+
+
+    // ------------------------------------------------------
+
     return (
         <div className="chat-window-container">
             <div className="chat-window">
@@ -279,38 +454,117 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                             className="chat-header-btn"
                             aria-label="New Chat"
                             title="New Chat"
-                            onClick={handleNewChat}
-                        >
+                            onClick={handleNewChat}>
+
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <line x1="12" y1="5" x2="12" y2="19"></line>
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
                             </svg>
+
                         </button>
+
                         <button className="chat-header-btn" aria-label="Settings" title="Chat Settings">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <circle cx="12" cy="12" r="3"></circle>
                                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
                             </svg>
+
                         </button>
                     </div>
                 </div>
 
                 <div className="chat-messages">
-                    {displayMessages.map(message => (
+                    {displayMessages.map((message, index) => (
                         <div
                             key={message.id}
-                            className={`chat-message ${message.role}`}
-                        >
-                            <div className="message-bubble markdown-content">
-                                <ReactMarkdown components={markdownComponents}
-                                               remarkPlugins={[remarkGfm]}>
-                                    {message.content}
-                                </ReactMarkdown>
-                            </div>
+                            className={`chat-message ${message.role}`}>
+
+                            {/* Check if this message is being edited */}
+                            {editingMessageId === message.id ? (
+                                <div className="message-edit-container">
+                    <textarea
+                        className="message-edit-input"
+                        value={editedContent}
+                        onChange={(e) => setEditedContent(e.target.value)}
+                        onKeyDown={(e) => handleEditKeyDown(e, index)}
+                        autoFocus
+                        rows={3}
+                    />
+                                    <div className="message-edit-actions">
+                                        <button
+                                            className="message-edit-save"
+                                            onClick={() => saveEditedMessage(index)}
+                                            disabled={!editedContent.trim()}
+                                        >
+                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                <polyline points="20 6 9 17 4 12"></polyline>
+                                            </svg>
+                                            Save & Submit
+                                        </button>
+                                        <button
+                                            className="message-edit-cancel"
+                                            onClick={cancelEditingMessage}
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="message-bubble markdown-content">
+                                    <ReactMarkdown
+                                        components={markdownComponents}
+                                        remarkPlugins={[remarkGfm]}
+                                    >
+                                        {message.content}
+                                    </ReactMarkdown>
+                                </div>
+                            )}
+
                             <div className="message-meta">
-                                    <span className="message-timestamp">
-                                        {formatTime(message.timestamp)}
-                                    </span>
+                                {message.role === "assistant" ? (
+                                    <>
+                                        {/* Assistant: time left, buttons right */}
+                                        <div className="message-meta-time">
+                                            <span className="message-timestamp">
+                                                {formatTime(message.timestamp)}
+                                            </span>
+                                        </div>
+                                        <div className="msg-btn-wrapper">
+                                            <MessageCopyButton textContent={message.content}
+                                                               className="msg-copy-btn"/>
+                                            <RegenResponseButton
+                                                onRegen={() => regenerateResponse(index)}
+                                                isRegenerating={isRegenerating}
+                                                className="msg-regenerate-btn"
+                                            />
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        {/* User: buttons left, time right */}
+                                        <div className="msg-btn-wrapper">
+                                            <MessageCopyButton textContent={message.content}
+                                                               className="msg-copy-btn"/>
+                                            {editingMessageId !== message.id && (
+                                                <button
+                                                    onClick={() => startEditingMessage(message.id, message.content)}
+                                                    className="msg-edit-btn"
+                                                    aria-label="Edit message"
+                                                    title="Edit message">
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                                    </svg>
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="message-meta-time">
+                                            <span className="message-timestamp">
+                                                {formatTime(message.timestamp)}
+                                            </span>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
                     ))}
@@ -331,13 +585,15 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                 {/* Input Area */}
                 <div className="chat-input-area">
                     <div className="chat-input-wrapper">
-                        <input
+                        <textarea
+                            ref={textareaRef}
                             className="chat-input"
                             value={input}
-                            onChange={e => setInput(e.target.value)}
+                            onChange={handleInputChange}
                             onKeyDown={handleKeyDown}
                             placeholder="Type your message..."
                             disabled={isTyping}
+                            rows={1}
                         />
                         <div className="chat-input-actions">
                             <ModelSelector

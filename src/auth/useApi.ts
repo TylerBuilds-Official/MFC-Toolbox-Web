@@ -63,6 +63,8 @@ export function useApi() {
                 },
             });
 
+            // Response Error handling
+
             if (response.status === 401) {
                 throw {
                     status: 401,
@@ -122,11 +124,14 @@ export function useApi() {
         [getAccessToken]
     );
 
+
+
     // Convenience methods for common HTTP verbs
     const get = useCallback(
         <T>(endpoint: string) => fetchWithAuth<T>(endpoint, { method: "GET" }),
         [fetchWithAuth]
     );
+
 
     const post = useCallback(
         <T>(endpoint: string, body?: unknown) =>
@@ -138,6 +143,7 @@ export function useApi() {
         [fetchWithAuth]
     );
 
+
     const put = useCallback(
         <T>(endpoint: string, body?: unknown) =>
             fetchWithAuth<T>(endpoint, {
@@ -148,10 +154,23 @@ export function useApi() {
         [fetchWithAuth]
     );
 
+
+    const patch = useCallback(
+        <T>(endpoint: string, body?: unknown) =>
+            fetchWithAuth<T>(endpoint, {
+                method: "PATCH",
+                headers: body ? { "Content-Type": "application/json" } : undefined,
+                body: body ? JSON.stringify(body) : undefined,
+            }),
+        [fetchWithAuth]
+    );
+
+
     const del = useCallback(
         <T>(endpoint: string) => fetchWithAuth<T>(endpoint, { method: "DELETE" }),
         [fetchWithAuth]
     );
+
 
     return {
         getAccessToken,
@@ -159,6 +178,7 @@ export function useApi() {
         get,
         post,
         put,
+        patch,
         delete: del,
     };
 }

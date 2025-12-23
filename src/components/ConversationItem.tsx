@@ -1,16 +1,34 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import type { Conversation } from "../types/conversation.ts";
 import '../styles/conversationSidebar.css';
-
 
 interface ConversationItemProps {
     conversation: Conversation;
     isActive: boolean;
     onSelect: () => void;
     onDelete: () => void;
+    onRename: (newTitle: string) => void; // NEW
 }
 
-const ConversationItem = ({ conversation, isActive, onSelect, onDelete }: ConversationItemProps) => {
+const ConversationItem = ({
+                              conversation,
+                              isActive,
+                              onSelect,
+                              onDelete,
+                              onRename // NEW
+                          }: ConversationItemProps) => {
+    const [isEditing, setIsEditing] = useState(false);
+    const [editedTitle, setEditedTitle] = useState(conversation.title);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    // Focus input when entering edit mode
+    useEffect(() => {
+        if (isEditing && inputRef.current) {
+            inputRef.current.focus();
+            inputRef.current.select();
+        }
+    }, [isEditing]);
+
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
         const now = new Date();
@@ -32,7 +50,7 @@ const ConversationItem = ({ conversation, isActive, onSelect, onDelete }: Conver
             return "No messages yet";
         }
         return preview;
-    }
+    };
 
     const handleDeleteClick = (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -41,14 +59,68 @@ const ConversationItem = ({ conversation, isActive, onSelect, onDelete }: Conver
         }
     };
 
+    const handleTitleClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setIsEditing(true);
+        setEditedTitle(conversation.title);
+    };
+
+    const handleSaveTitle = () => {
+        const trimmedTitle = editedTitle.trim();
+        if (trimmedTitle && trimmedTitle !== conversation.title) {
+            onRename(trimmedTitle);
+        }
+        setIsEditing(false);
+    };
+
+    const handleCancelEdit = () => {
+        setIsEditing(false);
+        setEditedTitle(conversation.title);
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleSaveTitle();
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            handleCancelEdit();
+        }
+    };
+
+    const handleBlur = () => {
+        // Save on blur
+        handleSaveTitle();
+    };
+
     return (
         <div
             className={`conversation-item ${isActive ? "active" : ""}`}
-            onClick={onSelect}
+            onClick={isEditing ? undefined : onSelect}
         >
             <div className="conversation-icon">💬</div>
             <div className="conversation-info">
-                <span className="conversation-title">{conversation.title}</span>
+                {isEditing ? (
+                    <input
+                        ref={inputRef}
+                        type="text"
+                        className="conversation-title-input"
+                        value={editedTitle}
+                        onChange={(e) => setEditedTitle(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        onBlur={handleBlur}
+                        onClick={(e) => e.stopPropagation()}
+                        maxLength={100}
+                    />
+                ) : (
+                    <span
+                        className="conversation-title"
+                        onClick={handleTitleClick}
+                        title="Click to rename"
+                    >
+                        {conversation.title}
+                    </span>
+                )}
                 <span className="conversation-preview">{getPreviewText(conversation.last_message_preview)}</span>
                 <span className="conversation-date">{formatDate(conversation.updated_at)}</span>
             </div>

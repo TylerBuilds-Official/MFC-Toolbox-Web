@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useApi } from '../auth/useApi';
-import { useAuth } from '../auth/AuthContext';
+import { useApi } from '../auth';
+import { useAuth } from '../auth';
 import type { Conversation, Message, ConversationWithMessages, ConversationsResponse } from '../types/conversation';
 import '../styles/home.css';
+import '../styles/auth.css'
 import ChatWindow from "../components/chatWindow";
 import ToolboxSidebar from "../components/ToolboxSidebar";
 import ConversationSidebar from "../components/ConversationSidebar";
@@ -64,6 +65,26 @@ const Home = () => {
         setMessages([]);
     };
 
+    const handleRenameConversation = async (conversationId: number, newTitle: string) => {
+        try {
+            // Optimistic update
+            setConversations(prev =>
+                prev.map(c => c.id === conversationId ? { ...c, title: newTitle } : c)
+            );
+
+            // Call API
+            await api.patch(`/conversations/${conversationId}`, { title: newTitle });
+
+        } catch (error) {
+            console.error("Failed to rename conversation:", error);
+
+            // Revert on error
+            await loadConversations();
+
+            alert("Failed to rename conversation. Please try again.");
+        }
+    };
+
     const handleDeleteConversation = async (conversationId: number) => {
         try {
             await api.delete(`/conversations/${conversationId}`);
@@ -118,6 +139,7 @@ const Home = () => {
                 onSelectConversation={handleSelectConversation}
                 onNewConversation={handleNewConversation}
                 onDeleteConversation={handleDeleteConversation}
+                onRenameConversation={handleRenameConversation}
                 loading={conversationsLoading}
             />
 

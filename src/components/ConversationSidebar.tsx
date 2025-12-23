@@ -11,10 +11,11 @@ interface ConversationSidebarProps {
     onSelectConversation: (conversationId: number) => void;
     onNewConversation: () => void;
     onDeleteConversation: (conversationId: number) => void;
+    onRenameConversation: (conversationId: number, newTitle: string) => void; // NEW
     loading: boolean;
 }
 
-const ConversationSidebar = ({ isOpen, onClose, conversations, activeConversationId, onSelectConversation, onNewConversation, onDeleteConversation, loading }: ConversationSidebarProps) => {
+const ConversationSidebar = ({ isOpen, onClose, conversations, activeConversationId, onSelectConversation, onNewConversation, onDeleteConversation, loading, onRenameConversation }: ConversationSidebarProps) => {
 
     const handleNewChat = () => {
         onNewConversation();
@@ -87,6 +88,7 @@ const ConversationSidebar = ({ isOpen, onClose, conversations, activeConversatio
                                     isActive={conversation.id === activeConversationId}
                                     onSelect={() => handleSelectConversation(conversation.id)}
                                     onDelete={() => onDeleteConversation(conversation.id)}
+                                    onRename={(newTitle) => onRenameConversation(conversation.id, newTitle)}
                                 />
                             ))}
                         </div>

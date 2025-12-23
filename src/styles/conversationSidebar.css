@@ -227,6 +227,35 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+
+.conversation-title:hover {
+    color: var(--accent-primary);
+}
+
+.conversation-title-input {
+    width: 100%;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-subtle);
+    outline: none;
+    font-family: inherit;
+}
+
+.conversation-title-input:focus {
+}
+
+/* Active conversation editing */
+.conversation-item.active .conversation-title-input {
+    background-color: var(--bg-elevated);
+    border-color: var(--accent-primary);
 }
 
 .conversation-date {

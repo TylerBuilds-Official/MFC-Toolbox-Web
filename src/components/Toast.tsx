@@ -2,23 +2,39 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import '../styles/toast.css';
 
 
+// Types
+
 type ToastVariant = 'success' | 'error' | 'warning' | 'info';
+
+interface ToastAction {
+    label: string;
+    onClick: () => void;
+}
+
+interface ToastOptions {
+    duration?: number;
+    action?: ToastAction;
+}
 
 interface Toast {
     id: number;
     message: string;
     variant: ToastVariant;
     duration: number;
+    action?: ToastAction;
 }
-
 
 interface ToastContextType {
-    showToast: (message: string, variant?: ToastVariant, duration?: number) => void;
+    showToast: (message: string, variant?: ToastVariant, options?: ToastOptions | number) => void;
 }
 
+
+// Context
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
+
+// Hook
 
 export function useToast(): ToastContextType {
     const context = useContext(ToastContext);
@@ -28,6 +44,8 @@ export function useToast(): ToastContextType {
     return context;
 }
 
+
+// Icons
 
 const CheckIcon = () => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -80,26 +98,36 @@ const variantIcons: Record<ToastVariant, React.ReactNode> = {
 };
 
 
+// Toast Item Component
+
 interface ToastItemProps {
     toast: Toast;
     onDismiss: (id: number) => void;
 }
 
-
 const ToastItem: React.FC<ToastItemProps> = ({ toast, onDismiss }) => {
     const [isExiting, setIsExiting] = useState(false);
     const [progress, setProgress] = useState(100);
+
 
     const handleDismiss = useCallback(() => {
         setIsExiting(true);
         setTimeout(() => onDismiss(toast.id), 200);
     }, [onDismiss, toast.id]);
 
+
+    const handleAction = useCallback(() => {
+        toast.action?.onClick();
+        handleDismiss();
+    }, [toast.action, handleDismiss]);
+
+
     // Auto-dismiss timer
     useEffect(() => {
         if (toast.duration <= 0) return;
 
         const startTime = Date.now();
+
         const interval = setInterval(() => {
             const elapsed = Date.now() - startTime;
             const remaining = Math.max(0, 100 - (elapsed / toast.duration) * 100);
@@ -120,9 +148,17 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onDismiss }) => {
             <div className="toast-icon">
                 {variantIcons[toast.variant]}
             </div>
+
             <div className="toast-content">
                 <p className="toast-message">{toast.message}</p>
+
+                {toast.action && (
+                    <button className="toast-action" onClick={handleAction}>
+                        {toast.action.label}
+                    </button>
+                )}
             </div>
+
             <button
                 className="toast-close"
                 onClick={handleDismiss}
@@ -130,6 +166,7 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onDismiss }) => {
             >
                 <CloseIcon />
             </button>
+
             {toast.duration > 0 && (
                 <div className="toast-progress">
                     <div
@@ -143,6 +180,8 @@ const ToastItem: React.FC<ToastItemProps> = ({ toast, onDismiss }) => {
 };
 
 
+// Toast Provider
+
 interface ToastProviderProps {
     children: React.ReactNode;
 }
@@ -150,18 +189,30 @@ interface ToastProviderProps {
 export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
     const [toasts, setToasts] = useState<Toast[]>([]);
 
+
     const showToast = useCallback((
         message: string,
         variant: ToastVariant = 'info',
-        duration: number = 4000
+        options?: ToastOptions | number
     ) => {
         const id = Date.now();
-        setToasts(prev => [...prev, { id, message, variant, duration }]);
+
+        // Handle legacy number parameter for duration
+        const opts: ToastOptions = typeof options === 'number' 
+            ? { duration: options } 
+            : options || {};
+
+        const duration = opts.duration ?? 4000;
+        const action = opts.action;
+
+        setToasts(prev => [...prev, { id, message, variant, duration, action }]);
     }, []);
+
 
     const dismissToast = useCallback((id: number) => {
         setToasts(prev => prev.filter(toast => toast.id !== id));
     }, []);
+
 
     return (
         <ToastContext.Provider value={{ showToast }}>
@@ -178,5 +229,6 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
         </ToastContext.Provider>
     );
 };
+
 
 export default ToastProvider;

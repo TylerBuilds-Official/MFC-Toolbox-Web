@@ -1,6 +1,4 @@
-/* ============================================
-   Toast Notifications
-   ============================================ */
+/* Toast Notifications */
 
 .toast-container {
     position: fixed;
@@ -15,9 +13,8 @@
     width: calc(100% - var(--space-8));
 }
 
-/* ============================================
-   Toast Item
-   ============================================ */
+
+/* Toast Item */
 
 .toast {
     display: flex;
@@ -60,9 +57,8 @@
     }
 }
 
-/* ============================================
-   Toast Variants
-   ============================================ */
+
+/* Toast Variants */
 
 .toast-success {
     border-left: 3px solid var(--success);
@@ -112,9 +108,8 @@
     background-color: var(--accent-primary);
 }
 
-/* ============================================
-   Toast Elements
-   ============================================ */
+
+/* Toast Elements */
 
 .toast-icon {
     flex-shrink: 0;
@@ -127,6 +122,9 @@
 .toast-content {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
 }
 
 .toast-message {
@@ -136,6 +134,29 @@
     margin: 0;
     line-height: 1.4;
     word-wrap: break-word;
+}
+
+.toast-action {
+    align-self: flex-start;
+    padding: var(--space-1) var(--space-3);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--accent-primary);
+    background-color: var(--accent-muted);
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.toast-action:hover {
+    background-color: var(--accent-primary);
+    color: white;
+}
+
+.toast-action:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
 }
 
 .toast-close {
@@ -161,9 +182,8 @@
     outline-offset: 2px;
 }
 
-/* ============================================
-   Progress Bar
-   ============================================ */
+
+/* Progress Bar */
 
 .toast-progress {
     position: absolute;
@@ -179,9 +199,8 @@
     transition: width 50ms linear;
 }
 
-/* ============================================
-   Responsive
-   ============================================ */
+
+/* Responsive */
 
 @media (max-width: 480px) {
     .toast-container {

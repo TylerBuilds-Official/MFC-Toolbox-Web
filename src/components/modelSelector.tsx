@@ -94,11 +94,20 @@ const ModelSelector = ({ value, onChange, provider, disabled }: ModelSelectorPro
 
     if (loading) {
         return (
-            <select className="model-selector" disabled>
-                <LoadingDots variant="secondary" size="small" message="Loading Models.."/>
-            </select>
+            <div className="model-selector model-selector-loading">
+                <LoadingDots variant="secondary" size="small" />
+            </div>
         );
     }
+
+    if (Object.keys(filteredModels).length === 0) {
+        return (
+            <div className="model-selector model-selector-empty">
+                <p>No models available for selected provider</p>
+            </div>
+        );
+    }
+
 
     return (
         <select

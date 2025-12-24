@@ -4,6 +4,7 @@ import remarkGfm from "remark-gfm";
 import { useApi } from "../auth";
 import { useAuth } from "../auth";
 import { useToast } from "./Toast";
+import { executeTrigger } from "../triggers";
 import type { Message } from "../types/conversation";
 import "../styles/chatWindow.css";
 import ModelSelector from "./modelSelector";
@@ -194,6 +195,19 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     }, []);
 
 
+    // Clear messages helper (for triggers)
+
+    const clearMessages = useCallback(() => {
+        setDisplayMessages([{
+            ...WELCOME_MESSAGE,
+            id: Date.now(),
+            timestamp: new Date().toISOString()
+        }]);
+        setConversationId(null);
+        onConversationCreated(-1);
+    }, [onConversationCreated]);
+
+
     // API Calls
 
     const loadDefaultModel = async () => {
@@ -212,7 +226,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
     // Message sending with retry support
 
-    const sendMessageInternal = async (messageContent: string, existingMessageId?: number) => {
+    const sendMessageInternal = async (messageContent: string, existingMessageId?: number, simulateFailure?: boolean) => {
         const timestamp = Date.now();
         const messageId = existingMessageId || timestamp;
 
@@ -236,6 +250,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         abortControllerRef.current = new AbortController();
 
         try {
+            // Simulate failure if requested (for /fail trigger)
+            if (simulateFailure) {
+                throw new Error('Simulated failure triggered by /fail');
+            }
+
             const params = new URLSearchParams({
                 message: messageContent,
                 model: selectedModel,
@@ -345,6 +364,39 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
         if (textareaRef.current) {
             textareaRef.current.style.height = 'auto';
+        }
+
+        // Check for triggers first
+        const triggerResult = executeTrigger(messageContent, {
+            message: messageContent,
+            conversationId,
+            showToast,
+            clearMessages
+        });
+
+        if (triggerResult) {
+            // If trigger returns a response, show it as assistant message
+            if (triggerResult.response) {
+                const responseMessage: DisplayMessage = {
+                    id: Date.now(),
+                    role: "assistant",
+                    content: triggerResult.response,
+                    timestamp: new Date().toISOString(),
+                    status: 'sent'
+                };
+                setDisplayMessages(prev => [...prev, responseMessage]);
+            }
+
+            // If trigger handled and wants to prevent normal flow, return
+            if (triggerResult.preventDefault) {
+                return;
+            }
+
+            // If trigger wants to simulate failure
+            if (triggerResult.simulateFailure) {
+                await sendMessageInternal(messageContent, undefined, true);
+                return;
+            }
         }
 
         await sendMessageInternal(messageContent);

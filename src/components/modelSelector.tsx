@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useApi } from "../auth";
+import LoadingDots from "./LoadingDots.tsx";
 
 type ModelSelectorProps = {
     value: string;
@@ -94,7 +95,7 @@ const ModelSelector = ({ value, onChange, provider, disabled }: ModelSelectorPro
     if (loading) {
         return (
             <select className="model-selector" disabled>
-                <option>Loading models...</option>
+                <LoadingDots variant="secondary" size="small" message="Loading Models.."/>
             </select>
         );
     }

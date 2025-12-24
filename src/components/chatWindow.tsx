@@ -3,6 +3,7 @@ import ReactMarkdown, {type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useApi } from "../auth";
 import { useAuth } from "../auth";
+import { useToast } from "./Toast";
 import type { Message } from "../types/conversation";
 import "../styles/chatWindow.css";
 import ModelSelector from "./modelSelector";
@@ -52,6 +53,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                                                    onConversationCreated}) => {
     const { user } = useAuth();
     const api = useApi();
+    const { showToast } = useToast();
 
     const [displayMessages, setDisplayMessages] = useState<DisplayMessage[]>([WELCOME_MESSAGE]);
     const [input, setInput] = useState("");
@@ -239,7 +241,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
                 console.error("Error sending edited message:", error);
                 setDisplayMessages(displayMessages);
-                alert("Failed to send edited message. Please try again.")
+                showToast('Failed to send edited message. Please try again.', 'error');
             }
         } finally {
             setIsTyping(false);
@@ -418,7 +420,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             } else {
                 console.error("Regenerate API error:", error);
                 setDisplayMessages(displayMessages)
-                alert("Failed to regenerate response. Please try again.");
+                showToast('Failed to regenerate response. Please try again.', 'error');
             }
 
         } finally {

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useApi } from '../auth/useApi';
 import { useAuth } from '../auth/AuthContext';
+import { useToast } from '../components/Toast';
+import { useConfirm } from '../components/ConfirmDialog';
 import ModelSelector from '../components/modelSelector';
 import '../styles/settings.css';
 import LoadingSpinner from "../components/loadingSpinner.tsx";
@@ -15,6 +17,8 @@ type Settings = {
 const SettingsPage: React.FC = () => {
     const { user } = useAuth();
     const api = useApi();
+    const { showToast } = useToast();
+    const { confirm } = useConfirm();
 
     const [settings, setSettings] = useState<Settings | null>(null);
     const [loading, setLoading] = useState(true);
@@ -110,16 +114,22 @@ const SettingsPage: React.FC = () => {
     };
 
     const handleReset = async () => {
-        if (!confirm('Are you sure you want to reset the conversation? This cannot be undone.')) {
-            return;
-        }
+        const confirmed = await confirm({
+            title: 'Reset Conversation',
+            message: 'Are you sure you want to reset the conversation? This cannot be undone.',
+            confirmText: 'Reset',
+            cancelText: 'Cancel',
+            variant: 'danger'
+        });
+
+        if (!confirmed) return;
 
         try {
             await api.post('/reset', {});
-            showMessage('success', 'Conversation reset successfully');
+            showToast('Conversation reset successfully', 'success');
         } catch (error) {
             console.error("Failed to reset conversation:", error);
-            showMessage('error', 'Failed to reset conversation');
+            showToast('Failed to reset conversation', 'error');
         }
     };
 

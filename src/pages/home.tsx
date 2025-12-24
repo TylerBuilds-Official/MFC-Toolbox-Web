@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useApi } from '../auth';
 import { useAuth } from '../auth';
+import { useToast } from '../components/Toast';
 import type { Conversation, Message, ConversationWithMessages, ConversationsResponse } from '../types/conversation';
 import '../styles/home.css';
 import '../styles/auth.css'
@@ -12,6 +13,7 @@ import WrenchIcon from "../assets/svg/toolbox/buttonWrench";
 const Home = () => {
     const { user } = useAuth();
     const api = useApi();
+    const { showToast } = useToast();
 
     // Toolbox state
     const [toolboxOpen, setToolboxOpen] = useState(false);
@@ -81,7 +83,7 @@ const Home = () => {
             // Revert on error
             await loadConversations();
 
-            alert("Failed to rename conversation. Please try again.");
+            showToast('Failed to rename conversation. Please try again.', 'error');
         }
     };
 

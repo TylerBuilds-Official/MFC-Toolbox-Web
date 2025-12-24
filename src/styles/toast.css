@@ -1,0 +1,198 @@
+/* ============================================
+   Toast Notifications
+   ============================================ */
+
+.toast-container {
+    position: fixed;
+    bottom: var(--space-6);
+    right: var(--space-6);
+    z-index: var(--z-toast);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    pointer-events: none;
+    max-width: 400px;
+    width: calc(100% - var(--space-8));
+}
+
+/* ============================================
+   Toast Item
+   ============================================ */
+
+.toast {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    pointer-events: auto;
+    position: relative;
+    overflow: hidden;
+    animation: toast-enter 0.2s ease-out forwards;
+}
+
+.toast-exit {
+    animation: toast-exit 0.2s ease-in forwards;
+}
+
+@keyframes toast-enter {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes toast-exit {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+/* ============================================
+   Toast Variants
+   ============================================ */
+
+.toast-success {
+    border-left: 3px solid var(--success);
+}
+
+.toast-success .toast-icon {
+    color: var(--success);
+}
+
+.toast-success .toast-progress-bar {
+    background-color: var(--success);
+}
+
+.toast-error {
+    border-left: 3px solid var(--error);
+}
+
+.toast-error .toast-icon {
+    color: var(--error);
+}
+
+.toast-error .toast-progress-bar {
+    background-color: var(--error);
+}
+
+.toast-warning {
+    border-left: 3px solid var(--warning);
+}
+
+.toast-warning .toast-icon {
+    color: var(--warning);
+}
+
+.toast-warning .toast-progress-bar {
+    background-color: var(--warning);
+}
+
+.toast-info {
+    border-left: 3px solid var(--accent-primary);
+}
+
+.toast-info .toast-icon {
+    color: var(--accent-primary);
+}
+
+.toast-info .toast-progress-bar {
+    background-color: var(--accent-primary);
+}
+
+/* ============================================
+   Toast Elements
+   ============================================ */
+
+.toast-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+}
+
+.toast-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.toast-message {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+
+.toast-close {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    transition: all var(--transition-fast);
+    margin: -2px -4px -2px 0;
+}
+
+.toast-close:hover {
+    background-color: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.toast-close:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+}
+
+/* ============================================
+   Progress Bar
+   ============================================ */
+
+.toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: var(--bg-hover);
+}
+
+.toast-progress-bar {
+    height: 100%;
+    transition: width 50ms linear;
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+
+@media (max-width: 480px) {
+    .toast-container {
+        bottom: var(--space-4);
+        right: var(--space-4);
+        left: var(--space-4);
+        width: auto;
+        max-width: none;
+    }
+
+    .toast {
+        padding: var(--space-3);
+    }
+}

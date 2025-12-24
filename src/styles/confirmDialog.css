@@ -1,0 +1,220 @@
+/* ============================================
+   Confirm Dialog
+   ============================================ */
+
+.confirm-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-4);
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    animation: backdrop-enter 0.15s ease-out forwards;
+}
+
+.confirm-backdrop-exit {
+    animation: backdrop-exit 0.15s ease-in forwards;
+}
+
+@keyframes backdrop-enter {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes backdrop-exit {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+/* ============================================
+   Dialog Box
+   ============================================ */
+
+.confirm-dialog {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+    width: 100%;
+    max-width: 400px;
+    padding: var(--space-6);
+    background-color: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-xl);
+    text-align: center;
+    animation: dialog-enter 0.15s ease-out forwards;
+}
+
+.confirm-dialog-exit {
+    animation: dialog-exit 0.15s ease-in forwards;
+}
+
+@keyframes dialog-enter {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@keyframes dialog-exit {
+    from {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: scale(0.95) translateY(-10px);
+    }
+}
+
+/* ============================================
+   Icon
+   ============================================ */
+
+.confirm-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-full);
+}
+
+.confirm-icon-default {
+    background-color: var(--accent-muted);
+    color: var(--accent-primary);
+}
+
+.confirm-icon-warning {
+    background-color: var(--warning-muted);
+    color: var(--warning);
+}
+
+.confirm-icon-danger {
+    background-color: var(--error-muted);
+    color: var(--error);
+}
+
+/* ============================================
+   Content
+   ============================================ */
+
+.confirm-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.confirm-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.confirm-message {
+    font-size: 0.9375rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* ============================================
+   Actions
+   ============================================ */
+
+.confirm-actions {
+    display: flex;
+    gap: var(--space-3);
+    width: 100%;
+    margin-top: var(--space-2);
+}
+
+.confirm-btn {
+    flex: 1;
+    padding: var(--space-3) var(--space-4);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+}
+
+.confirm-btn-cancel {
+    background-color: var(--bg-hover);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-default);
+}
+
+.confirm-btn-cancel:hover {
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    border-color: var(--border-strong);
+}
+
+.confirm-btn-confirm {
+    color: white;
+    border: none;
+}
+
+.confirm-btn-default {
+    background-color: var(--accent-primary);
+}
+
+.confirm-btn-default:hover {
+    background-color: var(--accent-hover);
+}
+
+.confirm-btn-warning {
+    background-color: var(--warning);
+}
+
+.confirm-btn-warning:hover {
+    background-color: #d97706;
+}
+
+.confirm-btn-danger {
+    background-color: var(--error);
+}
+
+.confirm-btn-danger:hover {
+    background-color: #dc2626;
+}
+
+.confirm-btn:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
+}
+
+/* ============================================
+   Responsive
+   ============================================ */
+
+@media (max-width: 480px) {
+    .confirm-dialog {
+        padding: var(--space-5);
+    }
+
+    .confirm-actions {
+        flex-direction: column-reverse;
+    }
+
+    .confirm-btn {
+        width: 100%;
+    }
+}

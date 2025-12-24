@@ -11,6 +11,7 @@ import ToolboxErrorIcon from "../assets/svg/toolbox/toolboxError.tsx";
 import EmptyToolboxIcon from "../assets/svg/toolbox/emptyToolbox.tsx";
 import ToolExpandIcon from "../assets/svg/toolbox/toolExpand.tsx";
 import ParamSubmitIcon from "../assets/svg/toolbox/paramSubmit.tsx";
+import LoadingSpinner from "./loadingSpinner.tsx";
 
 // Interface for API response
 interface ToolsApiResponse {
@@ -136,7 +137,7 @@ const ToolboxSidebar = ({ isOpen, onClose, onToolSelect }: ToolboxSidebarProps) 
                     {loading && (
                         <div className="sidebar-loading">
                             <div className="loading-spinner"></div>
-                            <span>Loading tools...</span>
+                            <LoadingSpinner variant="secondary" message="Loading tools..." size='small' />
                         </div>
                     )}
 

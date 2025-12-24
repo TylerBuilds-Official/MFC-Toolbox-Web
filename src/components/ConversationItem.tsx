@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { Conversation } from "../types/conversation.ts";
+import { useConfirm } from './ConfirmDialog';
 import '../styles/conversationSidebar.css';
 
 interface ConversationItemProps {
@@ -17,6 +18,7 @@ const ConversationItem = ({
                               onDelete,
                               onRename
                           }: ConversationItemProps) => {
+    const { confirm } = useConfirm();
     const [isEditing, setIsEditing] = useState(false);
     const [editedTitle, setEditedTitle] = useState(conversation.title);
     const inputRef = useRef<HTMLInputElement>(null);
@@ -52,9 +54,17 @@ const ConversationItem = ({
         return preview;
     };
 
-    const handleDeleteClick = (e: React.MouseEvent) => {
+    const handleDeleteClick = async (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (confirm("Are you sure you want to delete this conversation?")) {
+        const confirmed = await confirm({
+            title: 'Delete Conversation',
+            message: 'Are you sure you want to delete this conversation? This cannot be undone.',
+            confirmText: 'Delete',
+            cancelText: 'Cancel',
+            variant: 'danger'
+        });
+
+        if (confirmed) {
             onDelete();
         }
     };

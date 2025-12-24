@@ -9,7 +9,7 @@ import ModelSelector from "./modelSelector";
 import CodeBlock from "./CodeBlock";
 import MessageCopyButton from "./MessageCopyButton";
 import RegenResponseButton from "./RegenResponseButton.tsx";
-import LoadingSpinner from "./loading.tsx";
+import LoadingSpinner from "./loadingSpinner.tsx";
 
 
 type DisplayMessage = {

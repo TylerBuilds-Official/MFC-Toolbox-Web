@@ -3,7 +3,7 @@ import { useApi } from '../auth/useApi';
 import { useAuth } from '../auth/AuthContext';
 import ModelSelector from '../components/modelSelector';
 import '../styles/settings.css';
-import LoadingSpinner from "../components/loading.tsx";
+import LoadingSpinner from "../components/loadingSpinner.tsx";
 
 type Settings = {
     provider: string;

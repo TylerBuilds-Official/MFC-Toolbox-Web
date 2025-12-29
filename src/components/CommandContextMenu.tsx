@@ -305,7 +305,7 @@ const CommandContextMenu: React.FC<CommandContextMenuProps> = ({
                                     {param.required && <span className="param-required">*</span>}
                                 </label>
                                 <input
-                                    ref={el => paramInputRefs.current[param.name] = el}
+                                    ref={el => { paramInputRefs.current[param.name] = el; }}
                                     id={`param-${param.name}`}
                                     type={param.type === 'number' ? 'number' : 'text'}
                                     placeholder={param.description || `Enter ${param.name}`}

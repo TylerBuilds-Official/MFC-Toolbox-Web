@@ -12,6 +12,11 @@ type Settings = {
     default_model: string;
     auto_save_conversations: boolean;
     dark_mode: boolean;
+    // Streaming & Reasoning
+    enable_streaming: boolean;
+    enable_extended_thinking: boolean;
+    openai_reasoning_effort: string;
+    anthropic_thinking_budget: number;
 };
 
 const SettingsPage: React.FC = () => {
@@ -53,7 +58,6 @@ const SettingsPage: React.FC = () => {
 
         setSaving(true);
         try {
-            // Use the dedicated provider endpoint with query params
             const result = await api.post<{ status: string; provider: string; default_model: string }>(
                 `/settings/provider?provider=${encodeURIComponent(newProvider)}`
             );
@@ -76,7 +80,6 @@ const SettingsPage: React.FC = () => {
 
         setSaving(true);
         try {
-            // Use the dedicated provider endpoint with default_model param
             const result = await api.post<{ status: string; provider: string; default_model: string }>(
                 `/settings/provider?provider=${encodeURIComponent(settings.provider)}&default_model=${encodeURIComponent(newModel)}`
             );
@@ -93,7 +96,47 @@ const SettingsPage: React.FC = () => {
         }
     };
 
-    const handleToggleChange = async (key: 'auto_save_conversations' | 'dark_mode', value: boolean) => {
+    const handleToggleChange = async (key: keyof Settings, value: boolean) => {
+        if (!settings) return;
+
+        setSaving(true);
+        try {
+            const updates = { [key]: value };
+            await api.post('/settings', updates);
+            setSettings({
+                ...settings,
+                [key]: value
+            });
+            showMessage('success', 'Settings updated');
+        } catch (error) {
+            console.error("Failed to update settings:", error);
+            showMessage('error', 'Failed to update settings');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleSelectChange = async (key: keyof Settings, value: string) => {
+        if (!settings) return;
+
+        setSaving(true);
+        try {
+            const updates = { [key]: value };
+            await api.post('/settings', updates);
+            setSettings({
+                ...settings,
+                [key]: value
+            });
+            showMessage('success', 'Settings updated');
+        } catch (error) {
+            console.error("Failed to update settings:", error);
+            showMessage('error', 'Failed to update settings');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleNumberChange = async (key: keyof Settings, value: number) => {
         if (!settings) return;
 
         setSaving(true);
@@ -208,6 +251,130 @@ const SettingsPage: React.FC = () => {
                 </div>
             </div>
 
+            {/* Response Behavior Section */}
+            <div className="settings-section">
+                <h2 className="settings-section-title">Response Behavior</h2>
+
+                <div className="settings-card">
+                    <div className="settings-card-header">
+                        <div className="settings-card-info">
+                            <h3 className="settings-card-title">Enable Streaming</h3>
+                            <p className="settings-card-description">
+                                Stream responses token-by-token for a more interactive experience.
+                            </p>
+                        </div>
+                        <label className="settings-toggle">
+                            <input
+                                type="checkbox"
+                                checked={settings.enable_streaming}
+                                onChange={(e) => handleToggleChange('enable_streaming', e.target.checked)}
+                                disabled={saving}
+                            />
+                            <span className="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div className="settings-card">
+                    <div className="settings-card-header">
+                        <div className="settings-card-info">
+                            <h3 className="settings-card-title">Enable Extended Thinking</h3>
+                            <p className="settings-card-description">
+                                Show the model's reasoning process before responses. Available for Claude models with extended thinking capability.
+                            </p>
+                        </div>
+                        <label className="settings-toggle">
+                            <input
+                                type="checkbox"
+                                checked={settings.enable_extended_thinking}
+                                onChange={(e) => handleToggleChange('enable_extended_thinking', e.target.checked)}
+                                disabled={saving}
+                            />
+                            <span className="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            {/* Advanced Reasoning Section */}
+            <div className="settings-section">
+                <h2 className="settings-section-title">Advanced Reasoning</h2>
+
+                <div className="settings-card">
+                    <div className="settings-card-header">
+                        <div className="settings-card-info">
+                            <h3 className="settings-card-title">OpenAI Reasoning Effort</h3>
+                            <p className="settings-card-description">
+                                Controls how much effort OpenAI reasoning models (o1, o3) spend thinking. Higher effort may produce better results but takes longer.
+                            </p>
+                        </div>
+                        <span className="settings-badge settings-badge-openai">OpenAI</span>
+                    </div>
+
+                    <div className="settings-input-group">
+                        <label className="settings-label">Effort Level</label>
+                        <select
+                            className="settings-input settings-select"
+                            value={settings.openai_reasoning_effort}
+                            onChange={(e) => handleSelectChange('openai_reasoning_effort', e.target.value)}
+                            disabled={saving}
+                        >
+                            <option value="low">Low - Faster responses</option>
+                            <option value="medium">Medium - Balanced (Default)</option>
+                            <option value="high">High - More thorough</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div className="settings-card">
+                    <div className="settings-card-header">
+                        <div className="settings-card-info">
+                            <h3 className="settings-card-title">Anthropic Thinking Budget</h3>
+                            <p className="settings-card-description">
+                                Maximum tokens Claude can use for extended thinking. Higher values allow deeper reasoning but increase response time and cost.
+                            </p>
+                        </div>
+                        <span className="settings-badge settings-badge-anthropic">Anthropic</span>
+                    </div>
+
+                    <div className="settings-input-group">
+                        <label className="settings-label">
+                            Token Budget: <strong>{settings.anthropic_thinking_budget.toLocaleString()}</strong>
+                        </label>
+                        <div className="settings-range-container">
+                            <input
+                                type="range"
+                                className="settings-range"
+                                min="1024"
+                                max="32000"
+                                step="1024"
+                                value={settings.anthropic_thinking_budget}
+                                onChange={(e) => {
+                                    const value = parseInt(e.target.value);
+                                    setSettings({ ...settings, anthropic_thinking_budget: value });
+                                }}
+                                onMouseUp={(e) => {
+                                    const value = parseInt((e.target as HTMLInputElement).value);
+                                    handleNumberChange('anthropic_thinking_budget', value);
+                                }}
+                                onTouchEnd={(e) => {
+                                    const value = parseInt((e.target as HTMLInputElement).value);
+                                    handleNumberChange('anthropic_thinking_budget', value);
+                                }}
+                                disabled={saving}
+                            />
+                            <div className="settings-range-labels">
+                                <span>1K</span>
+                                <span>8K</span>
+                                <span>16K</span>
+                                <span>24K</span>
+                                <span>32K</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             {/* Preferences Section */}
             <div className="settings-section">
                 <h2 className="settings-section-title">Preferences</h2>
@@ -258,7 +425,7 @@ const SettingsPage: React.FC = () => {
                         <div className="account-info">
                             <p><strong>Email:</strong> {user.email}</p>
                             <p><strong>Display Name:</strong> {user.display_name}</p>
-                            <p><strong>Role:</strong> {user.role}</p>
+                            <p><strong>Role:</strong> <span className="settings-role-badge">{user.role}</span></p>
                         </div>
                     </div>
                 </div>

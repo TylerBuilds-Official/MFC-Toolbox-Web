@@ -27,7 +27,7 @@ type DisplayMessage = {
     timestamp: string;
     status?: MessageStatus;
     error?: string;
-    thinking?: string;  // Thinking content for this message
+    thinking?: string;
 };
 
 type ChatWindowProps = {
@@ -83,7 +83,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     const { showToast } = useToast();
 
 
+    // =========================================================================
     // State
+    // =========================================================================
 
     const [displayMessages, setDisplayMessages] = useState<DisplayMessage[]>([WELCOME_MESSAGE]);
     const [input, setInput] = useState("");
@@ -105,92 +107,46 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     const [isThinkingActive, setIsThinkingActive] = useState<boolean>(false);
 
 
+    // =========================================================================
     // Refs
+    // =========================================================================
 
+    const thinkingContentRef = useRef<string>("");
+    const streamingContentRef = useRef<string>("");
     const abortControllerRef = useRef<AbortController | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const sendMessageRef = useRef<(content: string, existingId?: number, simFail?: boolean, skipUser?: boolean) => Promise<void>>(null!);
 
 
-    // Effects
+    // =========================================================================
+    // Helper Functions (defined before effects that use them)
+    // =========================================================================
 
-    useEffect(() => {
-        setConversationId(activeConversationId);
-    }, [activeConversationId]);
-
-
-    useEffect(() => {
-        if (initialMessages.length > 0) {
-            const converted: DisplayMessage[] = initialMessages.map(msg => ({
-                id: msg.id,
-                role: msg.role,
-                content: msg.content,
-                timestamp: msg.created_at,
-                status: 'sent' as MessageStatus
-            }));
-            setDisplayMessages(converted);
-        } else if (activeConversationId === null) {
-            setDisplayMessages([{
-                ...WELCOME_MESSAGE,
-                id: Date.now(),
-                timestamp: new Date().toISOString()
-            }]);
-        }
-    }, [initialMessages, activeConversationId]);
-
-
-    useEffect(() => {
-        scrollToBottom();
-    }, [displayMessages, isTyping, streamingContent]);
-
-
-    useEffect(() => {
-        if (user) {
-            loadDefaultModel();
-        }
-    }, [user]);
-
-
-    useEffect(() => {
-        if (externalPrompt && !isTyping) {
-            sendMessageInternal(externalPrompt);
-            onPromptConsumed?.();
-        }
-    }, [externalPrompt]);
-
-
-    // Helpers
-
-    const inferProviderFromModel = (model: string): string => {
+    const inferProviderFromModel = useCallback((model: string): string => {
         if (model.startsWith("claude")) return "anthropic";
         if (model.startsWith("gpt")) return "openai";
         return currentProvider;
-    };
+    }, [currentProvider]);
 
-
-    const scrollToBottom = () => {
+    const scrollToBottom = useCallback(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
+    }, []);
 
-
-    const formatTime = (timestamp: string) => {
+    const formatTime = useCallback((timestamp: string) => {
         return new Date(timestamp).toLocaleTimeString([], {
             hour: '2-digit',
             minute: '2-digit'
         });
-    };
+    }, []);
 
-
-    const autoResizeTextarea = () => {
+    const autoResizeTextarea = useCallback(() => {
         const textarea = textareaRef.current;
         if (textarea) {
             textarea.style.height = 'auto';
             textarea.style.height = `${Math.min(textarea.scrollHeight, 120)}px`;
         }
-    };
-
-
-    // Update message status helper
+    }, []);
 
     const updateMessageStatus = useCallback((messageId: number, status: MessageStatus, error?: string) => {
         setDisplayMessages(prev => prev.map(msg =>
@@ -200,9 +156,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         ));
     }, []);
 
-
-    // Update message content helper (for streaming)
-
     const updateMessageContent = useCallback((messageId: number, content: string, thinking?: string) => {
         setDisplayMessages(prev => prev.map(msg =>
             msg.id === messageId
@@ -210,9 +163,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                 : msg
         ));
     }, []);
-
-
-    // Clear messages helper (for triggers)
 
     const clearMessages = useCallback(() => {
         setDisplayMessages([{
@@ -224,10 +174,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         onConversationCreated(-1);
     }, [onConversationCreated]);
 
-
-    // API Calls
-
-    const loadDefaultModel = async () => {
+    const loadDefaultModel = useCallback(async () => {
         try {
             const providerInfo = await api.get<{ provider: string; default_model: string; }>('/settings');
             setSelectedModel(providerInfo.default_model);
@@ -238,21 +185,21 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             setSelectedModel("gpt-4o");
             setCurrentProvider("openai");
         }
-    };
+    }, [api]);
 
-
-    // Message sending with streaming support
-
-    const sendMessageInternal = async (messageContent: string, existingMessageId?: number, simulateFailure?: boolean) => {
+    const sendMessageInternal = useCallback(async (
+        messageContent: string, 
+        existingMessageId?: number, 
+        simulateFailure?: boolean,
+        skipUserMessage?: boolean
+    ) => {
         const timestamp = Date.now();
         const userMessageId = existingMessageId || timestamp;
         const assistantMessageId = timestamp + 1;
 
-        // If retrying, update existing message status
         if (existingMessageId) {
             updateMessageStatus(existingMessageId, 'sending', undefined);
-        } else {
-            // Add user message
+        } else if (!skipUserMessage) {
             const userMessage: DisplayMessage = {
                 id: userMessageId,
                 role: "user",
@@ -263,7 +210,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             setDisplayMessages(prev => [...prev, userMessage]);
         }
 
-        // Add placeholder assistant message
         const assistantMessage: DisplayMessage = {
             id: assistantMessageId,
             role: "assistant",
@@ -273,15 +219,16 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         };
         setDisplayMessages(prev => [...prev, assistantMessage]);
 
-        // Reset streaming state
         setIsTyping(true);
         setIsStreaming(true);
         setStreamingMessageId(assistantMessageId);
         setStreamingContent("");
         setThinkingContent("");
         setIsThinkingActive(false);
+        
+        thinkingContentRef.current = "";
+        streamingContentRef.current = "";
 
-        // Simulate failure if requested (for /fail trigger)
         if (simulateFailure) {
             setDisplayMessages(prev => prev.filter(m => m.id !== assistantMessageId));
             updateMessageStatus(userMessageId, 'failed', 'Simulated failure triggered by /fail');
@@ -292,7 +239,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         }
 
         try {
-            // Use streaming API
             const abortController = await api.streamChat(
                 messageContent,
                 selectedModel,
@@ -309,73 +255,85 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                         setIsThinkingActive(true);
                     },
                     onThinking: (text) => {
-                        setThinkingContent(prev => prev + text);
+                        thinkingContentRef.current += text;
+                        setThinkingContent(thinkingContentRef.current);
                     },
                     onThinkingEnd: () => {
                         setIsThinkingActive(false);
                     },
                     onContent: (text) => {
-                        setStreamingContent(prev => {
-                            const newContent = prev + text;
-                            // Update the message in real-time
-                            updateMessageContent(assistantMessageId, newContent, thinkingContent);
-                            return newContent;
-                        });
+                        streamingContentRef.current += text;
+                        setStreamingContent(streamingContentRef.current);
+                        updateMessageContent(assistantMessageId, streamingContentRef.current, thinkingContentRef.current);
                     },
                     onToolStart: (name) => {
                         console.log(`[ChatWindow] Tool started: ${name}`);
-                        // Optionally show tool execution in UI
                     },
                     onToolEnd: (name, result) => {
                         console.log(`[ChatWindow] Tool ended: ${name}`, result);
                     },
-                    onStreamEnd: (finalConversationId, title) => {
-                        // Mark user message as sent
-                        updateMessageStatus(userMessageId, 'sent');
+                    onStreamEnd: (finalConversationId, _title) => {
+                        const finalContent = streamingContentRef.current;
+                        const finalThinking = thinkingContentRef.current;
                         
-                        // Finalize assistant message
+                        if (!skipUserMessage) {
+                            updateMessageStatus(userMessageId, 'sent');
+                        }
+                        
                         setDisplayMessages(prev => prev.map(msg => 
                             msg.id === assistantMessageId
-                                ? { ...msg, status: 'sent' as MessageStatus, thinking: thinkingContent || undefined }
+                                ? { 
+                                    ...msg, 
+                                    status: 'sent' as MessageStatus, 
+                                    content: finalContent || msg.content,
+                                    thinking: finalThinking || undefined 
+                                }
                                 : msg
                         ));
                         
-                        // Update conversation if needed
                         if (finalConversationId !== conversationId) {
                             setConversationId(finalConversationId);
                             onConversationCreated(finalConversationId);
                         }
 
-                        // Clean up
                         setIsTyping(false);
                         setIsStreaming(false);
                         setStreamingMessageId(null);
                         setStreamingContent("");
                         setThinkingContent("");
+                        thinkingContentRef.current = "";
+                        streamingContentRef.current = "";
                         abortControllerRef.current = null;
                     },
                     onError: (errorMessage) => {
                         console.error("[ChatWindow] Stream error:", errorMessage);
                         
-                        // Remove placeholder assistant message
                         setDisplayMessages(prev => prev.filter(m => m.id !== assistantMessageId));
                         
-                        // Mark user message as failed
-                        updateMessageStatus(userMessageId, 'failed', errorMessage);
-                        
-                        showToast('Failed to send message', 'error', {
-                            duration: 6000,
-                            action: {
-                                label: 'Retry',
-                                onClick: () => retryMessage(userMessageId, messageContent)
-                            }
-                        });
+                        if (!skipUserMessage) {
+                            updateMessageStatus(userMessageId, 'failed', errorMessage);
+                            
+                            showToast('Failed to send message', 'error', {
+                                duration: 6000,
+                                action: {
+                                    label: 'Retry',
+                                    onClick: () => {
+                                        setDisplayMessages(prev => prev.filter(m => m.id !== userMessageId));
+                                        sendMessageRef.current(messageContent);
+                                    }
+                                }
+                            });
+                        } else {
+                            showToast('Failed to regenerate response', 'error');
+                        }
                         
                         setIsTyping(false);
                         setIsStreaming(false);
                         setStreamingMessageId(null);
                         setStreamingContent("");
                         setThinkingContent("");
+                        thinkingContentRef.current = "";
+                        streamingContentRef.current = "";
                         abortControllerRef.current = null;
                     }
                 }
@@ -386,44 +344,92 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         } catch (error) {
             console.error("[ChatWindow] Failed to start stream:", error);
             
-            // Remove placeholder assistant message
             setDisplayMessages(prev => prev.filter(m => m.id !== assistantMessageId));
             
-            // Mark user message as failed
-            updateMessageStatus(userMessageId, 'failed', 'Failed to connect');
+            if (!skipUserMessage) {
+                updateMessageStatus(userMessageId, 'failed', 'Failed to connect');
+            } else {
+                showToast('Failed to regenerate response', 'error');
+            }
             
             setIsTyping(false);
             setIsStreaming(false);
             setStreamingMessageId(null);
             abortControllerRef.current = null;
         }
-    };
+    }, [api, selectedModel, currentProvider, conversationId, onConversationCreated, updateMessageStatus, updateMessageContent, showToast]);
 
 
-    // Retry handler
+    // =========================================================================
+    // Effects (now functions are defined above)
+    // =========================================================================
+
+    // Keep sendMessageRef in sync
+    useEffect(() => {
+        sendMessageRef.current = sendMessageInternal;
+    }, [sendMessageInternal]);
+
+    useEffect(() => {
+        setConversationId(activeConversationId);
+    }, [activeConversationId]);
+
+    useEffect(() => {
+        if (initialMessages.length > 0) {
+            const converted: DisplayMessage[] = initialMessages.map(msg => ({
+                id: msg.id,
+                role: msg.role,
+                content: msg.content,
+                timestamp: msg.created_at,
+                status: 'sent' as MessageStatus,
+                thinking: msg.thinking
+            }));
+            setDisplayMessages(converted);
+        } else if (activeConversationId === null) {
+            setDisplayMessages([{
+                ...WELCOME_MESSAGE,
+                id: Date.now(),
+                timestamp: new Date().toISOString()
+            }]);
+        }
+    }, [initialMessages, activeConversationId]);
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [displayMessages, isTyping, streamingContent, scrollToBottom]);
+
+    useEffect(() => {
+        if (user) {
+            loadDefaultModel();
+        }
+    }, [user, loadDefaultModel]);
+
+    useEffect(() => {
+        if (externalPrompt && !isTyping) {
+            sendMessageInternal(externalPrompt);
+            onPromptConsumed?.();
+        }
+    }, [externalPrompt, isTyping, sendMessageInternal, onPromptConsumed]);
+
+
+    // =========================================================================
+    // Event Handlers
+    // =========================================================================
 
     const retryMessage = useCallback((messageId: number, content: string) => {
-        // Remove the failed message first
         setDisplayMessages(prev => prev.filter(m => m.id !== messageId));
-        // Then send again
-        sendMessageInternal(content);
-    }, [selectedModel, currentProvider, conversationId]);
+        sendMessageRef.current(content);
+    }, []);
 
-
-    // Event handlers
-
-    const handleModelChange = (newModel: string) => {
+    const handleModelChange = useCallback((newModel: string) => {
         setSelectedModel(newModel);
         setCurrentProvider(inferProviderFromModel(newModel));
-    };
+    }, [inferProviderFromModel]);
 
-
-    const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const value = e.target.value;
         setInput(value);
         autoResizeTextarea();
 
-        // Check for command trigger
         if (value.startsWith('/')) {
             setShowCommandMenu(true);
             setCommandSearch(value.slice(1));
@@ -431,38 +437,16 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             setShowCommandMenu(false);
             setCommandSearch('');
         }
-    };
+    }, [autoResizeTextarea]);
 
-
-    const handleKeyDown = (e: React.KeyboardEvent) => {
-        // Don't handle Enter if command menu is open (let it handle selection)
-        if (showCommandMenu && (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'Enter' || e.key === 'Tab')) {
-            return; // Let CommandContextMenu handle these
-        }
-
-        if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            sendMessage();
-        }
-
-        if (e.key === "Escape" && showCommandMenu) {
-            setShowCommandMenu(false);
-        }
-    };
-
-
-    // Command menu selection handler
-
-    const handleCommandSelect = (trigger: Trigger, params?: Record<string, string>) => {
+    const handleCommandSelect = useCallback(async (trigger: Trigger, params?: Record<string, string>) => {
         setShowCommandMenu(false);
         setCommandSearch('');
         setInput('');
 
-        // Build the command message
         const commandMessage = `/${trigger.command}`;
 
-        // If params provided, add them to context
-        const triggerResult = executeTrigger(commandMessage, {
+        const triggerResult = await executeTrigger(commandMessage, {
             message: commandMessage,
             conversationId,
             showToast,
@@ -471,7 +455,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         });
 
         if (triggerResult) {
-            // If trigger returns a response, show it as assistant message
             if (triggerResult.response) {
                 const responseMessage: DisplayMessage = {
                     id: Date.now(),
@@ -483,15 +466,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                 setDisplayMessages(prev => [...prev, responseMessage]);
             }
 
-            // If trigger wants to simulate failure
             if (triggerResult.simulateFailure) {
                 sendMessageInternal(commandMessage, undefined, true);
             }
         }
-    };
+    }, [conversationId, showToast, clearMessages, sendMessageInternal]);
 
-
-    const sendMessage = async () => {
+    const handleSendMessage = useCallback(async () => {
         if (!input.trim() || !selectedModel) return;
 
         const messageContent = input.trim();
@@ -501,8 +482,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             textareaRef.current.style.height = 'auto';
         }
 
-        // Check for triggers first
-        const triggerResult = executeTrigger(messageContent, {
+        const triggerResult = await executeTrigger(messageContent, {
             message: messageContent,
             conversationId,
             showToast,
@@ -510,7 +490,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         });
 
         if (triggerResult) {
-            // If trigger returns a response, show it as assistant message
             if (triggerResult.response) {
                 const responseMessage: DisplayMessage = {
                     id: Date.now(),
@@ -522,12 +501,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                 setDisplayMessages(prev => [...prev, responseMessage]);
             }
 
-            // If trigger handled and wants to prevent normal flow, return
             if (triggerResult.preventDefault) {
                 return;
             }
 
-            // If trigger wants to simulate failure
             if (triggerResult.simulateFailure) {
                 await sendMessageInternal(messageContent, undefined, true);
                 return;
@@ -535,24 +512,41 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         }
 
         await sendMessageInternal(messageContent);
-    };
+    }, [input, selectedModel, conversationId, showToast, clearMessages, sendMessageInternal]);
 
+    // Wire up handleKeyDown to use handleSendMessage
+    const onKeyDown = useCallback((e: React.KeyboardEvent) => {
+        if (showCommandMenu && (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'Enter' || e.key === 'Tab')) {
+            return;
+        }
 
-    const stopGeneration = () => {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            handleSendMessage();
+        }
+
+        if (e.key === "Escape" && showCommandMenu) {
+            setShowCommandMenu(false);
+        }
+    }, [showCommandMenu, handleSendMessage]);
+
+    const stopGeneration = useCallback(() => {
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
             abortControllerRef.current = null;
         }
         
-        // Finalize any in-progress message
+        const finalContent = streamingContentRef.current;
+        const finalThinking = thinkingContentRef.current;
+        
         if (streamingMessageId) {
             setDisplayMessages(prev => prev.map(msg =>
                 msg.id === streamingMessageId
                     ? { 
                         ...msg, 
-                        content: streamingContent || "_Generation cancelled by user._",
+                        content: finalContent || "_Generation cancelled by user._",
                         status: 'sent' as MessageStatus,
-                        thinking: thinkingContent || undefined
+                        thinking: finalThinking || undefined
                     }
                     : msg
             ));
@@ -565,10 +559,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         setStreamingContent("");
         setThinkingContent("");
         setIsThinkingActive(false);
-    };
+        
+        thinkingContentRef.current = "";
+        streamingContentRef.current = "";
+    }, [streamingMessageId]);
 
-
-    const handleNewChat = () => {
+    const handleNewChat = useCallback(() => {
         setConversationId(null);
         setDisplayMessages([{
             ...WELCOME_MESSAGE,
@@ -576,34 +572,20 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             timestamp: new Date().toISOString()
         }]);
         onConversationCreated(-1);
-    };
+    }, [onConversationCreated]);
 
-
-    // Edit message handlers
-
-    const startEditingMessage = (message_id: number, currentContent: string) => {
+    const startEditingMessage = useCallback((message_id: number, currentContent: string) => {
         setEditingMessageId(message_id);
         setEditedContent(currentContent);
-    };
+    }, []);
 
-
-    const cancelEditingMessage = () => {
+    const cancelEditingMessage = useCallback(() => {
         setEditingMessageId(null);
         setEditedContent("");
-    };
+    }, []);
 
-
-    const handleEditKeyDown = (e: React.KeyboardEvent, messageIndex: number) => {
-        if (e.key === "Enter" && e.ctrlKey && !e.shiftKey) {
-            e.preventDefault();
-            saveEditedMessage(messageIndex);
-        } else if (e.key === "Escape") {
-            cancelEditingMessage();
-        }
-    };
-
-
-    const saveEditedMessage = async (messageIndex: number) => {
+    // saveEditedMessage must be defined BEFORE handleEditKeyDown since it references it
+    const saveEditedMessage = useCallback(async (messageIndex: number) => {
         if (!editedContent.trim()) return;
 
         const editedMessage = displayMessages[messageIndex];
@@ -615,14 +597,19 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         setEditedContent("");
         setDisplayMessages(messageBeforeEdit);
 
-        // Send as new message
         await sendMessageInternal(editedContent.trim());
-    };
+    }, [editedContent, displayMessages, sendMessageInternal]);
 
+    const handleEditKeyDown = useCallback((e: React.KeyboardEvent, messageIndex: number) => {
+        if (e.key === "Enter" && e.ctrlKey && !e.shiftKey) {
+            e.preventDefault();
+            saveEditedMessage(messageIndex);
+        } else if (e.key === "Escape") {
+            cancelEditingMessage();
+        }
+    }, [saveEditedMessage, cancelEditingMessage]);
 
-    // Regenerate response
-
-    const regenerateResponse = async (messageIndex: number) => {
+    const regenerateResponse = useCallback(async (messageIndex: number) => {
         const previousUserMessage = displayMessages
             .slice(0, messageIndex)
             .reverse()
@@ -635,18 +622,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
         setIsRegenerating(true);
         
-        // Remove the old assistant message
         const messagesBeforeRegenerate = displayMessages.slice(0, messageIndex);
         setDisplayMessages(messagesBeforeRegenerate);
 
-        // Send the original user message again
-        await sendMessageInternal(previousUserMessage.content);
+        await sendMessageInternal(previousUserMessage.content, undefined, false, true);
         
         setIsRegenerating(false);
-    };
+    }, [displayMessages, sendMessageInternal]);
 
 
-    // Markdown components
+    // =========================================================================
+    // Markdown Components
+    // =========================================================================
 
     const markdownComponents: Components = {
         code({ className, children, ...props }) {
@@ -678,7 +665,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     };
 
 
-    // Loading state
+    // =========================================================================
+    // Render
+    // =========================================================================
 
     if (!selectedModel) {
         return (
@@ -689,9 +678,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             </div>
         );
     }
-
-
-    // Render
 
     return (
         <div className="chat-window-container">
@@ -880,7 +866,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                             className="chat-input"
                             value={input}
                             onChange={handleInputChange}
-                            onKeyDown={handleKeyDown}
+                            onKeyDown={onKeyDown}
                             placeholder="Type your message..."
                             disabled={isTyping}
                             rows={1}
@@ -906,7 +892,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                             ) : (
                                 <button
                                     className="send-btn"
-                                    onClick={sendMessage}
+                                    onClick={handleSendMessage}
                                     disabled={!input.trim() || isTyping}
                                     aria-label="Send message"
                                 >

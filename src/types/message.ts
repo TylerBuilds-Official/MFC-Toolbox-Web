@@ -1,5 +1,4 @@
 
-
 export interface Message {
     id: number;
     conversation_id: number;
@@ -9,4 +8,5 @@ export interface Message {
     provider: string;
     tokens_used: number | null;
     created_at: string;
+    thinking?: string;  // Extended thinking content (Claude only)
 }

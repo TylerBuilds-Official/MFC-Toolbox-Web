@@ -4,6 +4,15 @@ export type ToastVariant = 'success' | 'error' | 'warning' | 'info';
 
 export type UserRole = 'pending' | 'user' | 'admin';
 
+export interface ToastAction {
+    label: string;
+    onClick: () => void;
+}
+
+export interface ToastOptions {
+    duration?: number;
+    action?: ToastAction;
+}
 
 export interface TriggerParameter {
     name: string;
@@ -18,7 +27,7 @@ export interface TriggerContext {
     args: string[];
     params?: Record<string, string>;
     conversationId: number | null;
-    showToast: (message: string, variant?: ToastVariant, options?: unknown) => void;
+    showToast: (message: string, variant?: ToastVariant, options?: ToastOptions | number) => void;
     clearMessages: () => void;
     getAllTriggers: () => Trigger[];
 }

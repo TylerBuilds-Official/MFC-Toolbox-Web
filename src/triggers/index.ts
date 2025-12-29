@@ -57,10 +57,10 @@ export function getAvailableTriggers(userRole?: UserRole, isDev?: boolean): Trig
 
 // Execute a trigger if message matches
 
-export function executeTrigger(
+export async function executeTrigger(
     message: string,
     ctx: Omit<TriggerContext, 'args' | 'getAllTriggers'>
-): TriggerResult | null {
+): Promise<TriggerResult | null> {
 
     if (!message.startsWith('/')) {
         return null;
@@ -90,7 +90,8 @@ export function executeTrigger(
         getAllTriggers
     };
 
-    return trigger.execute(fullContext);
+    // Handle both sync and async triggers
+    return await trigger.execute(fullContext);
 }
 
 

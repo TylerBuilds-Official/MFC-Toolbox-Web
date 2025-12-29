@@ -7,7 +7,7 @@ interface ThinkingBlockProps {
 }
 
 const ThinkingBlock: React.FC<ThinkingBlockProps> = ({ content, isStreaming = false }) => {
-    const [isExpanded, setIsExpanded] = useState(true);
+    const [isExpanded, setIsExpanded] = useState(false);  // Collapsed by default
 
     if (!content && !isStreaming) return null;
 

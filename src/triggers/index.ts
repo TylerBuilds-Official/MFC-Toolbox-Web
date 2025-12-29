@@ -1,4 +1,4 @@
-import type { Trigger, TriggerContext, TriggerResult } from './types';
+import type { Trigger, TriggerContext, TriggerResult, UserRole } from './types';
 import { failTrigger } from './fail';
 import { clearTrigger } from './clear';
 import { helpTrigger } from './help';
@@ -17,6 +17,41 @@ const triggers: Trigger[] = [
 
 export function getAllTriggers(): Trigger[] {
     return triggers;
+}
+
+
+// Get triggers available to a specific user role
+
+export function getAvailableTriggers(userRole?: UserRole, isDev?: boolean): Trigger[] {
+    const devMode = isDev ?? import.meta.env.DEV;
+
+    return triggers.filter(trigger => {
+        // Filter out dev-only triggers in production
+        if (trigger.devOnly && !devMode) {
+            return false;
+        }
+
+        // Filter by required role
+        if (trigger.requiredRole) {
+            if (!userRole) return false;
+
+            // Role hierarchy: admin > user > pending
+            const roleHierarchy: Record<UserRole, number> = {
+                'pending': 0,
+                'user': 1,
+                'admin': 2
+            };
+
+            const userLevel = roleHierarchy[userRole] ?? 0;
+            const requiredLevel = roleHierarchy[trigger.requiredRole] ?? 0;
+
+            if (userLevel < requiredLevel) {
+                return false;
+            }
+        }
+
+        return true;
+    });
 }
 
 
@@ -60,4 +95,4 @@ export function executeTrigger(
 
 
 // Export types
-export type { Trigger, TriggerContext, TriggerResult } from './types';
+export type { Trigger, TriggerContext, TriggerResult, TriggerParameter, UserRole } from './types';

@@ -2,10 +2,21 @@
 
 export type ToastVariant = 'success' | 'error' | 'warning' | 'info';
 
+export type UserRole = 'pending' | 'user' | 'admin';
+
+
+export interface TriggerParameter {
+    name: string;
+    description?: string;
+    required?: boolean;
+    type?: 'string' | 'number';
+}
+
 
 export interface TriggerContext {
     message: string;
     args: string[];
+    params?: Record<string, string>;
     conversationId: number | null;
     showToast: (message: string, variant?: ToastVariant, options?: unknown) => void;
     clearMessages: () => void;
@@ -25,5 +36,7 @@ export interface Trigger {
     command: string;
     description: string;
     devOnly?: boolean;
+    requiredRole?: UserRole;
+    parameters?: TriggerParameter[];
     execute: (ctx: TriggerContext) => Promise<TriggerResult> | TriggerResult;
 }

@@ -373,6 +373,7 @@
 }
 
 .chat-input-wrapper {
+  position: relative;
   display: flex;
   align-items: flex-end;
   gap: var(--space-3);

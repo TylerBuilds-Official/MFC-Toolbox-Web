@@ -4,7 +4,8 @@ import remarkGfm from "remark-gfm";
 import { useApi } from "../auth";
 import { useAuth } from "../auth";
 import { useToast } from "./Toast";
-import { executeTrigger } from "../triggers";
+import { executeTrigger, type Trigger } from "../triggers";
+import CommandContextMenu from "./CommandContextMenu";
 import type { Message } from "../types/conversation";
 import "../styles/chatWindow.css";
 import ModelSelector from "./modelSelector";
@@ -97,6 +98,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     const [editingMessageId, setEditingMessageId] = useState<number | null>(null);
     const [editedContent, setEditedContent] = useState<string>("");
     const [isStreaming, setIsStreaming] = useState<boolean>(false);
+    const [showCommandMenu, setShowCommandMenu] = useState<boolean>(false);
+    const [commandSearch, setCommandSearch] = useState<string>('');
 
 
     // Refs
@@ -343,15 +346,74 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
 
     const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-        setInput(e.target.value);
+        const value = e.target.value;
+        setInput(value);
         autoResizeTextarea();
+
+        // Check for command trigger
+        if (value.startsWith('/')) {
+            setShowCommandMenu(true);
+            setCommandSearch(value.slice(1));
+        } else {
+            setShowCommandMenu(false);
+            setCommandSearch('');
+        }
     };
 
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
+        // Don't handle Enter if command menu is open (let it handle selection)
+        if (showCommandMenu && (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'Enter' || e.key === 'Tab')) {
+            return; // Let CommandContextMenu handle these
+        }
+
         if (e.key === "Enter" && !e.shiftKey) {
             e.preventDefault();
             sendMessage();
+        }
+
+        if (e.key === "Escape" && showCommandMenu) {
+            setShowCommandMenu(false);
+        }
+    };
+
+
+    // Command menu selection handler
+
+    const handleCommandSelect = (trigger: Trigger, params?: Record<string, string>) => {
+        setShowCommandMenu(false);
+        setCommandSearch('');
+        setInput('');
+
+        // Build the command message
+        let commandMessage = `/${trigger.command}`;
+
+        // If params provided, add them to context
+        const triggerResult = executeTrigger(commandMessage, {
+            message: commandMessage,
+            conversationId,
+            showToast,
+            clearMessages,
+            params
+        });
+
+        if (triggerResult) {
+            // If trigger returns a response, show it as assistant message
+            if (triggerResult.response) {
+                const responseMessage: DisplayMessage = {
+                    id: Date.now(),
+                    role: "assistant",
+                    content: triggerResult.response,
+                    timestamp: new Date().toISOString(),
+                    status: 'sent'
+                };
+                setDisplayMessages(prev => [...prev, responseMessage]);
+            }
+
+            // If trigger wants to simulate failure
+            if (triggerResult.simulateFailure) {
+                sendMessageInternal(commandMessage, undefined, true);
+            }
         }
     };
 
@@ -815,6 +877,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                 {/* Input Area */}
                 <div className="chat-input-area">
                     <div className="chat-input-wrapper">
+                        {/* Command Context Menu */}
+                        <CommandContextMenu
+                            isOpen={showCommandMenu}
+                            searchQuery={commandSearch}
+                            onSelect={handleCommandSelect}
+                            onClose={() => setShowCommandMenu(false)}
+                        />
+
                         <textarea
                             ref={textareaRef}
                             className="chat-input"

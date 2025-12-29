@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { useMsal } from "@azure/msal-react";
 import { apiTokenRequest } from "./authConfig";
+import type { StreamEvent, StreamCallbacks } from "../types/streaming";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
@@ -126,6 +127,115 @@ export function useApi() {
     );
 
 
+    /**
+     * Stream chat response via SSE.
+     * Returns an AbortController that can be used to cancel the stream.
+     */
+    const streamChat = useCallback(
+        async (
+            message: string,
+            model: string,
+            provider: string,
+            conversationId: number | null,
+            callbacks: StreamCallbacks
+        ): Promise<AbortController> => {
+            const token = await getAccessToken();
+            
+            if (!token) {
+                callbacks.onError("Not authenticated. Please log in.");
+                return new AbortController();
+            }
+
+            const params = new URLSearchParams({ message, model, provider });
+            if (conversationId !== null) {
+                params.append("conversation_id", conversationId.toString());
+            }
+
+            const url = `${API_BASE_URL}/chat/stream?${params.toString()}`;
+            const abortController = new AbortController();
+
+            try {
+                const response = await fetch(url, {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        Accept: "text/event-stream",
+                    },
+                    signal: abortController.signal,
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    callbacks.onError(errorText || `Stream failed with status ${response.status}`);
+                    return abortController;
+                }
+
+                const reader = response.body?.getReader();
+                if (!reader) {
+                    callbacks.onError("Failed to get response stream");
+                    return abortController;
+                }
+
+                const decoder = new TextDecoder();
+                let buffer = "";
+
+                // Process stream
+                const processStream = async () => {
+                    try {
+                        while (true) {
+                            const { done, value } = await reader.read();
+                            
+                            if (done) {
+                                break;
+                            }
+
+                            buffer += decoder.decode(value, { stream: true });
+                            
+                            // Process complete SSE events (separated by double newline)
+                            const events = buffer.split("\n\n");
+                            buffer = events.pop() || ""; // Keep incomplete event in buffer
+
+                            for (const eventStr of events) {
+                                if (!eventStr.trim()) continue;
+                                
+                                // Parse SSE format: "data: {...}"
+                                const dataMatch = eventStr.match(/^data:\s*(.+)$/m);
+                                if (!dataMatch) continue;
+
+                                try {
+                                    const event: StreamEvent = JSON.parse(dataMatch[1]);
+                                    handleStreamEvent(event, callbacks);
+                                } catch (parseError) {
+                                    console.error("[streamChat] Failed to parse event:", dataMatch[1], parseError);
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        if (error instanceof Error && error.name === 'AbortError') {
+                            console.log("[streamChat] Stream aborted by user");
+                        } else {
+                            console.error("[streamChat] Stream error:", error);
+                            callbacks.onError(error instanceof Error ? error.message : "Stream error");
+                        }
+                    }
+                };
+
+                // Start processing (don't await - let it run in background)
+                processStream();
+
+            } catch (error) {
+                if (error instanceof Error && error.name === 'AbortError') {
+                    console.log("[streamChat] Request aborted");
+                } else {
+                    callbacks.onError(error instanceof Error ? error.message : "Connection error");
+                }
+            }
+
+            return abortController;
+        },
+        [getAccessToken]
+    );
+
 
     // Convenience methods for common HTTP verbs
     const get = useCallback(
@@ -176,10 +286,48 @@ export function useApi() {
     return {
         getAccessToken,
         fetchWithAuth,
+        streamChat,
         get,
         post,
         put,
         patch,
         delete: del,
     };
+}
+
+
+/**
+ * Route stream events to appropriate callbacks
+ */
+function handleStreamEvent(event: StreamEvent, callbacks: StreamCallbacks): void {
+    switch (event.type) {
+        case 'meta':
+            callbacks.onMeta(event.conversation_id);
+            break;
+        case 'thinking_start':
+            callbacks.onThinkingStart();
+            break;
+        case 'thinking':
+            callbacks.onThinking(event.text);
+            break;
+        case 'thinking_end':
+            callbacks.onThinkingEnd();
+            break;
+        case 'content':
+            callbacks.onContent(event.text);
+            break;
+        case 'tool_start':
+            callbacks.onToolStart(event.name);
+            break;
+        case 'tool_end':
+            callbacks.onToolEnd(event.name, event.result);
+            break;
+        case 'stream_end':
+            callbacks.onStreamEnd(event.conversation_id, event.title);
+            break;
+        case 'error':
+            callbacks.onError(event.message);
+            break;
+        // Ignore: content_start, content_end, done (internal events)
+    }
 }

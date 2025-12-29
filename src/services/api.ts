@@ -37,6 +37,11 @@ export interface Settings {
     anthropic_api_key: string | null;
     auto_save_conversations: boolean;
     dark_mode: boolean;
+    // Streaming & reasoning settings
+    enable_streaming: boolean;
+    enable_extended_thinking: boolean;
+    openai_reasoning_effort: 'low' | 'medium' | 'high';
+    anthropic_thinking_budget: number;
 }
 
 export interface ProviderInfo {

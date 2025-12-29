@@ -6,6 +6,7 @@ import { useAuth } from "../auth";
 import { useToast } from "./Toast";
 import { executeTrigger, type Trigger } from "../triggers";
 import CommandContextMenu from "./CommandContextMenu";
+import ThinkingBlock from "./ThinkingBlock";
 import type { Message } from "../types/conversation";
 import "../styles/chatWindow.css";
 import ModelSelector from "./modelSelector";
@@ -17,7 +18,7 @@ import LoadingSpinner from "./loadingSpinner.tsx";
 
 // Types
 
-type MessageStatus = 'sending' | 'sent' | 'failed';
+type MessageStatus = 'sending' | 'streaming' | 'sent' | 'failed';
 
 type DisplayMessage = {
     id: number;
@@ -26,6 +27,7 @@ type DisplayMessage = {
     timestamp: string;
     status?: MessageStatus;
     error?: string;
+    thinking?: string;  // Thinking content for this message
 };
 
 type ChatWindowProps = {
@@ -36,11 +38,6 @@ type ChatWindowProps = {
     onConversationCreated: (id: number) => void;
     onMessagesUpdated: (messages: Message[]) => void;
 };
-
-interface ChatResponse {
-    response: string;
-    conversation_id: number;
-}
 
 
 // Constants
@@ -100,6 +97,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     const [isStreaming, setIsStreaming] = useState<boolean>(false);
     const [showCommandMenu, setShowCommandMenu] = useState<boolean>(false);
     const [commandSearch, setCommandSearch] = useState<string>('');
+    
+    // Streaming state
+    const [streamingMessageId, setStreamingMessageId] = useState<number | null>(null);
+    const [streamingContent, setStreamingContent] = useState<string>("");
+    const [thinkingContent, setThinkingContent] = useState<string>("");
+    const [isThinkingActive, setIsThinkingActive] = useState<boolean>(false);
 
 
     // Refs
@@ -138,7 +141,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
     useEffect(() => {
         scrollToBottom();
-    }, [displayMessages, isTyping]);
+    }, [displayMessages, isTyping, streamingContent]);
 
 
     useEffect(() => {
@@ -198,6 +201,17 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     }, []);
 
 
+    // Update message content helper (for streaming)
+
+    const updateMessageContent = useCallback((messageId: number, content: string, thinking?: string) => {
+        setDisplayMessages(prev => prev.map(msg =>
+            msg.id === messageId
+                ? { ...msg, content, thinking: thinking || msg.thinking }
+                : msg
+        ));
+    }, []);
+
+
     // Clear messages helper (for triggers)
 
     const clearMessages = useCallback(() => {
@@ -227,19 +241,20 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     };
 
 
-    // Message sending with retry support
+    // Message sending with streaming support
 
     const sendMessageInternal = async (messageContent: string, existingMessageId?: number, simulateFailure?: boolean) => {
         const timestamp = Date.now();
-        const messageId = existingMessageId || timestamp;
+        const userMessageId = existingMessageId || timestamp;
+        const assistantMessageId = timestamp + 1;
 
         // If retrying, update existing message status
         if (existingMessageId) {
             updateMessageStatus(existingMessageId, 'sending', undefined);
         } else {
-            // New message
+            // Add user message
             const userMessage: DisplayMessage = {
-                id: messageId,
+                id: userMessageId,
                 role: "user",
                 content: messageContent,
                 timestamp: new Date(timestamp).toISOString(),
@@ -248,83 +263,138 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             setDisplayMessages(prev => [...prev, userMessage]);
         }
 
+        // Add placeholder assistant message
+        const assistantMessage: DisplayMessage = {
+            id: assistantMessageId,
+            role: "assistant",
+            content: "",
+            timestamp: new Date().toISOString(),
+            status: 'streaming'
+        };
+        setDisplayMessages(prev => [...prev, assistantMessage]);
+
+        // Reset streaming state
         setIsTyping(true);
         setIsStreaming(true);
-        abortControllerRef.current = new AbortController();
+        setStreamingMessageId(assistantMessageId);
+        setStreamingContent("");
+        setThinkingContent("");
+        setIsThinkingActive(false);
 
-        try {
-            // Simulate failure if requested (for /fail trigger)
-            if (simulateFailure) {
-                throw new Error('Simulated failure triggered by /fail');
-            }
-
-            const params = new URLSearchParams({
-                message: messageContent,
-                model: selectedModel,
-                provider: currentProvider,
-            });
-
-            if (conversationId !== null) {
-                params.append("conversation_id", conversationId.toString());
-            }
-
-            const response = await api.get<ChatResponse>(
-                `/chat?${params.toString()}`,
-                { signal: abortControllerRef.current.signal }
-            );
-
-            // Handle new conversation created
-            if (response.conversation_id && response.conversation_id !== conversationId) {
-                setConversationId(response.conversation_id);
-                onConversationCreated(response.conversation_id);
-            }
-
-            // Mark user message as sent
-            updateMessageStatus(messageId, 'sent');
-
-            // Add assistant response
-            const assistantMessage: DisplayMessage = {
-                id: Date.now(),
-                role: "assistant",
-                content: response.response,
-                timestamp: new Date().toISOString(),
-                status: 'sent'
-            };
-            setDisplayMessages(prev => [...prev, assistantMessage]);
-
-        } catch (error: unknown) {
-            if (error instanceof Error && error.name === 'AbortError') {
-                console.log("Aborted generation request.");
-                updateMessageStatus(messageId, 'sent');
-                setDisplayMessages(prev => [
-                    ...prev,
-                    {
-                        id: Date.now(),
-                        role: "assistant",
-                        content: "_Answer generation cancelled by user._",
-                        timestamp: new Date().toISOString(),
-                        status: 'sent'
-                    }
-                ]);
-            } else {
-                console.error("Chat API error:", error);
-
-                // Mark message as failed
-                const errorMessage = 'Failed to send message';
-                updateMessageStatus(messageId, 'failed', errorMessage);
-
-                // Show toast with retry action
-                showToast('Failed to send message', 'error', {
-                    duration: 6000,
-                    action: {
-                        label: 'Retry',
-                        onClick: () => retryMessage(messageId, messageContent)
-                    }
-                });
-            }
-        } finally {
+        // Simulate failure if requested (for /fail trigger)
+        if (simulateFailure) {
+            setDisplayMessages(prev => prev.filter(m => m.id !== assistantMessageId));
+            updateMessageStatus(userMessageId, 'failed', 'Simulated failure triggered by /fail');
             setIsTyping(false);
             setIsStreaming(false);
+            setStreamingMessageId(null);
+            return;
+        }
+
+        try {
+            // Use streaming API
+            const abortController = await api.streamChat(
+                messageContent,
+                selectedModel,
+                currentProvider,
+                conversationId,
+                {
+                    onMeta: (newConversationId) => {
+                        if (newConversationId !== conversationId) {
+                            setConversationId(newConversationId);
+                            onConversationCreated(newConversationId);
+                        }
+                    },
+                    onThinkingStart: () => {
+                        setIsThinkingActive(true);
+                    },
+                    onThinking: (text) => {
+                        setThinkingContent(prev => prev + text);
+                    },
+                    onThinkingEnd: () => {
+                        setIsThinkingActive(false);
+                    },
+                    onContent: (text) => {
+                        setStreamingContent(prev => {
+                            const newContent = prev + text;
+                            // Update the message in real-time
+                            updateMessageContent(assistantMessageId, newContent, thinkingContent);
+                            return newContent;
+                        });
+                    },
+                    onToolStart: (name) => {
+                        console.log(`[ChatWindow] Tool started: ${name}`);
+                        // Optionally show tool execution in UI
+                    },
+                    onToolEnd: (name, result) => {
+                        console.log(`[ChatWindow] Tool ended: ${name}`, result);
+                    },
+                    onStreamEnd: (finalConversationId, title) => {
+                        // Mark user message as sent
+                        updateMessageStatus(userMessageId, 'sent');
+                        
+                        // Finalize assistant message
+                        setDisplayMessages(prev => prev.map(msg => 
+                            msg.id === assistantMessageId
+                                ? { ...msg, status: 'sent' as MessageStatus, thinking: thinkingContent || undefined }
+                                : msg
+                        ));
+                        
+                        // Update conversation if needed
+                        if (finalConversationId !== conversationId) {
+                            setConversationId(finalConversationId);
+                            onConversationCreated(finalConversationId);
+                        }
+
+                        // Clean up
+                        setIsTyping(false);
+                        setIsStreaming(false);
+                        setStreamingMessageId(null);
+                        setStreamingContent("");
+                        setThinkingContent("");
+                        abortControllerRef.current = null;
+                    },
+                    onError: (errorMessage) => {
+                        console.error("[ChatWindow] Stream error:", errorMessage);
+                        
+                        // Remove placeholder assistant message
+                        setDisplayMessages(prev => prev.filter(m => m.id !== assistantMessageId));
+                        
+                        // Mark user message as failed
+                        updateMessageStatus(userMessageId, 'failed', errorMessage);
+                        
+                        showToast('Failed to send message', 'error', {
+                            duration: 6000,
+                            action: {
+                                label: 'Retry',
+                                onClick: () => retryMessage(userMessageId, messageContent)
+                            }
+                        });
+                        
+                        setIsTyping(false);
+                        setIsStreaming(false);
+                        setStreamingMessageId(null);
+                        setStreamingContent("");
+                        setThinkingContent("");
+                        abortControllerRef.current = null;
+                    }
+                }
+            );
+
+            abortControllerRef.current = abortController;
+
+        } catch (error) {
+            console.error("[ChatWindow] Failed to start stream:", error);
+            
+            // Remove placeholder assistant message
+            setDisplayMessages(prev => prev.filter(m => m.id !== assistantMessageId));
+            
+            // Mark user message as failed
+            updateMessageStatus(userMessageId, 'failed', 'Failed to connect');
+            
+            setIsTyping(false);
+            setIsStreaming(false);
+            setStreamingMessageId(null);
             abortControllerRef.current = null;
         }
     };
@@ -333,7 +403,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     // Retry handler
 
     const retryMessage = useCallback((messageId: number, content: string) => {
-        sendMessageInternal(content, messageId);
+        // Remove the failed message first
+        setDisplayMessages(prev => prev.filter(m => m.id !== messageId));
+        // Then send again
+        sendMessageInternal(content);
     }, [selectedModel, currentProvider, conversationId]);
 
 
@@ -386,7 +459,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         setInput('');
 
         // Build the command message
-        let commandMessage = `/${trigger.command}`;
+        const commandMessage = `/${trigger.command}`;
 
         // If params provided, add them to context
         const triggerResult = executeTrigger(commandMessage, {
@@ -470,9 +543,28 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             abortControllerRef.current.abort();
             abortControllerRef.current = null;
         }
+        
+        // Finalize any in-progress message
+        if (streamingMessageId) {
+            setDisplayMessages(prev => prev.map(msg =>
+                msg.id === streamingMessageId
+                    ? { 
+                        ...msg, 
+                        content: streamingContent || "_Generation cancelled by user._",
+                        status: 'sent' as MessageStatus,
+                        thinking: thinkingContent || undefined
+                    }
+                    : msg
+            ));
+        }
+        
         setIsStreaming(false);
         setIsTyping(false);
         setIsRegenerating(false);
+        setStreamingMessageId(null);
+        setStreamingContent("");
+        setThinkingContent("");
+        setIsThinkingActive(false);
     };
 
 
@@ -522,72 +614,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         setEditingMessageId(null);
         setEditedContent("");
         setDisplayMessages(messageBeforeEdit);
-        setIsTyping(true);
-        setIsStreaming(true);
 
-        abortControllerRef.current = new AbortController();
-
-        try {
-            const params = new URLSearchParams({
-                message: editedContent.trim(),
-                model: selectedModel,
-                provider: currentProvider,
-            });
-
-            if (conversationId !== null) {
-                params.append("conversation_id", conversationId.toString());
-            }
-
-            const response = await api.get<ChatResponse>(
-                `/chat?${params.toString()}`,
-                { signal: abortControllerRef.current.signal }
-            );
-
-            if (response.conversation_id && response.conversation_id !== conversationId) {
-                setConversationId(response.conversation_id);
-                onConversationCreated(response.conversation_id);
-            }
-
-            const newUserMessage: DisplayMessage = {
-                id: Date.now(),
-                role: "user",
-                content: editedContent.trim(),
-                timestamp: new Date().toISOString(),
-                status: 'sent'
-            };
-
-            const newAssistantMessage: DisplayMessage = {
-                id: Date.now() + 1,
-                role: "assistant",
-                content: response.response,
-                timestamp: new Date().toISOString(),
-                status: 'sent'
-            };
-
-            setDisplayMessages(prev => [...prev, newUserMessage, newAssistantMessage]);
-
-        } catch (error: unknown) {
-            if (error instanceof Error && error.name === 'AbortError') {
-                console.log("Aborted editing request.");
-                setDisplayMessages(prev => [
-                    ...prev,
-                    {
-                        id: Date.now(),
-                        role: "assistant",
-                        content: "_Generation cancelled by user._",
-                        timestamp: new Date().toISOString(),
-                        status: 'sent'
-                    }
-                ]);
-            } else {
-                console.error("Error sending edited message:", error);
-                setDisplayMessages(displayMessages);
-                showToast('Failed to send edited message', 'error');
-            }
-        } finally {
-            setIsTyping(false);
-            setIsStreaming(false);
-        }
+        // Send as new message
+        await sendMessageInternal(editedContent.trim());
     };
 
 
@@ -605,64 +634,15 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         }
 
         setIsRegenerating(true);
-        setIsTyping(true);
-        setIsStreaming(false);
+        
+        // Remove the old assistant message
+        const messagesBeforeRegenerate = displayMessages.slice(0, messageIndex);
+        setDisplayMessages(messagesBeforeRegenerate);
 
-        abortControllerRef.current = new AbortController();
-
-        try {
-            const messagesBeforeRegenerate = displayMessages.slice(0, messageIndex);
-            setDisplayMessages(messagesBeforeRegenerate);
-
-            const params = new URLSearchParams({
-                message: previousUserMessage.content,
-                model: selectedModel,
-                provider: currentProvider,
-            });
-
-            if (conversationId !== null) {
-                params.append("conversation_id", conversationId.toString());
-            }
-
-            const response = await api.get<ChatResponse>(
-                `/chat?${params.toString()}`,
-                { signal: abortControllerRef.current.signal }
-            );
-
-            const newAssistantMessage: DisplayMessage = {
-                id: Date.now(),
-                role: "assistant",
-                content: response.response,
-                timestamp: new Date().toISOString(),
-                status: 'sent'
-            };
-
-            setDisplayMessages(prev => [...prev, newAssistantMessage]);
-
-        } catch (error: unknown) {
-            if (error instanceof Error && error.name === 'AbortError') {
-                console.log("Aborted regeneration request.");
-                setDisplayMessages(prev => [
-                    ...prev,
-                    {
-                        id: Date.now(),
-                        role: "assistant",
-                        content: "_Regeneration cancelled by user._",
-                        timestamp: new Date().toISOString(),
-                        status: 'sent'
-                    }
-                ]);
-            } else {
-                console.error("Regenerate API error:", error);
-                setDisplayMessages(displayMessages);
-                showToast('Failed to regenerate response', 'error');
-            }
-        } finally {
-            setIsRegenerating(false);
-            setIsTyping(false);
-            setIsStreaming(false);
-            abortControllerRef.current = null;
-        }
+        // Send the original user message again
+        await sendMessageInternal(previousUserMessage.content);
+        
+        setIsRegenerating(false);
     };
 
 
@@ -725,7 +705,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                             <h2>MFC Assistant</h2>
                             <div className="chat-header-status">
                                 <span className="status-indicator"></span>
-                                <span>Online</span>
+                                <span>{isStreaming ? 'Responding...' : 'Online'}</span>
                             </div>
                         </div>
                     </div>
@@ -756,7 +736,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                     {displayMessages.map((message, index) => (
                         <div
                             key={message.id}
-                            className={`chat-message ${message.role} ${message.status === 'failed' ? 'message-failed' : ''} ${message.status === 'sending' ? 'message-sending' : ''}`}
+                            className={`chat-message ${message.role} ${message.status === 'failed' ? 'message-failed' : ''} ${message.status === 'sending' ? 'message-sending' : ''} ${message.status === 'streaming' ? 'message-streaming' : ''}`}
                         >
                             {/* Edit mode */}
                             {editingMessageId === message.id ? (
@@ -789,14 +769,32 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                                     </div>
                                 </div>
                             ) : (
-                                <div className="message-bubble markdown-content">
-                                    <ReactMarkdown
-                                        components={markdownComponents}
-                                        remarkPlugins={[remarkGfm]}
-                                    >
-                                        {message.content}
-                                    </ReactMarkdown>
-                                </div>
+                                <>
+                                    {/* Thinking block for assistant messages */}
+                                    {message.role === "assistant" && (message.thinking || (message.id === streamingMessageId && thinkingContent)) && (
+                                        <ThinkingBlock 
+                                            content={message.thinking || thinkingContent}
+                                            isStreaming={message.id === streamingMessageId && isThinkingActive}
+                                        />
+                                    )}
+                                    
+                                    <div className="message-bubble markdown-content">
+                                        {message.status === 'streaming' && !message.content ? (
+                                            <div className="typing-indicator">
+                                                <span></span>
+                                                <span></span>
+                                                <span></span>
+                                            </div>
+                                        ) : (
+                                            <ReactMarkdown
+                                                components={markdownComponents}
+                                                remarkPlugins={[remarkGfm]}
+                                            >
+                                                {message.content}
+                                            </ReactMarkdown>
+                                        )}
+                                    </div>
+                                </>
                             )}
 
                             {/* Failed message indicator */}
@@ -820,17 +818,19 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                                     <>
                                         <div className="message-meta-time">
                                             <span className="message-timestamp">
-                                                {formatTime(message.timestamp)}
+                                                {message.status === 'streaming' ? 'Streaming...' : formatTime(message.timestamp)}
                                             </span>
                                         </div>
-                                        <div className="msg-btn-wrapper">
-                                            <MessageCopyButton textContent={message.content} className="msg-copy-btn"/>
-                                            <RegenResponseButton
-                                                onRegen={() => regenerateResponse(index)}
-                                                isRegenerating={isRegenerating}
-                                                className="msg-regenerate-btn"
-                                            />
-                                        </div>
+                                        {message.status === 'sent' && (
+                                            <div className="msg-btn-wrapper">
+                                                <MessageCopyButton textContent={message.content} className="msg-copy-btn"/>
+                                                <RegenResponseButton
+                                                    onRegen={() => regenerateResponse(index)}
+                                                    isRegenerating={isRegenerating}
+                                                    className="msg-regenerate-btn"
+                                                />
+                                            </div>
+                                        )}
                                     </>
                                 ) : (
                                     <>
@@ -860,16 +860,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                             </div>
                         </div>
                     ))}
-
-                    {isTyping && (
-                        <div className="chat-message assistant">
-                            <div className="typing-indicator">
-                                <span></span>
-                                <span></span>
-                                <span></span>
-                            </div>
-                        </div>
-                    )}
 
                     <div ref={messagesEndRef} />
                 </div>

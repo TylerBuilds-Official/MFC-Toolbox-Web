@@ -2,12 +2,14 @@ import type { Configuration } from "@azure/msal-browser";
 import { LogLevel } from "@azure/msal-browser";
 
 // Azure AD Configuration
+const baseUrl = window.location.origin;
+
 export const msalConfig: Configuration = {
     auth: {
         clientId: "79633382-952d-4e11-bd6d-6f047bf5732b",
         authority: "https://login.microsoftonline.com/99857259-7d6a-47fb-a35b-7f6004c4965d",
-        redirectUri: "http://localhost:5173/auth/callback",  // ← Changed!
-        postLogoutRedirectUri: "http://localhost:5173",
+        redirectUri: `${baseUrl}/auth/callback`,
+        postLogoutRedirectUri: baseUrl,
     },
     cache: {
         cacheLocation: "sessionStorage",

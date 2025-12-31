@@ -42,10 +42,20 @@ export interface DataToolParameter {
     description: string;
 }
 
+export interface ChartConfig {
+    x_axis: string;
+    series_by: string;
+    y_axis: string;
+    x_axis_label?: string;
+    y_axis_label?: string;
+}
+
 export interface DataTool {
     name: string;
     description: string;
     parameters: DataToolParameter[];
+    default_chart_type?: string;
+    chart_config?: ChartConfig;
 }
 
 // API Response types

@@ -145,3 +145,10 @@ export const useVisualizationConfig = () => useDataStore((state) => ({
     xAxis: state.xAxis,
     yAxis: state.yAxis,
 }));
+
+// Get chart_config for the active session's tool
+export const useActiveChartConfig = () => useDataStore((state) => {
+    if (!state.activeSession) return null;
+    const tool = state.tools.find(t => t.name === state.activeSession?.tool_name);
+    return tool?.chart_config ?? null;
+});

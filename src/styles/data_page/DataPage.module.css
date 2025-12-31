@@ -25,27 +25,27 @@
 .sidebarToggle {
     position: fixed;
     left: var(--space-4);
-    top: 50%;
-    transform: translateY(-50%);
+    top: 100px;
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 44px;
-    height: 44px;
+    width: 48px;
+    height: 48px;
+    padding: var(--space-2);
     background: var(--bg-secondary);
     border: 1px solid var(--border-primary);
     border-radius: var(--radius-md);
     color: var(--text-secondary);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, color 0.2s ease;
     z-index: 10;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .sidebarToggle:hover {
-    background: var(--bg-hover);
-    color: var(--accent-primary);
-    border-color: var(--accent-primary);
+    background: var(--bg-hover-light);
+    border-color: var(--accent-muted);
+    color: var(--text-primary);
+    transform: scale(1.05);
 }
 
 /* Error Banner */
@@ -73,7 +73,7 @@
 
     .sidebarToggle {
         left: var(--space-3);
-        width: 40px;
-        height: 40px;
+        width: 44px;
+        height: 44px;
     }
 }

@@ -8,7 +8,7 @@ import '../styles/auth.css'
 import ChatWindow from "../components/chatWindow";
 import ToolboxSidebar from "../components/ToolboxSidebar";
 import ConversationSidebar from "../components/ConversationSidebar";
-import WrenchIcon from "../assets/svg/toolbox/buttonWrench";
+import SidebarToggleWrench from "../assets/svg/toolbox/sidebarToggleWrench";
 
 const Home = () => {
     const { user } = useAuth();
@@ -145,31 +145,31 @@ const Home = () => {
                 loading={conversationsLoading}
             />
 
-            <div className="header-container">
-                <button
-                    className="toolbox-sidebar-toggle"
-                    onClick={() => setToolboxOpen(true)}
-                    aria-label="Open Toolbox"
-                    title="Open Toolbox"
-                >
-                    <WrenchIcon />
-                </button>
+            {/* Fixed sidebar toggle buttons */}
+            <button
+                className="toolbox-sidebar-toggle"
+                onClick={() => setToolboxOpen(true)}
+                aria-label="Open Toolbox"
+                title="Open Toolbox"
+            >
+                <SidebarToggleWrench />
+            </button>
 
-                <div className="welcome-header">
-                    <h1>Welcome to the MFC Toolbox</h1>
-                    <p>Your AI-powered assistant for fabrication workflows, document processing, and internal operations.</p>
-                </div>
+            <button
+                className="conversations-sidebar-toggle"
+                onClick={() => setConversationsOpen(true)}
+                aria-label="Open Conversations"
+                title="Conversation History"
+            >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+            </button>
 
-                <button
-                    className="conversations-sidebar-toggle"
-                    onClick={() => setConversationsOpen(true)}
-                    aria-label="Open Conversations"
-                    title="Conversation History"
-                >
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                    </svg>
-                </button>
+            {/* Welcome Header */}
+            <div className="welcome-header">
+                <h1>Welcome to the MFC Toolbox</h1>
+                <p>Your AI-powered assistant for fabrication workflows, document processing, and internal operations.</p>
             </div>
 
             <div className="chat-section">

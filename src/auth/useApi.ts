@@ -58,6 +58,7 @@ export function useApi() {
             
             const response = await fetch(url, {
                 ...options,
+                credentials: 'include',
                 headers: {
                     ...options.headers,
                     Authorization: `Bearer ${token}`,
@@ -157,6 +158,7 @@ export function useApi() {
             try {
                 const response = await fetch(url, {
                     method: "GET",
+                    credentials: 'include',
                     headers: {
                         Authorization: `Bearer ${token}`,
                         Accept: "text/event-stream",

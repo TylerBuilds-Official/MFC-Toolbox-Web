@@ -1,0 +1,89 @@
+/**
+ * Data Visualization Types
+ * Matches backend DataSession, DataResult, and related models
+ */
+
+export interface VisualizationConfig {
+    chart_type: 'bar' | 'line' | 'pie' | 'table';
+    x_axis?: string;
+    y_axis?: string;
+    options?: Record<string, unknown>;
+}
+
+export interface DataSession {
+    id: number;
+    user_id: number;
+    message_id: number | null;
+    session_group_id: number | null;
+    parent_session_id: number | null;
+    tool_name: string;
+    tool_params: Record<string, unknown> | null;
+    visualization_config: VisualizationConfig | null;
+    status: 'pending' | 'running' | 'success' | 'error';
+    error_message: string | null;
+    created_at: string;
+    updated_at: string;
+    has_results?: boolean;
+}
+
+export interface DataResult {
+    id: number;
+    session_id: number;
+    columns: string[];
+    rows: unknown[][];
+    row_count: number;
+    created_at: string;
+}
+
+export interface DataToolParameter {
+    name: string;
+    type: string;
+    required: boolean;
+    description: string;
+}
+
+export interface DataTool {
+    name: string;
+    description: string;
+    parameters: DataToolParameter[];
+}
+
+// API Response types
+export interface DataToolsResponse {
+    tools: DataTool[];
+}
+
+export interface DataSessionsResponse {
+    sessions: DataSession[];
+    count: number;
+}
+
+export interface DataSessionResponse extends DataSession {
+    has_results: boolean;
+}
+
+export interface ExecuteSessionResponse {
+    session: DataSession;
+    success: boolean;
+    result?: DataResult;
+}
+
+export interface SessionGroupResponse {
+    group_id: number;
+    sessions: DataSession[];
+    count: number;
+}
+
+// Create/Update request types
+export interface CreateDataSessionRequest {
+    tool_name: string;
+    tool_params?: Record<string, unknown>;
+    message_id?: number;
+    parent_session_id?: number;
+    visualization_config?: VisualizationConfig;
+}
+
+export interface UpdateDataSessionRequest {
+    visualization_config?: VisualizationConfig;
+    status?: string;
+}

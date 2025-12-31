@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useMsal } from "@azure/msal-react";
 import { apiTokenRequest } from "./authConfig";
 import type { StreamEvent, StreamCallbacks } from "../types/streaming";
@@ -283,7 +283,7 @@ export function useApi() {
     );
 
 
-    return {
+    return useMemo(() => ({
         getAccessToken,
         fetchWithAuth,
         streamChat,
@@ -292,7 +292,7 @@ export function useApi() {
         put,
         patch,
         delete: del,
-    };
+    }), [getAccessToken, fetchWithAuth, streamChat, get, post, put, patch, del]);
 }
 
 

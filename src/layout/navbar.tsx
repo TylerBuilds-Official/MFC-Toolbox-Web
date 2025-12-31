@@ -43,6 +43,14 @@ const Navbar: React.FC = () => {
                         Home
                     </NavLink>
                     <NavLink 
+                        to="/data" 
+                        end 
+                        className={({ isActive }) => isActive ? "active" : undefined} 
+                        onClick={closeMenu}
+                    >
+                        Data
+                    </NavLink>
+                    <NavLink 
                         to="/settings" 
                         end 
                         className={({ isActive }) => isActive ? "active" : undefined} 

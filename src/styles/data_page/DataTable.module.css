@@ -1,0 +1,59 @@
+/* ============================================
+   DataTable - Raw data table view
+   ============================================ */
+
+.tableWrapper {
+    width: 100%;
+    overflow: auto;
+    max-height: 500px;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.table th,
+.table td {
+    padding: var(--space-2) var(--space-3);
+    text-align: left;
+    border-bottom: 1px solid var(--border-primary);
+    white-space: nowrap;
+}
+
+.table th {
+    position: sticky;
+    top: 0;
+    background: var(--bg-primary);
+    font-weight: 600;
+    color: var(--text-primary);
+    border-bottom: 2px solid var(--border-primary);
+    z-index: 1;
+}
+
+.table td {
+    color: var(--text-secondary);
+}
+
+.table tbody tr:hover {
+    background: var(--bg-hover-light);
+}
+
+.table tbody tr:hover td {
+    color: var(--text-primary);
+}
+
+/* Alternate row colors */
+.table tbody tr:nth-child(even) {
+    background: var(--bg-hover);
+}
+
+.table tbody tr:nth-child(even):hover {
+    background: var(--bg-hover-light);
+}
+
+/* Number alignment */
+.table td:has(+ td) {
+    font-variant-numeric: tabular-nums;
+}

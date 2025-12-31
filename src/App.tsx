@@ -7,6 +7,7 @@ import { ConfirmProvider } from "./components/ConfirmDialog";
 import Layout from "./layout/layout.tsx";
 import Home from "./pages/home.tsx";
 import Settings from "./pages/settings.tsx";
+import { DataPage } from "./components/data";
 
 
 function App() {
@@ -25,6 +26,11 @@ function App() {
                                 <Route path="/settings" element={
                                     <ProtectedRoute>
                                         <Settings />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/data" element={
+                                    <ProtectedRoute>
+                                        <DataPage />
                                     </ProtectedRoute>
                                 } />
                                 {/* Auth callback route - just redirects to home after auth */}

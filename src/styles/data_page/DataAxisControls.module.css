@@ -1,0 +1,53 @@
+/* ============================================
+   DataAxisControls - X/Y axis selectors
+   ============================================ */
+
+.controls {
+    display: flex;
+    gap: var(--space-3);
+}
+
+.control {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.control label {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.control select {
+    padding: var(--space-1) var(--space-2);
+    font-size: 0.8125rem;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    cursor: pointer;
+    min-width: 120px;
+}
+
+.control select:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .controls {
+        flex-direction: column;
+        gap: var(--space-2);
+    }
+
+    .control {
+        width: 100%;
+    }
+
+    .control select {
+        flex: 1;
+    }
+}

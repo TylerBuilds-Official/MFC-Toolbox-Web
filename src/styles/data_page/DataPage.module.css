@@ -1,0 +1,79 @@
+/* ============================================
+   DataPage - Main container layout
+   ============================================ */
+
+.dataPage {
+    display: flex;
+    flex-direction: column;
+    min-height: calc(100vh - 120px); /* Account for navbar/footer */
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: var(--space-4);
+    position: relative;
+}
+
+.mainContent {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: var(--space-4);
+    position: relative;
+}
+
+/* Sidebar Toggle Button */
+.sidebarToggle {
+    position: fixed;
+    left: var(--space-4);
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.sidebarToggle:hover {
+    background: var(--bg-hover);
+    color: var(--accent-primary);
+    border-color: var(--accent-primary);
+}
+
+/* Error Banner */
+.errorBanner {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: var(--radius-md);
+    color: var(--error, #ef4444);
+    font-size: 0.875rem;
+}
+
+.errorBanner svg {
+    flex-shrink: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .dataPage {
+        padding: var(--space-3);
+    }
+
+    .sidebarToggle {
+        left: var(--space-3);
+        width: 40px;
+        height: 40px;
+    }
+}

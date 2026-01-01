@@ -134,9 +134,102 @@
 .toolsList {
     display: flex;
     flex-direction: column;
-    gap: var(--space-2);
+    gap: var(--space-3);
 }
 
+/* Category Groups */
+.toolCategory {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--bg-secondary);
+}
+
+.categoryHeader {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    width: 100%;
+    padding: var(--space-3);
+    background: var(--bg-tertiary, var(--bg-secondary));
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    text-align: left;
+}
+
+.categoryHeader:hover {
+    background: var(--bg-hover);
+}
+
+.categoryIcon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    color: var(--accent-primary);
+    flex-shrink: 0;
+}
+
+.categoryName {
+    flex: 1;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.categoryCount {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    background: var(--bg-hover);
+    border-radius: 10px;
+}
+
+.categoryChevron {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    color: var(--text-secondary);
+    transition: transform 0.2s ease;
+}
+
+.categoryHeader.collapsed .categoryChevron {
+    transform: rotate(-90deg);
+}
+
+.categoryTools {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-2);
+    padding-top: 0;
+    max-height: 1000px;
+    opacity: 1;
+    transition: max-height 0.3s ease, opacity 0.2s ease, padding 0.2s ease;
+}
+
+.categoryTools.collapsed {
+    max-height: 0;
+    opacity: 0;
+    padding: 0 var(--space-2);
+    overflow: hidden;
+}
+
+/* Tool Items */
 .toolWrapper {
     display: flex;
     flex-direction: column;
@@ -147,9 +240,9 @@
     align-items: flex-start;
     gap: var(--space-3);
     width: 100%;
-    padding: var(--space-3);
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-primary);
+    padding: var(--space-2) var(--space-3);
+    background: transparent;
+    border: 1px solid transparent;
     border-radius: var(--radius-md);
     cursor: pointer;
     transition: background 0.2s ease, border-color 0.2s ease;
@@ -158,7 +251,7 @@
 
 .toolItem:hover:not(:disabled) {
     background: var(--bg-hover-light);
-    border-color: var(--accent-primary);
+    border-color: var(--border-subtle);
 }
 
 .toolItem:disabled {
@@ -167,6 +260,7 @@
 }
 
 .toolItem.active {
+    background: var(--bg-hover-light);
     border-color: var(--accent-primary);
 }
 

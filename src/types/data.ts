@@ -53,6 +53,7 @@ export interface ChartConfig {
 export interface DataTool {
     name: string;
     description: string;
+    display_category: string;
     parameters: DataToolParameter[];
     default_chart_type?: string;
     chart_config?: ChartConfig;

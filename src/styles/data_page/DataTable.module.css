@@ -6,6 +6,7 @@
     width: 100%;
     overflow: auto;
     max-height: 500px;
+    position: relative;
 }
 
 .table {
@@ -22,6 +23,10 @@
     white-space: nowrap;
 }
 
+/* ============================================
+   Header Styles
+   ============================================ */
+
 .table th {
     position: sticky;
     top: 0;
@@ -29,8 +34,46 @@
     font-weight: 600;
     color: var(--text-primary);
     border-bottom: 2px solid var(--border-primary);
-    z-index: 1;
+    z-index: 2;
 }
+
+.sortableHeader {
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.15s ease;
+}
+
+.sortableHeader:hover {
+    background: var(--bg-hover);
+}
+
+.headerContent {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+.sortIndicator {
+    display: inline-block;
+    width: 1em;
+    font-size: 0.625rem;
+    color: var(--text-muted);
+    opacity: 0;
+    transition: opacity 0.15s ease;
+}
+
+.sortableHeader:hover .sortIndicator {
+    opacity: 0.5;
+}
+
+.sortIndicator.active {
+    opacity: 1;
+    color: var(--accent-primary);
+}
+
+/* ============================================
+   Body Styles
+   ============================================ */
 
 .table td {
     color: var(--text-secondary);
@@ -56,4 +99,38 @@
 /* Number alignment */
 .table td:has(+ td) {
     font-variant-numeric: tabular-nums;
+}
+
+/* ============================================
+   Summary Row (Footer)
+   ============================================ */
+
+.table tfoot {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+}
+
+.summaryRow {
+    background: var(--bg-tertiary, var(--bg-primary));
+    border-top: 2px solid var(--border-primary);
+}
+
+.summaryRow td {
+    border-bottom: none;
+}
+
+.summaryCell {
+    font-weight: 600;
+    color: var(--text-primary);
+    background: var(--bg-tertiary, var(--bg-primary));
+    font-variant-numeric: tabular-nums;
+}
+
+.summaryCell:first-child {
+    color: var(--text-secondary);
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.025em;
 }

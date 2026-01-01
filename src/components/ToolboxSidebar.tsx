@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { type Tool } from "../types/tools";
+import { type Tool, type ToolParameter } from "../types/tools";
 import { useApi } from "../auth";
 import { useAuth } from "../auth";
-import { transformOpenAITools } from "../services/api";
+import { formatToolName } from "../services/api";
 import "../styles/toolboxSidebar.css";
 import Icons from "../assets/svg/toolbox/toolboxIcons.tsx";
 import HeaderWrenchIcon from "../assets/svg/toolbox/headerWrench.tsx";
@@ -13,20 +13,41 @@ import ToolExpandIcon from "../assets/svg/toolbox/toolExpand.tsx";
 import ParamSubmitIcon from "../assets/svg/toolbox/paramSubmit.tsx";
 import LoadingSpinner from "./loadingSpinner.tsx";
 
-// Interface for API response
-interface ToolsApiResponse {
-    open_ai_tools: Array<{
-        type: "function";
-        function: {
+// Interface for API response (simplified format from backend)
+interface ChatToolboxResponse {
+    tools: Array<{
+        name: string;
+        description: string;
+        parameters: Array<{
             name: string;
+            type: string;
+            required: boolean;
             description: string;
-            parameters: {
-                type: "object";
-                properties: Record<string, { type: string; description?: string }>;
-                required: string[];
-            };
-        };
+        }>;
+        data_visualization?: boolean;
+        default_chart_type?: string;
+        chart_config?: Record<string, string>;
     }>;
+}
+
+// Generate a prompt template from tool name and parameters
+function generateToolPrompt(name: string, parameters: ToolParameter[]): string {
+    const defaultPrompts: Record<string, string> = {
+        "get_job_info": "Get the details for job",
+        "get_all_job_info": "List all jobs",
+        "get_machine_production": "Show machine production data",
+        "get_ot_hours_by_job": "Get overtime hours for job",
+        "get_ot_hours_all_jobs": "Get overtime hours across all jobs",
+    };
+    
+    const basePrompt = defaultPrompts[name] || formatToolName(name);
+    
+    if (parameters.length === 0) {
+        return basePrompt;
+    }
+    
+    const paramPlaceholders = parameters.map(p => `{${p.name}}`).join(", ");
+    return `${basePrompt} ${paramPlaceholders}`;
 }
 
 interface ToolboxSidebarProps {
@@ -53,10 +74,28 @@ const ToolboxSidebar = ({ isOpen, onClose, onToolSelect }: ToolboxSidebarProps) 
             }
 
             try {
-                // Fetch with proper response type, then transform using shared function
-                const response = await api.get<ToolsApiResponse>('/tools');
-                const fetchedTools = transformOpenAITools(response.open_ai_tools || []);
-                console.log("[ToolboxSidebar] Transformed tools:", fetchedTools);
+                // Fetch tools filtered for chat toolbox (excludes AI-internal tools)
+                const response = await api.get<ChatToolboxResponse>('/tools?surface=chat_toolbox');
+                
+                // Transform to internal Tool format
+                const fetchedTools: Tool[] = (response.tools || []).map(tool => {
+                    const parameters: ToolParameter[] = tool.parameters.map(p => ({
+                        name: p.name,
+                        type: p.type === "integer" ? "number" : p.type as "string" | "number",
+                        required: p.required,
+                        description: p.description
+                    }));
+                    
+                    return {
+                        id: tool.name,
+                        name: formatToolName(tool.name),
+                        description: tool.description,
+                        prompt: generateToolPrompt(tool.name, parameters),
+                        parameters
+                    };
+                });
+                
+                console.log("[ToolboxSidebar] Loaded tools:", fetchedTools);
                 setTools(fetchedTools);
                 setError(null);
             } catch (err) {
@@ -70,7 +109,7 @@ const ToolboxSidebar = ({ isOpen, onClose, onToolSelect }: ToolboxSidebarProps) 
         if (isOpen) {
             fetchTools();
         }
-    }, [isOpen, user]);
+    }, [isOpen, user, api]);
 
     const handleToolClick = (tool: Tool) => {
         if (tool.parameters.length === 0) {
@@ -108,7 +147,9 @@ const ToolboxSidebar = ({ isOpen, onClose, onToolSelect }: ToolboxSidebarProps) 
     const getToolIcon = (tool: Tool) => {
         const id = tool.id || "";
         if (id.includes("get_all")) return <Icons.list />;
+        if (id.includes("ot_hours")) return <Icons.tool />; // OT/overtime tools
         if (id.includes("job")) return <Icons.job />;
+        if (id.includes("machine") || id.includes("production")) return <Icons.tool />;
         if (id.includes("search")) return <Icons.search />;
         if (id.includes("create")) return <Icons.create />;
         if (id.includes("delete")) return <Icons.delete />;

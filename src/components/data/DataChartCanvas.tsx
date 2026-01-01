@@ -323,6 +323,7 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
                 return (
                     <ResponsiveContainer width="100%" height={400}>
                         <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+
                             <CartesianGrid strokeDasharray="3 3" stroke="var(--border-primary)" />
                             <XAxis
                                 dataKey="name"
@@ -330,20 +331,20 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
                                 tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
                                 angle={-45}
                                 textAnchor="end"
-                                height={80}
-                            />
+                                height={80}/>
+
                             <YAxis
                                 stroke="var(--text-secondary)"
-                                tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
-                            />
+                                tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}/>
+
                             <Tooltip
                                 contentStyle={{
                                     background: 'var(--bg-primary)',
                                     border: '1px solid var(--border-primary)',
                                     borderRadius: '8px',
                                 }}
-                                labelStyle={{ color: 'var(--text-primary)' }}
-                            />
+                                labelStyle={{ color: 'var(--text-primary)' }}/>
+
                             <Legend />
                             <Line
                                 type="monotone"
@@ -352,8 +353,8 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
                                 stroke={COLORS[0]}
                                 strokeWidth={2}
                                 dot={{ fill: COLORS[0], strokeWidth: 2 }}
-                                activeDot={{ r: 6 }}
-                            />
+                                activeDot={{ r: 6 }}/>
+
                         </LineChart>
                     </ResponsiveContainer>
                 );
@@ -367,22 +368,24 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
                                 cx="50%"
                                 cy="50%"
                                 labelLine={false}
-                                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                                label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
                                 outerRadius={150}
                                 fill="#8884d8"
-                                dataKey="value"
-                            >
+                                dataKey="value">
+
                                 {chartData.map((_, index) => (
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                 ))}
+
                             </Pie>
+
                             <Tooltip
                                 contentStyle={{
                                     background: 'var(--bg-primary)',
                                     border: '1px solid var(--border-primary)',
                                     borderRadius: '8px',
-                                }}
-                            />
+                                }}/>
+
                             <Legend />
                         </PieChart>
                     </ResponsiveContainer>

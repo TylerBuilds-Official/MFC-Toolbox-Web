@@ -10,6 +10,7 @@ import DataChartCanvas from './DataChartCanvas';
 import DataChartTypeToggle from './DataChartTypeToggle';
 import DataAxisControls from './DataAxisControls';
 import DataTable from './DataTable';
+import DataDetailCard from './DataDetailCard';
 import styles from '../../styles/data_page/DataVisualizationPanel.module.css';
 
 interface DataVisualizationPanelProps {
@@ -108,19 +109,19 @@ const DataVisualizationPanel = ({ session, result, isLoading }: DataVisualizatio
             {/* Controls Bar */}
             <div className={styles.controlsBar}>
                 <DataChartTypeToggle />
-                {chartType !== 'table' && <DataAxisControls columns={result.columns} />}
+                {!['table', 'card'].includes(chartType) && <DataAxisControls columns={result.columns} />}
                 <div className={styles.resultInfo}>
-                    <span className={styles.rowCount}>{result.row_count} rows</span>
+                    <span className={styles.rowCount}>
+                        {result.row_count} {result.row_count === 1 ? 'record' : 'rows'}
+                    </span>
                 </div>
             </div>
 
             {/* Visualization Area */}
             <div className={styles.visualizationArea}>
-                {chartType === 'table' ? (
-                    <DataTable result={result} />
-                ) : (
-                    <DataChartCanvas result={result} />
-                )}
+                {chartType === 'table' && <DataTable result={result} />}
+                {chartType === 'card'  && <DataDetailCard result={result} />}
+                {['bar', 'line', 'pie'].includes(chartType) && <DataChartCanvas result={result} />}
             </div>
         </div>
     );

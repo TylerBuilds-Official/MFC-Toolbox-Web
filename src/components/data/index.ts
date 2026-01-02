@@ -11,3 +11,4 @@ export { default as DataAxisControls } from './DataAxisControls';
 export { default as DataEmptyState } from './DataEmptyState';
 export { default as DataSessionHeader } from './DataSessionHeader';
 export { default as DataTable } from './DataTable';
+export { default as DataDetailCard } from './DataDetailCard';

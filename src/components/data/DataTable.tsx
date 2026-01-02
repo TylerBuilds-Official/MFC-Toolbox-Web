@@ -4,6 +4,7 @@
 
 import { useState, useMemo } from 'react';
 import type { DataResult } from '../../types/data';
+import { formatColumnName } from '../../services/api';
 import styles from '../../styles/data_page/DataTable.module.css';
 
 interface DataTableProps {
@@ -240,10 +241,10 @@ const DataTable = ({ result }: DataTableProps) => {
                                 key={column}
                                 onClick={() => handleHeaderClick(column)}
                                 className={styles.sortableHeader}
-                                title={`Sort by ${column}`}
+                                title={`Sort by ${formatColumnName(column)}`}
                             >
                                 <span className={styles.headerContent}>
-                                    {column}
+                                    {formatColumnName(column)}
                                     {renderSortIndicator(column)}
                                 </span>
                             </th>

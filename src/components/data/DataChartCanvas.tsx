@@ -21,11 +21,15 @@ import {
 } from 'recharts';
 import { useDataStore, useActiveChartConfig } from '../../store/useDataStore';
 import type { DataResult } from '../../types/data';
+import { formatColumnName, formatTickValue, formatTooltipValue, formatYAxisValue } from '../../services/api';
 import styles from '../../styles/data_page/DataChartCanvas.module.css';
 
 interface DataChartCanvasProps {
     result: DataResult;
 }
+
+// Alias for cleaner code in this file
+const formatLabel = formatColumnName;
 
 // Color palette for charts
 const COLORS = [
@@ -38,6 +42,19 @@ const COLORS = [
     '#06b6d4', // cyan
     '#84cc16', // lime
 ];
+
+/**
+ * Calculate optimal tick interval based on data length
+ * Aims for ~10-15 visible ticks max to prevent label overlap
+ */
+const getTickInterval = (dataLength: number): number | "preserveStartEnd" => {
+    if (dataLength <= 12)  return 0;
+    if (dataLength <= 25)  return 1;
+    if (dataLength <= 50)  return Math.floor(dataLength / 12) - 1;
+    if (dataLength <= 100) return Math.floor(dataLength / 10) - 1;
+    
+    return "preserveStartEnd";
+};
 
 /**
  * Pivot flat data into multi-series format for charting
@@ -93,18 +110,6 @@ const pivotData = (
     };
 };
 
-/**
- * Format date string for display (shorter format)
- */
-const formatXAxisLabel = (value: string): string => {
-    // Try to parse as date
-    const date = new Date(value);
-    if (!isNaN(date.getTime())) {
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    }
-    return value;
-};
-
 const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
     const { chartType, xAxis, yAxis } = useDataStore();
     const chartConfig = useActiveChartConfig();
@@ -129,8 +134,8 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
                 chartData: data,
                 seriesNames,
                 axisLabels: {
-                    x: chartConfig.x_axis_label || chartConfig.x_axis,
-                    y: chartConfig.y_axis_label || chartConfig.y_axis,
+                    x: formatLabel(chartConfig.x_axis_label || chartConfig.x_axis),
+                    y: formatLabel(chartConfig.y_axis_label || chartConfig.y_axis),
                 },
             };
         }
@@ -161,18 +166,24 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
         return {
             chartData: data,
             seriesNames: [],
-            axisLabels: { x: xAxis, y: yAxis || 'Value' },
+            axisLabels: { x: formatLabel(xAxis), y: formatLabel(yAxis || 'Value') },
         };
     }, [result, xAxis, yAxis, chartConfig, useMultiSeries]);
 
     // No data to display
     if (!chartData.length) {
-        const message = useMultiSeries 
-            ? 'No data available for chart'
-            : 'Select X and Y axes to visualize data';
         return (
             <div className={styles.noData}>
-                <p>{message}</p>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M3 3v18h18" />
+                    <path d="M18 17l-5-5-4 4-3-3" />
+                </svg>
+                <h3>No visualization available</h3>
+                <p>
+                    {useMultiSeries 
+                        ? 'The data returned is empty or incompatible with charting.'
+                        : 'Use the axis dropdowns above to select which columns to visualize.'}
+                </p>
             </div>
         );
     }
@@ -186,7 +197,8 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
                     dataKey="xValue"
                     stroke="var(--text-secondary)"
                     tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
-                    tickFormatter={formatXAxisLabel}
+                    tickFormatter={formatTickValue}
+                    interval={getTickInterval(chartData.length)}
                     angle={-45}
                     textAnchor="end"
                     height={80}
@@ -200,6 +212,7 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
                 <YAxis
                     stroke="var(--text-secondary)"
                     tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
+                    tickFormatter={formatYAxisValue}
                     label={{
                         value: axisLabels.y,
                         angle: -90,
@@ -214,15 +227,16 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
                         borderRadius: '8px',
                     }}
                     labelStyle={{ color: 'var(--text-primary)' }}
-                    labelFormatter={formatXAxisLabel}
+                    labelFormatter={formatTooltipValue}
+                    formatter={(value: number, name: string) => [value.toLocaleString(), formatLabel(name)]}
                 />
-                <Legend />
+                <Legend formatter={formatLabel} />
                 {seriesNames.map((name, index) => (
                     <Line
                         key={name}
                         type="monotone"
                         dataKey={name}
-                        name={name}
+                        name={formatLabel(name)}
                         stroke={COLORS[index % COLORS.length]}
                         strokeWidth={2}
                         dot={{ fill: COLORS[index % COLORS.length], strokeWidth: 2, r: 3 }}
@@ -242,7 +256,8 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
                     dataKey="xValue"
                     stroke="var(--text-secondary)"
                     tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
-                    tickFormatter={formatXAxisLabel}
+                    tickFormatter={formatTickValue}
+                    interval={getTickInterval(chartData.length)}
                     angle={-45}
                     textAnchor="end"
                     height={80}
@@ -250,6 +265,7 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
                 <YAxis
                     stroke="var(--text-secondary)"
                     tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
+                    tickFormatter={formatYAxisValue}
                     label={{
                         value: axisLabels.y,
                         angle: -90,
@@ -264,14 +280,15 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
                         borderRadius: '8px',
                     }}
                     labelStyle={{ color: 'var(--text-primary)' }}
-                    labelFormatter={formatXAxisLabel}
+                    labelFormatter={formatTooltipValue}
+                    formatter={(value: number, name: string) => [value.toLocaleString(), formatLabel(name)]}
                 />
-                <Legend />
+                <Legend formatter={formatLabel} />
                 {seriesNames.map((name, index) => (
                     <Bar
                         key={name}
                         dataKey={name}
-                        name={name}
+                        name={formatLabel(name)}
                         fill={COLORS[index % COLORS.length]}
                         radius={[4, 4, 0, 0]}
                     />
@@ -292,6 +309,8 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
                                 dataKey="name"
                                 stroke="var(--text-secondary)"
                                 tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
+                                tickFormatter={formatTickValue}
+                                interval={getTickInterval(chartData.length)}
                                 angle={-45}
                                 textAnchor="end"
                                 height={80}
@@ -299,6 +318,7 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
                             <YAxis
                                 stroke="var(--text-secondary)"
                                 tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
+                                tickFormatter={formatYAxisValue}
                             />
                             <Tooltip
                                 contentStyle={{
@@ -307,11 +327,12 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
                                     borderRadius: '8px',
                                 }}
                                 labelStyle={{ color: 'var(--text-primary)' }}
+                                formatter={(value: number) => [value.toLocaleString(), axisLabels.y]}
                             />
                             <Legend />
                             <Bar
                                 dataKey="value"
-                                name={yAxis || 'Value'}
+                                name={axisLabels.y}
                                 fill={COLORS[0]}
                                 radius={[4, 4, 0, 0]}
                             />
@@ -329,13 +350,16 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
                                 dataKey="name"
                                 stroke="var(--text-secondary)"
                                 tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
+                                tickFormatter={formatTickValue}
+                                interval={getTickInterval(chartData.length)}
                                 angle={-45}
                                 textAnchor="end"
                                 height={80}/>
 
                             <YAxis
                                 stroke="var(--text-secondary)"
-                                tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}/>
+                                tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
+                                tickFormatter={formatYAxisValue}/>
 
                             <Tooltip
                                 contentStyle={{
@@ -343,13 +367,14 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
                                     border: '1px solid var(--border-primary)',
                                     borderRadius: '8px',
                                 }}
-                                labelStyle={{ color: 'var(--text-primary)' }}/>
+                                labelStyle={{ color: 'var(--text-primary)' }}
+                                formatter={(value: number) => [value.toLocaleString(), axisLabels.y]}/>
 
                             <Legend />
                             <Line
                                 type="monotone"
                                 dataKey="value"
-                                name={yAxis || 'Value'}
+                                name={axisLabels.y}
                                 stroke={COLORS[0]}
                                 strokeWidth={2}
                                 dot={{ fill: COLORS[0], strokeWidth: 2 }}

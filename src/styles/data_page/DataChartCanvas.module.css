@@ -16,15 +16,31 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: var(--space-3);
+    gap: var(--space-4);
     padding: var(--space-8);
     color: var(--text-secondary);
     text-align: center;
 }
 
+.noData svg {
+    width: 48px;
+    height: 48px;
+    stroke: var(--text-tertiary);
+    opacity: 0.6;
+}
+
+.noData h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
 .noData p {
     margin: 0;
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
+    max-width: 280px;
+    line-height: 1.5;
 }
 
 /* Recharts customization */

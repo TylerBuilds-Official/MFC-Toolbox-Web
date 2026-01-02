@@ -59,6 +59,71 @@ function generateToolPrompt(name: string, parameters: ToolParameter[]): string {
 // Category display order (categories not in this list appear at the end)
 const CATEGORY_ORDER = ["Jobs", "Production", "Overtime"];
 
+
+// PARAMETER PLACEHOLDER CONFIGURATION
+// Explicit placeholders by tool.param - add new tools here as they're created
+
+const PARAM_PLACEHOLDERS: Record<string, Record<string, string>> = {
+    "get_job_info": {
+        "job_number":       "e.g., 24123"
+    },
+
+    "get_ot_hours_by_job": {
+        "job_number":       "e.g., 24123",
+        "start_date":       "e.g., 01/15/2024",
+        "end_date":         "e.g., 01/31/2024"
+    },
+
+    "get_ot_hours_all_jobs": {
+        "start_date":       "e.g., 01/15/2024",
+        "end_date":         "e.g., 01/31/2024"
+    },
+
+    "get_machine_production": {
+        "machine_id":       "e.g., CNC-01",
+        "start_date":       "e.g., 01/15/2024",
+        "end_date":         "e.g., 01/31/2024"
+    }
+};
+
+// Pattern-based fallbacks for common param name patterns
+function getPatternPlaceholder(paramName: string): string | null {
+    const name = paramName.toLowerCase();
+    
+    if (name.includes('job'))       return 'e.g., 24123';
+    if (name.includes('date'))      return 'e.g., 01/15/2024';
+    if (name.includes('machine'))   return 'e.g., CNC-01';
+    if (name.includes('email'))     return 'e.g., user@metalsfab.com';
+    if (name.includes('phone'))     return 'e.g., 555-123-4567';
+    if (name.includes('id'))        return 'e.g., 12345';
+    if (name.includes('job') && name.includes('number')) return 'e.g., 24123';
+    if (name.includes('count') || name.includes('quantity') || name.includes('qty')) return 'e.g., 10';
+    if (name.includes('employee') || name.includes('emp_')) return 'e.g., John Smith';
+
+    return null;
+}
+
+// Get user-friendly placeholder for a parameter
+function getParamPlaceholder(toolId: string, param: ToolParameter): string {
+    // Check explicit tool.param mapping first
+    const toolPlaceholders = PARAM_PLACEHOLDERS[toolId];
+    if (toolPlaceholders?.[param.name]) {
+        return toolPlaceholders[param.name];
+    }
+    
+    // Try pattern-based matching
+    const patternMatch = getPatternPlaceholder(param.name);
+    if (patternMatch) {
+        return patternMatch;
+    }
+    
+    // Fall back to type-based defaults
+    if (param.type === 'number') return 'Enter a number';
+    
+    // Generic fallback
+    return 'Type here...';
+}
+
 // Category icons
 const getCategoryIcon = (category: string) => {
     switch (category) {
@@ -318,13 +383,13 @@ const ToolboxSidebar = ({ isOpen, onClose, onToolSelect }: ToolboxSidebarProps) 
                                                             {tool.parameters.map(param => (
                                                                 <div key={param.name} className="param-field">
                                                                     <label htmlFor={`param-${param.name}`}>
-                                                                        {param.name}
+                                                                        {formatToolName(param.name)}
                                                                         {param.required && <span className="required">*</span>}
                                                                     </label>
                                                                     <input
                                                                         id={`param-${param.name}`}
                                                                         type={param.type === "number" ? "number" : "text"}
-                                                                        placeholder={param.description || `Enter ${param.name}`}
+                                                                        placeholder={getParamPlaceholder(tool.id, param)}
                                                                         value={paramValues[param.name] || ""}
                                                                         onChange={e => handleParamChange(param.name, e.target.value)}
                                                                     />

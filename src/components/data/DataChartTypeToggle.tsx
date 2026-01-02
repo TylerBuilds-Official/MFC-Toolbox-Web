@@ -1,15 +1,23 @@
 /**
  * DataChartTypeToggle - Switch between chart types
+ * Filters available types based on data characteristics
  */
 
-import { useDataStore } from '../../store/useDataStore';
+import { useMemo } from 'react';
+import { useDataStore, useActiveChartConfig } from '../../store/useDataStore';
 import type { VisualizationConfig } from '../../types/data';
 import styles from '../../styles/data_page/DataChartTypeToggle.module.css';
-import type {JSX} from "react";
+import type { JSX } from "react";
 
 type ChartType = VisualizationConfig['chart_type'];
 
-const chartTypes: { type: ChartType; label: string; icon: JSX.Element }[] = [
+interface ChartTypeOption {
+    type:  ChartType;
+    label: string;
+    icon:  JSX.Element;
+}
+
+const ALL_CHART_TYPES: ChartTypeOption[] = [
     {
         type: 'bar',
         label: 'Bar',
@@ -53,14 +61,59 @@ const chartTypes: { type: ChartType; label: string; icon: JSX.Element }[] = [
             </svg>
         ),
     },
+    {
+        type: 'card',
+        label: 'Card',
+        icon: (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <line x1="7" y1="8" x2="17" y2="8" />
+                <line x1="7" y1="12" x2="14" y2="12" />
+                <line x1="7" y1="16" x2="11" y2="16" />
+            </svg>
+        ),
+    },
 ];
 
 const DataChartTypeToggle = () => {
-    const { chartType, setChartType } = useDataStore();
+    const { chartType, setChartType, activeResult } = useDataStore();
+    const chartConfig = useActiveChartConfig();
+
+    // Filter valid chart types based on data characteristics
+    const validTypes = useMemo(() => {
+        const types: ChartType[] = ['table']; // Always available
+        
+        if (!activeResult) return types;
+        
+        const rowCount = activeResult.row_count;
+        
+        // Single record -> card makes sense
+        if (rowCount === 1) {
+            types.push('card');
+        }
+        
+        // Multi-series data -> bar and line
+        if (chartConfig?.series_by) {
+            types.push('bar', 'line');
+        } else if (rowCount > 1) {
+            // Regular multi-row data
+            types.push('bar', 'line');
+            
+            // Pie only makes sense for small datasets
+            if (rowCount <= 12) {
+                types.push('pie');
+            }
+        }
+        
+        return types;
+    }, [activeResult, chartConfig]);
+
+    // Filter to only show valid types
+    const availableTypes = ALL_CHART_TYPES.filter(ct => validTypes.includes(ct.type));
 
     return (
         <div className={styles.toggle}>
-            {chartTypes.map(({ type, label, icon }) => (
+            {availableTypes.map(({ type, label, icon }) => (
                 <button
                     key={type}
                     className={`${styles.button} ${chartType === type ? styles.active : ''}`}

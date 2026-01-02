@@ -4,7 +4,7 @@
  */
 
 export interface VisualizationConfig {
-    chart_type: 'bar' | 'line' | 'pie' | 'table';
+    chart_type: 'bar' | 'line' | 'pie' | 'table' | 'card';
     x_axis?: string;
     y_axis?: string;
     options?: Record<string, unknown>;

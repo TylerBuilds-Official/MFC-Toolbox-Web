@@ -46,6 +46,99 @@ export function formatToolName(name: string): string {
         .join(" ");
 }
 
+/**
+ * Split camelCase or PascalCase string into readable words
+ * "PiecesProcessed" → "Pieces Processed"
+ * "totalOTHours" → "Total OT Hours"
+ */
+export function splitCamelCase(str: string): string {
+    return str
+        // Insert space before uppercase letters that follow lowercase
+        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        // Insert space before uppercase letters that are followed by lowercase (handles "OTHours" → "OT Hours")
+        .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
+        // Clean up any double spaces
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+/**
+ * Format a column/field name for display - handles camelCase, PascalCase, and snake_case
+ * "PiecesProcessed" → "Pieces Processed"
+ * "job_number" → "Job Number"
+ */
+export function formatColumnName(value: string): string {
+    if (!value) return '';
+    
+    // Handle snake_case (convert to Title Case)
+    if (value.includes('_')) {
+        return formatToolName(value);
+    }
+    
+    // Handle camelCase/PascalCase
+    return splitCamelCase(value);
+}
+
+/**
+ * Format axis tick values - handles dates and long strings
+ */
+export function formatTickValue(value: string): string {
+    if (!value) return '';
+    
+    // Try to parse as ISO date (2025-01-15 or 2025-01-15T00:00:00)
+    const isoDateRegex = /^\d{4}-\d{2}-\d{2}/;
+    if (isoDateRegex.test(value)) {
+        const date = new Date(value);
+        if (!isNaN(date.getTime())) {
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+    }
+    
+    // Truncate long strings for tick display
+    if (value.length > 15) {
+        return value.substring(0, 12) + '...';
+    }
+    
+    return value;
+}
+
+/**
+ * Format full value for tooltips - more detailed than tick labels
+ */
+export function formatTooltipValue(value: string): string {
+    if (!value) return '';
+    
+    // Try to parse as ISO date
+    const isoDateRegex = /^\d{4}-\d{2}-\d{2}/;
+    if (isoDateRegex.test(value)) {
+        const date = new Date(value);
+        if (!isNaN(date.getTime())) {
+            return date.toLocaleDateString('en-US', { 
+                weekday: 'short',
+                month: 'short', 
+                day: 'numeric',
+                year: 'numeric'
+            });
+        }
+    }
+    
+    return value;
+}
+
+/**
+ * Format numeric values for Y-axis (compact notation)
+ * 1500 → "1.5K", 1500000 → "1.5M"
+ */
+export function formatYAxisValue(value: number): string {
+    if (Math.abs(value) >= 1_000_000) {
+        return (value / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+    }
+    if (Math.abs(value) >= 1_000) {
+        return (value / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
+    }
+    return value.toLocaleString();
+}
+
 // ============================================
 // PUBLIC API - No authentication required
 // ============================================

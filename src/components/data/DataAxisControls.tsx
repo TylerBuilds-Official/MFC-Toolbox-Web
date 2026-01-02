@@ -3,6 +3,7 @@
  */
 
 import { useDataStore } from '../../store/useDataStore';
+import { formatColumnName } from '../../services/api';
 import styles from '../../styles/data_page/DataAxisControls.module.css';
 
 interface DataAxisControlsProps {
@@ -24,7 +25,7 @@ const DataAxisControls = ({ columns }: DataAxisControlsProps) => {
                     <option value="">Select column...</option>
                     {columns.map((col) => (
                         <option key={col} value={col}>
-                            {col}
+                            {formatColumnName(col)}
                         </option>
                     ))}
                 </select>
@@ -40,7 +41,7 @@ const DataAxisControls = ({ columns }: DataAxisControlsProps) => {
                     <option value="">Select column...</option>
                     {columns.map((col) => (
                         <option key={col} value={col}>
-                            {col}
+                            {formatColumnName(col)}
                         </option>
                     ))}
                 </select>

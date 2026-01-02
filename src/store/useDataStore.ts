@@ -122,22 +122,44 @@ export const useDataStore = create<DataState & DataActions>((set, get) => ({
             chartType = tool.default_chart_type as VisualizationConfig['chart_type'];
         }
         
-        // Apply axis hints from chart_config, or fall back to first columns
+        // Apply axis hints from chart_config, or use smart auto-detection
         let xAxis = state.xAxis;
         let yAxis = state.yAxis;
         
         if (result && result.columns.length >= 2) {
-            // Use chart_config hints if available and columns exist in result
+            // Priority 1: Use chart_config hints if available
             if (chartConfig?.x_axis && result.columns.includes(chartConfig.x_axis)) {
                 xAxis = chartConfig.x_axis;
-            } else if (!xAxis) {
-                xAxis = result.columns[0];
             }
-            
             if (chartConfig?.y_axis && result.columns.includes(chartConfig.y_axis)) {
                 yAxis = chartConfig.y_axis;
-            } else if (!yAxis) {
-                yAxis = result.columns[1];
+            }
+            
+            // Priority 2: Smart auto-detection by column name patterns
+            if (!xAxis) {
+                const cols = result.columns.map(c => c.toLowerCase());
+                const dateCol = result.columns.find((_, i) => 
+                    cols[i].includes('date')    ||
+                    cols[i].includes('time')    ||
+                    cols[i].includes('created') ||
+                    cols[i].includes('updated')
+                );
+                xAxis = dateCol || result.columns[0];
+            }
+            
+            if (!yAxis) {
+                const cols = result.columns.map(c => c.toLowerCase());
+                const numericCol = result.columns.find((_, i) => 
+                    cols[i].includes('total')    ||
+                    cols[i].includes('count')    ||
+                    cols[i].includes('sum')      ||
+                    cols[i].includes('hours')    ||
+                    cols[i].includes('amount')   ||
+                    cols[i].includes('quantity') ||
+                    cols[i].includes('pieces')   ||
+                    cols[i].includes('weight')
+                );
+                yAxis = numericCol || result.columns[1];
             }
         }
         

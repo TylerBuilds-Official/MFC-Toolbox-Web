@@ -3,7 +3,7 @@
  * Grouped by category with collapsible sections
  */
 
-import { useState, useMemo } from 'react';
+import {useState, useMemo, type JSX} from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDataStore } from '../../store/useDataStore';
 import { useDataApi } from '../../store/useDataApi';

@@ -5,6 +5,7 @@
 import { useDataStore } from '../../store/useDataStore';
 import type { VisualizationConfig } from '../../types/data';
 import styles from '../../styles/data_page/DataChartTypeToggle.module.css';
+import type {JSX} from "react";
 
 type ChartType = VisualizationConfig['chart_type'];
 

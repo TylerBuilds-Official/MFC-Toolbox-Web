@@ -97,6 +97,7 @@ export const useDataStore = create<DataState & DataActions>((set, get) => ({
         activeResult: null,
         xAxis: null,
         yAxis: null,
+        chartType: 'bar',  // Reset to default so hints can be applied on result load
     }),
     
     updateSession: (session) => set((state) => ({
@@ -110,16 +111,37 @@ export const useDataStore = create<DataState & DataActions>((set, get) => ({
     
     // Results
     setActiveResult: (result) => set((state) => {
-        // Auto-select first two columns for axes if not set
+        // Get chart config from the active session's tool
+        const tool = state.tools.find(t => t.name === state.activeSession?.tool_name);
+        const chartConfig = tool?.chart_config;
+        
+        // Apply chart type hint if available
+        let chartType = state.chartType;
+        if (tool?.default_chart_type && state.chartType === 'bar') {
+            // Only override if still on default 'bar'
+            chartType = tool.default_chart_type as VisualizationConfig['chart_type'];
+        }
+        
+        // Apply axis hints from chart_config, or fall back to first columns
         let xAxis = state.xAxis;
         let yAxis = state.yAxis;
         
         if (result && result.columns.length >= 2) {
-            if (!xAxis) xAxis = result.columns[0];
-            if (!yAxis) yAxis = result.columns[1];
+            // Use chart_config hints if available and columns exist in result
+            if (chartConfig?.x_axis && result.columns.includes(chartConfig.x_axis)) {
+                xAxis = chartConfig.x_axis;
+            } else if (!xAxis) {
+                xAxis = result.columns[0];
+            }
+            
+            if (chartConfig?.y_axis && result.columns.includes(chartConfig.y_axis)) {
+                yAxis = chartConfig.y_axis;
+            } else if (!yAxis) {
+                yAxis = result.columns[1];
+            }
         }
         
-        return { activeResult: result, xAxis, yAxis };
+        return { activeResult: result, xAxis, yAxis, chartType };
     }),
     
     // Visualization Config

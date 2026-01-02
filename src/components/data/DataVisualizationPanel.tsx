@@ -3,7 +3,7 @@
  * Shows chart, table, or empty state depending on data
  */
 
-import { useDataStore } from '../../store/useDataStore';
+import { useDataStore } from '../../store';
 import type { DataSession, DataResult } from '../../types/data';
 import DataEmptyState from './DataEmptyState';
 import DataChartCanvas from './DataChartCanvas';

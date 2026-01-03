@@ -3,7 +3,6 @@ import react from '@vitejs/plugin-react'
 import fs from 'fs'
 import path from 'path'
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
   server: {
@@ -12,6 +11,13 @@ export default defineConfig({
     https: {
       key: fs.readFileSync(path.resolve(__dirname, 'localhost+3-key.pem')),
       cert: fs.readFileSync(path.resolve(__dirname, 'localhost+3.pem')),
+    },
+    proxy: {
+      '/api': {
+        target: 'http://10.0.59.72:8000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      }
     }
   }
 })

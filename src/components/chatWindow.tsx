@@ -1,6 +1,4 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import ReactMarkdown, {type Components } from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { useApi } from "../auth";
 import { useAuth } from "../auth";
 import { useToast } from "./Toast";
@@ -10,10 +8,10 @@ import ThinkingBlock from "./ThinkingBlock";
 import type { Message } from "../types/conversation";
 import "../styles/chatWindow.css";
 import ModelSelector from "./modelSelector";
-import CodeBlock from "./CodeBlock";
 import MessageCopyButton from "./MessageCopyButton";
 import RegenResponseButton from "./RegenResponseButton.tsx";
 import LoadingSpinner from "./loadingSpinner.tsx";
+import MessageContent from "./MessageContent";
 
 
 // Types
@@ -632,40 +630,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
 
     // =========================================================================
-    // Markdown Components
-    // =========================================================================
-
-    const markdownComponents: Components = {
-        code({ className, children, ...props }) {
-            const match = /language-(\w+)/.exec(className || "");
-            const isInline = !className && !String(children).includes("\n");
-
-            if (isInline) {
-                return <code className="inline-code" {...props}>{children}</code>;
-            }
-
-            return (
-                <CodeBlock language={match?.[1]}>
-                    {String(children).replace(/\n$/, "")}
-                </CodeBlock>
-            );
-        },
-
-        pre({ children }) {
-            return <>{children}</>;
-        },
-
-        table({ children, ...props }) {
-            return (
-                <div className="table-wrapper">
-                    <table {...props}>{children}</table>
-                </div>
-            );
-        },
-    };
-
-
-    // =========================================================================
     // Render
     // =========================================================================
 
@@ -772,12 +736,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                                                 <span></span>
                                             </div>
                                         ) : (
-                                            <ReactMarkdown
-                                                components={markdownComponents}
-                                                remarkPlugins={[remarkGfm]}
-                                            >
-                                                {message.content}
-                                            </ReactMarkdown>
+                                            <MessageContent
+                                                content={message.content}
+                                                isStreaming={message.status === 'streaming'}
+                                            />
                                         )}
                                     </div>
                                 </>

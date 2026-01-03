@@ -9,7 +9,6 @@ import type {
     DataResult,
     DataTool,
     VisualizationConfig,
-    CreateDataSessionRequest,
 } from '../types/data';
 
 interface DataState {
@@ -75,7 +74,7 @@ const initialState: DataState = {
     yAxis: null,
 };
 
-export const useDataStore = create<DataState & DataActions>((set, get) => ({
+export const useDataStore = create<DataState & DataActions>((set) => ({
     ...initialState,
     
     // Sidebar

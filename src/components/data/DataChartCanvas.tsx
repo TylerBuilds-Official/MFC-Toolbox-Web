@@ -228,7 +228,7 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
                     }}
                     labelStyle={{ color: 'var(--text-primary)' }}
                     labelFormatter={formatTooltipValue}
-                    formatter={(value: number, name: string) => [value.toLocaleString(), formatLabel(name)]}
+                    formatter={(value: number | undefined, name: string | undefined): [string, string] => [(value ?? 0).toLocaleString(), formatLabel(name ?? '')]}
                 />
                 <Legend formatter={formatLabel} />
                 {seriesNames.map((name, index) => (
@@ -281,7 +281,7 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
                     }}
                     labelStyle={{ color: 'var(--text-primary)' }}
                     labelFormatter={formatTooltipValue}
-                    formatter={(value: number, name: string) => [value.toLocaleString(), formatLabel(name)]}
+                    formatter={(value: number | undefined, name: string | undefined): [string, string] => [(value ?? 0).toLocaleString(), formatLabel(name ?? '')]}
                 />
                 <Legend formatter={formatLabel} />
                 {seriesNames.map((name, index) => (
@@ -327,7 +327,7 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
                                     borderRadius: '8px',
                                 }}
                                 labelStyle={{ color: 'var(--text-primary)' }}
-                                formatter={(value: number) => [value.toLocaleString(), axisLabels.y]}
+                                formatter={(value: number | undefined): [string, string] => [(value ?? 0).toLocaleString(), axisLabels.y]}
                             />
                             <Legend />
                             <Bar
@@ -368,7 +368,7 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
                                     borderRadius: '8px',
                                 }}
                                 labelStyle={{ color: 'var(--text-primary)' }}
-                                formatter={(value: number) => [value.toLocaleString(), axisLabels.y]}/>
+                                formatter={(value: number | undefined): [string, string] => [(value ?? 0).toLocaleString(), axisLabels.y]}/>
 
                             <Legend />
                             <Line

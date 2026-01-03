@@ -81,6 +81,7 @@ export function formatColumnName(value: string): string {
 
 /**
  * Format axis tick values - handles dates and long strings
+ * Compact format for chart axes (no year)
  */
 export function formatTickValue(value: string): string {
     if (!value) return '';
@@ -101,6 +102,30 @@ export function formatTickValue(value: string): string {
     
     return value;
 }
+
+/**
+ * Format date with year - for card/detail displays
+ * "2025-01-15" → "Jan 15, 2025"
+ */
+function formatDateWithYear(value: string): string {
+    if (!value) return '';
+    
+    const isoDateRegex = /^\d{4}-\d{2}-\d{2}/;
+    if (isoDateRegex.test(value)) {
+        const date = new Date(value);
+        if (!isNaN(date.getTime())) {
+            return date.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric',
+                year: 'numeric'
+            });
+        }
+    }
+    
+    return value;
+}
+
+export default formatDateWithYear
 
 /**
  * Format full value for tooltips - more detailed than tick labels
@@ -137,6 +162,30 @@ export function formatYAxisValue(value: number): string {
         return (value / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
     }
     return value.toLocaleString();
+}
+
+/**
+ * PM Name Mapping - First names from DB → Full names
+ */
+const PM_NAME_MAP: Record<string, string> = {
+    'Blake':     'Blake Reed',
+    'Conrad':    'Conrad Schmidt',
+    'Evan':      'Evan Weaver',
+    'James':     'James',
+    'Joe':       'Joe Lenoue',
+    'Ken':       'Ken Bastine',
+    'Matt Leon': 'Matt Leon',
+    'Quintin':   'Quintin Porterfield',
+    'Raymond':   'Raymond Rodriguez',
+};
+
+/**
+ * Format PM name from DB first name to full name
+ */
+export function formatPMName(value: unknown): string {
+    if (typeof value !== 'string') return String(value ?? '');
+    const trimmed = value.trim();
+    return PM_NAME_MAP[trimmed] || trimmed;
 }
 
 // ============================================

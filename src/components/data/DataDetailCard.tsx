@@ -4,67 +4,135 @@
  */
 
 import type { DataResult } from '../../types/data';
-import { formatColumnName, formatTickValue } from '../../services/api';
+import formatDateWithYear, { formatColumnName, formatPMName } from '../../services/api';
 import styles from '../../styles/data_page/DataDetailCard.module.css';
 
 interface DataDetailCardProps {
     result: DataResult;
 }
 
-/**
- * Detect value type for formatting
- */
-type ValueType = 'string' | 'number' | 'date' | 'empty';
+// =============================================================================
+// Value Type Detection & Formatting
+// =============================================================================
+
+type ValueType = 'string' | 'number' | 'date' | 'empty' | 'currency' | 'weight' | 'hours';
+
+const isNumeric = (value: unknown): boolean => {
+    if (typeof value === 'number') return true;
+    if (typeof value === 'string' && value !== '' && !isNaN(Number(value))) return true;
+    return false;
+};
 
 const detectValueType = (value: unknown, colName: string): ValueType => {
     if (value === null || value === undefined || value === '') return 'empty';
-    if (typeof value === 'number')                              return 'number';
     
-    if (typeof value === 'string') {
-        // Check for ISO date format
-        if (/^\d{4}-\d{2}-\d{2}/.test(value)) return 'date';
+    const col = colName.toLowerCase();
+    
+    // Currency check FIRST (before date, since "CostsToDate" contains "date")
+    if (isNumeric(value)) {
+        if (col.includes('amount') || col.includes('cost')) return 'currency';
+        if (col.includes('contract') && !col.includes('contractor')) return 'currency';
+        if (col.includes('weight')) return 'weight';
+        if (col.includes('hours'))  return 'hours';
     }
     
-    // Check column name hints
-    const col = colName.toLowerCase();
-    if (col.includes('date') || col.includes('time')) return 'date';
+    // Date patterns - be more specific
+    const isDateField = col.endsWith('date') || col.startsWith('date') || 
+                        col === 'targetdelivery' || col === 'erectdate' || col === 'startdate';
+    if (isDateField) return 'date';
+    if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) return 'date';
+    
+    // Generic numeric
+    if (isNumeric(value)) return 'number';
     
     return 'string';
 };
 
-/**
- * Format value for display based on type
- */
+const formatNumber = (value: number): string => {
+    const rounded = Math.round(value * 100) / 100;
+    return rounded.toLocaleString(undefined, { 
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2 
+    });
+};
+
 const formatValue = (value: unknown, type: ValueType): string => {
     switch (type) {
-        case 'empty':  return '—';
-        case 'number': return (value as number).toLocaleString();
-        case 'date':   return formatTickValue(String(value));
-        default:       return String(value);
+        case 'empty':    return '—';
+        case 'currency': return '$' + formatNumber(Number(value));
+        case 'weight':   return formatNumber(Number(value)) + ' lbs';
+        case 'hours':    return formatNumber(Number(value)) + ' hrs';
+        case 'number':   return formatNumber(Number(value));
+        case 'date':     return formatDateWithYear(String(value));
+        default:         return String(value);
     }
 };
 
-/**
- * Check if field should be full-width (long text)
- */
-const isLongTextField = (value: unknown, colName: string): boolean => {
+// =============================================================================
+// Field Classification
+// =============================================================================
+
+const isFullWidthField = (colName: string): boolean => {
     const col = colName.toLowerCase();
-    if (col.includes('description') || col.includes('notes') || col.includes('comment')) return true;
-    if (typeof value === 'string' && value.length > 100)                                  return true;
-    
-    return false;
+    return col === 'notes' || col.includes('description') || col.includes('comment');
 };
 
-/**
- * Check if field is a primary identifier
- */
 const isPrimaryField = (colName: string): boolean => {
     const col = colName.toLowerCase();
-    return col.includes('job') && (col.includes('number') || col.includes('id') || col.includes('name'));
+    return col === 'jobnumber' || col === 'jobname';
 };
 
+// =============================================================================
+// Conditional Styling
+// =============================================================================
+
+const getStatusStyle = (value: unknown): string | null => {
+    if (typeof value !== 'string') return null;
+    
+    const status = value.toLowerCase();
+    if (status === 'active')                         return 'positive';
+    if (status === 'on hold' || status === 'onhold') return 'warning';
+    if (status === 'complete')                       return 'neutral';
+    
+    return null;
+};
+
+const getSteelStatusStyle = (value: unknown): string | null => {
+    if (typeof value !== 'string') return null;
+    
+    const status = value.toLowerCase();
+    if (status === 'fully ordered') return 'positive';
+    
+    return 'warning';
+};
+
+const getHoursStyle = (
+    colName: string,
+    value: unknown,
+    rowData: Record<string, unknown>
+): string | null => {
+    const col    = colName.toLowerCase();
+    const numVal = typeof value === 'number' ? value : Number(value);
+    
+    if (col === 'hoursremaining') {
+        return numVal > 0 ? 'positive' : 'negative';
+    }
+    
+    if (col === 'hoursused') {
+        const total = Number(rowData['TotalHours']) || 0;
+        if (total > 0) {
+            return numVal <= total ? 'positive' : 'negative';
+        }
+    }
+    
+    return null;
+};
+
+// =============================================================================
+// Component
+// =============================================================================
+
 const DataDetailCard = ({ result }: DataDetailCardProps) => {
-    // Handle empty result
     if (!result.rows.length) {
         return (
             <div className={styles.card}>
@@ -74,6 +142,75 @@ const DataDetailCard = ({ result }: DataDetailCardProps) => {
     }
 
     const row = result.rows[0];
+    
+    // Build lookup object for conditional logic
+    const rowData: Record<string, unknown> = {};
+    result.columns.forEach((col, i) => {
+        rowData[col] = row[i];
+    });
+
+    // Separate full-width fields from regular fields
+    const regularFields: { col: string; index: number }[] = [];
+    const fullWidthFields: { col: string; index: number }[] = [];
+    
+    result.columns.forEach((col, i) => {
+        if (isFullWidthField(col)) {
+            fullWidthFields.push({ col, index: i });
+        } else {
+            regularFields.push({ col, index: i });
+        }
+    });
+
+    // Render a single field
+    const renderField = (col: string, index: number, isFullWidth: boolean = false) => {
+        const value     = row[index];
+        const valueType = detectValueType(value, col);
+        const isPrimary = isPrimaryField(col);
+        const colLower  = col.toLowerCase();
+        
+        // Determine conditional styling
+        let conditionalStyle: string | null = null;
+        if (colLower === 'status')           conditionalStyle = getStatusStyle(value);
+        else if (colLower === 'steelstatus') conditionalStyle = getSteelStatusStyle(value);
+        else                                 conditionalStyle = getHoursStyle(col, value, rowData);
+
+        const fieldClasses = [
+            styles.field,
+            isFullWidth && styles.fullWidth,
+            isPrimary   && styles.primary,
+        ].filter(Boolean).join(' ');
+
+        const valueClasses = [
+            styles.fieldValue,
+            valueType === 'empty'           && styles.empty,
+            valueType === 'number'          && styles.number,
+            valueType === 'currency'        && styles.number,
+            valueType === 'weight'          && styles.number,
+            valueType === 'hours'           && styles.number,
+            valueType === 'date'            && styles.date,
+            conditionalStyle === 'positive' && styles.positive,
+            conditionalStyle === 'negative' && styles.negative,
+            conditionalStyle === 'warning'  && styles.warning,
+            conditionalStyle === 'neutral'  && styles.neutral,
+        ].filter(Boolean).join(' ');
+
+        // Format display value (with PM name mapping)
+        let displayValue = formatValue(value, valueType);
+        if (colLower === 'projectmanager') {
+            displayValue = formatPMName(value);
+        }
+
+        return (
+            <div key={col} className={fieldClasses}>
+                <span className={styles.fieldLabel}>
+                    {formatColumnName(col)}
+                </span>
+                <span className={valueClasses}>
+                    {displayValue}
+                </span>
+            </div>
+        );
+    };
 
     return (
         <div className={styles.card}>
@@ -87,42 +224,22 @@ const DataDetailCard = ({ result }: DataDetailCardProps) => {
                         <line x1="16" y1="17" x2="8" y2="17" />
                     </svg>
                 </div>
-                <span className={styles.headerTitle}>Record Details</span>
+                <span className={styles.headerTitle}>
+                    {rowData['JobName'] ? String(rowData['JobName']) : 'Record Details'}
+                </span>
             </div>
 
-            {/* Fields Grid */}
+            {/* Two-column grid for regular fields */}
             <div className={styles.grid}>
-                {result.columns.map((col, i) => {
-                    const value     = row[i];
-                    const valueType = detectValueType(value, col);
-                    const isLong    = isLongTextField(value, col);
-                    const isPrimary = isPrimaryField(col);
-
-                    const fieldClasses = [
-                        styles.field,
-                        isLong    && styles.fullWidth,
-                        isPrimary && styles.primary,
-                    ].filter(Boolean).join(' ');
-
-                    const valueClasses = [
-                        styles.fieldValue,
-                        valueType === 'empty'  && styles.empty,
-                        valueType === 'number' && styles.number,
-                        valueType === 'date'   && styles.date,
-                    ].filter(Boolean).join(' ');
-
-                    return (
-                        <div key={col} className={fieldClasses}>
-                            <span className={styles.fieldLabel}>
-                                {formatColumnName(col)}
-                            </span>
-                            <span className={valueClasses}>
-                                {formatValue(value, valueType)}
-                            </span>
-                        </div>
-                    );
-                })}
+                {regularFields.map(({ col, index }) => renderField(col, index, false))}
             </div>
+
+            {/* Full-width fields at bottom (Notes, etc.) */}
+            {fullWidthFields.length > 0 && (
+                <div className={styles.notesSection}>
+                    {fullWidthFields.map(({ col, index }) => renderField(col, index, true))}
+                </div>
+            )}
         </div>
     );
 };

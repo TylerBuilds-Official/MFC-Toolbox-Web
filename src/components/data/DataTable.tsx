@@ -4,7 +4,7 @@
 
 import { useState, useMemo } from 'react';
 import type { DataResult } from '../../types/data';
-import { formatColumnName } from '../../services/api';
+import { formatColumnName, formatPMName } from '../../services/api';
 import styles from '../../styles/data_page/DataTable.module.css';
 
 interface DataTableProps {
@@ -209,10 +209,16 @@ const DataTable = ({ result }: DataTableProps) => {
         }
     };
 
-    const formatValue = (value: unknown): string => {
+    const formatValue = (value: unknown, colName: string): string => {
         if (value === null || value === undefined) {
             return '—';
         }
+        
+        // PM name mapping
+        if (colName.toLowerCase() === 'projectmanager') {
+            return formatPMName(value);
+        }
+        
         if (typeof value === 'number') {
             return value.toLocaleString();
         }
@@ -255,7 +261,9 @@ const DataTable = ({ result }: DataTableProps) => {
                     {sortedRows.map((row, rowIndex) => (
                         <tr key={rowIndex}>
                             {row.map((cell, cellIndex) => (
-                                <td key={cellIndex}>{formatValue(cell)}</td>
+                                <td key={cellIndex}>
+                                    {formatValue(cell, result.columns[cellIndex])}
+                                </td>
                             ))}
                         </tr>
                     ))}

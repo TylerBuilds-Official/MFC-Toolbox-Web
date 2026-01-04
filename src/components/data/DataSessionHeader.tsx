@@ -17,6 +17,9 @@ const DataSessionHeader = ({ session }: DataSessionHeaderProps) => {
             .join(' ');
     };
 
+    // Use title if available, otherwise format tool name
+    const displayTitle = session.title || formatToolName(session.tool_name);
+
     const formatDate = (dateString: string): string => {
         const date = new Date(dateString);
         return date.toLocaleString();
@@ -39,7 +42,7 @@ const DataSessionHeader = ({ session }: DataSessionHeaderProps) => {
         <div className={styles.header}>
             <div className={styles.info}>
                 <h2 className={styles.toolName}>
-                    {formatToolName(session.tool_name)}
+                    {displayTitle}
                 </h2>
                 <div className={styles.meta}>
                     <span className={`${styles.status} ${getStatusColor(session.status)}`}>

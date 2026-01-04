@@ -23,6 +23,7 @@ interface DataState {
     isExecuting: boolean;
     error: string | null;
     sidebarOpen: boolean;
+    sessionSidebarOpen: boolean;
     
     // Visualization State
     chartType: VisualizationConfig['chart_type'];
@@ -33,6 +34,7 @@ interface DataState {
 interface DataActions {
     // Sidebar
     setSidebarOpen: (open: boolean) => void;
+    setSessionSidebarOpen: (open: boolean) => void;
     
     // Tools
     setTools: (tools: DataTool[]) => void;
@@ -42,6 +44,7 @@ interface DataActions {
     addSession: (session: DataSession) => void;
     setActiveSession: (session: DataSession | null) => void;
     updateSession: (session: DataSession) => void;
+    removeSession: (sessionId: number) => void;
     
     // Results
     setActiveResult: (result: DataResult | null) => void;
@@ -69,6 +72,7 @@ const initialState: DataState = {
     isExecuting: false,
     error: null,
     sidebarOpen: false,
+    sessionSidebarOpen: false,
     chartType: 'bar',
     xAxis: null,
     yAxis: null,
@@ -79,6 +83,7 @@ export const useDataStore = create<DataState & DataActions>((set) => ({
     
     // Sidebar
     setSidebarOpen: (open) => set({ sidebarOpen: open }),
+    setSessionSidebarOpen: (open) => set({ sessionSidebarOpen: open }),
     
     // Tools
     setTools: (tools) => set({ tools }),
@@ -106,6 +111,17 @@ export const useDataStore = create<DataState & DataActions>((set) => ({
         activeSession: state.activeSession?.id === session.id 
             ? session 
             : state.activeSession,
+    })),
+    
+    removeSession: (sessionId) => set((state) => ({
+        sessions: state.sessions.filter((s) => s.id !== sessionId),
+        // Clear active session if it was deleted
+        activeSession: state.activeSession?.id === sessionId 
+            ? null 
+            : state.activeSession,
+        activeResult: state.activeSession?.id === sessionId
+            ? null
+            : state.activeResult,
     })),
     
     // Results

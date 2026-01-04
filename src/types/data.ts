@@ -23,6 +23,7 @@ export interface DataSession {
     error_message: string | null;
     created_at: string;
     updated_at: string;
+    title: string | null;
     has_results?: boolean;
 }
 

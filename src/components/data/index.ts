@@ -12,3 +12,5 @@ export { default as DataEmptyState } from './DataEmptyState';
 export { default as DataSessionHeader } from './DataSessionHeader';
 export { default as DataTable } from './DataTable';
 export { default as DataDetailCard } from './DataDetailCard';
+export { default as DataSessionSidebar } from './DataSessionSidebar';
+export { default as DataSessionItem } from './DataSessionItem';

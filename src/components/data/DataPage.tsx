@@ -10,6 +10,7 @@ import { useDataApi } from '../../store/useDataApi';
 import DataToolSidebar from './DataToolSidebar';
 import DataVisualizationPanel from './DataVisualizationPanel';
 import DataSessionHeader from './DataSessionHeader';
+import DataSessionSidebar from './DataSessionSidebar';
 import SidebarToggleWrench from '../../assets/svg/toolbox/sidebarToggleWrench';
 import styles from '../../styles/data_page/DataPage.module.css';
 
@@ -24,6 +25,8 @@ const DataPage = () => {
         error,
         sidebarOpen,
         setSidebarOpen,
+        sessionSidebarOpen,
+        setSessionSidebarOpen,
     } = useDataStore();
     
     const { fetchSession, fetchResults, fetchTools } = useDataApi();
@@ -93,7 +96,26 @@ const DataPage = () => {
                     result={activeResult}
                     isLoading={isLoading}
                 />
+
+                {/* Toggle button for sessions sidebar */}
+                <button
+                    className={styles.sessionToggle}
+                    onClick={() => setSessionSidebarOpen(true)}
+                    aria-label="View Sessions"
+                    title="View Sessions"
+                >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="12 6 12 12 16 14" />
+                    </svg>
+                </button>
             </div>
+
+            {/* Sessions Sidebar */}
+            <DataSessionSidebar
+                isOpen={sessionSidebarOpen}
+                onClose={() => setSessionSidebarOpen(false)}
+            />
         </div>
     );
 };

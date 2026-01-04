@@ -31,6 +31,7 @@ export function useDataApi() {
     const addSession = useDataStore((state) => state.addSession);
     const setActiveSession = useDataStore((state) => state.setActiveSession);
     const updateSessionInStore = useDataStore((state) => state.updateSession);
+    const removeSessionFromStore = useDataStore((state) => state.removeSession);
     const setActiveResult = useDataStore((state) => state.setActiveResult);
 
     /**
@@ -239,6 +240,25 @@ export function useDataApi() {
         };
     }, [createSession, executeSession]);
 
+    /**
+     * Soft delete a session
+     */
+    const deleteSession = useCallback(async (sessionId: number): Promise<void> => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            await api.delete(`/data/sessions/${sessionId}`);
+            removeSessionFromStore(sessionId);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to delete session';
+            setError(message);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    }, [api, setLoading, setError, removeSessionFromStore]);
+
     return useMemo(() => ({
         fetchTools,
         fetchSessions,
@@ -249,6 +269,7 @@ export function useDataApi() {
         updateSession,
         fetchSessionGroup,
         createAndExecute,
+        deleteSession,
     }), [
         fetchTools,
         fetchSessions,
@@ -259,5 +280,6 @@ export function useDataApi() {
         updateSession,
         fetchSessionGroup,
         createAndExecute,
+        deleteSession,
     ]);
 }

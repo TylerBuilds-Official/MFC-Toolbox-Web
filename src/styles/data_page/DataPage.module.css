@@ -48,6 +48,33 @@
     transform: scale(1.05);
 }
 
+/* Session History Toggle Button (right side) */
+.sessionToggle {
+    position: fixed;
+    right: var(--space-4);
+    top: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    padding: var(--space-2);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, color 0.2s ease;
+    z-index: 10;
+}
+
+.sessionToggle:hover {
+    background: var(--bg-hover-light);
+    border-color: var(--accent-muted);
+    color: var(--text-primary);
+    transform: scale(1.05);
+}
+
 /* Error Banner */
 .errorBanner {
     display: flex;
@@ -73,6 +100,12 @@
 
     .sidebarToggle {
         left: var(--space-3);
+        width: 44px;
+        height: 44px;
+    }
+
+    .sessionToggle {
+        right: var(--space-3);
         width: 44px;
         height: 44px;
     }

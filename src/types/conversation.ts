@@ -1,5 +1,4 @@
 import type { Message } from "./message.ts";
-export type { Message };
 
 export interface Conversation {
     id: number;

@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import { useApi } from '../auth';
 import { useAuth } from '../auth';
 import { useToast } from '../components/Toast';
-import type { Conversation, Message, ConversationWithMessages, ConversationsResponse } from '../types/conversation';
+import type { Conversation, ConversationWithMessages, ConversationsResponse } from '../types/conversation';
+import type { Message } from '../types/message';
 import '../styles/home.css';
 import '../styles/auth.css'
-import ChatWindow from "../components/chatWindow";
+import ChatWindow from "../components/chat_window/chatWindow";
 import ToolboxSidebar from "../components/ToolboxSidebar";
 import ConversationSidebar from "../components/ConversationSidebar";
 import SidebarToggleWrench from "../assets/svg/toolbox/sidebarToggleWrench";

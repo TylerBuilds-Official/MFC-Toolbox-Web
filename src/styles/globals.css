@@ -7,7 +7,7 @@
   --bg-primary: #0a0d12;
   --bg-secondary: #0f1419;
   --bg-surface: #151b23;
-  --bg-elevated: #1c232d;
+  --bg-elevated: rgba(28, 35, 45, 0.63);
   --bg-hover: #242d3a;
   --bg-hover-light: rgba(36, 45, 58, 0.39);
 
@@ -16,6 +16,9 @@
   --accent-hover: #2563eb;
   --accent-muted: rgba(59, 130, 246, 0.15);
   --accent-glow: rgba(59, 130, 246, 0.25);
+
+  /* Markdown Colors */
+  --blockquote-bg: rgba(46, 111, 213, 0.09);
   
   /* Success/Warning/Error */
   --success: #76de9d;

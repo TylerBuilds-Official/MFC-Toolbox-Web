@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { getAvailableTriggers, type Trigger } from '../triggers';
-import { useAuth } from '../auth';
-import '../styles/commandContextMenu.css';
+import { getAvailableTriggers, type Trigger } from '../../triggers';
+import { useAuth } from '../../auth';
+import '../../styles/commandContextMenu.css';
 
 
 // Icons

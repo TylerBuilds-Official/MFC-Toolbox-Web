@@ -1,0 +1,173 @@
+import React from 'react';
+import type { DisplayMessage } from '../../types/chat';
+import { formatMessageTime } from '../../services/chatService';
+
+import ThinkingBlock from '../ThinkingBlock';
+import MessageContent from '../MessageContent';
+import MessageCopyButton from '../MessageCopyButton';
+import RegenResponseButton from '../RegenResponseButton';
+import MessageEditor from './MessageEditor';
+import TypingIndicator from './TypingIndicator';
+
+import { RetryIcon, WarningIcon, EditIcon } from '../../assets/svg/chat_window';
+
+
+interface ChatMessageProps {
+    message: DisplayMessage;
+    index: number;
+    
+    // Streaming state
+    streamingMessageId: number | null;
+    thinkingContent: string;
+    isThinkingActive: boolean;
+    
+    // Editing state
+    editingMessageId: number | null;
+    editedContent: string;
+    isRegenerating: boolean;
+    
+    // Callbacks
+    onRetry: (id: number, content: string) => void;
+    onStartEdit: (id: number, content: string) => void;
+    onCancelEdit: () => void;
+    onSaveEdit: (index: number) => void;
+    onEditChange: (content: string) => void;
+    onRegenerate: (index: number) => void;
+}
+
+
+const ChatMessage: React.FC<ChatMessageProps> = ({
+    message,
+    index,
+    streamingMessageId,
+    thinkingContent,
+    isThinkingActive,
+    editingMessageId,
+    editedContent,
+    isRegenerating,
+    onRetry,
+    onStartEdit,
+    onCancelEdit,
+    onSaveEdit,
+    onEditChange,
+    onRegenerate,
+}) => {
+    const isEditing   = editingMessageId === message.id;
+    const isStreaming = message.id === streamingMessageId;
+
+    const handleEditKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === "Enter" && e.ctrlKey && !e.shiftKey) {
+            e.preventDefault();
+            onSaveEdit(index);
+        } else if (e.key === "Escape") {
+            onCancelEdit();
+        }
+    };
+
+    const statusClasses = [
+        message.status === 'failed'    ? 'message-failed'    : '',
+        message.status === 'sending'   ? 'message-sending'   : '',
+        message.status === 'streaming' ? 'message-streaming' : '',
+    ].filter(Boolean).join(' ');
+
+    return (
+        <div className={`chat-message ${message.role} ${statusClasses}`}>
+            {/* Edit mode */}
+            {isEditing ? (
+                <MessageEditor
+                    content={editedContent}
+                    onChange={onEditChange}
+                    onSave={() => onSaveEdit(index)}
+                    onCancel={onCancelEdit}
+                    onKeyDown={handleEditKeyDown}
+                />
+            ) : (
+                <>
+                    {/* Thinking block for assistant messages */}
+                    {message.role === "assistant" && (message.thinking || (isStreaming && thinkingContent)) && (
+                        <ThinkingBlock
+                            content={message.thinking || thinkingContent}
+                            isStreaming={isStreaming && isThinkingActive}
+                        />
+                    )}
+
+                    <div className="message-bubble markdown-content">
+                        {message.status === 'streaming' && !message.content ? (
+                            <TypingIndicator />
+                        ) : (
+                            <MessageContent
+                                content={message.content}
+                                isStreaming={message.status === 'streaming'}
+                            />
+                        )}
+                    </div>
+                </>
+            )}
+
+            {/* Failed message indicator */}
+            {message.status === 'failed' && message.role === 'user' && (
+                <div className="message-error-indicator">
+                    <WarningIcon />
+                    <span>Failed to send</span>
+                    <button
+                        className="message-retry-btn"
+                        onClick={() => onRetry(message.id, message.content)}
+                    >
+                        <RetryIcon />
+                        Retry
+                    </button>
+                </div>
+            )}
+
+            {/* Message meta */}
+            <div className="message-meta">
+                {message.role === "assistant" ? (
+                    <>
+                        <div className="message-meta-time">
+                            <span className="message-timestamp">
+                                {message.status === 'streaming' 
+                                    ? 'Streaming...' 
+                                    : formatMessageTime(message.timestamp)}
+                            </span>
+                        </div>
+                        {message.status === 'sent' && (
+                            <div className="msg-btn-wrapper">
+                                <MessageCopyButton textContent={message.content} className="msg-copy-btn" />
+                                <RegenResponseButton
+                                    onRegen={() => onRegenerate(index)}
+                                    isRegenerating={isRegenerating}
+                                    className="msg-regenerate-btn"
+                                />
+                            </div>
+                        )}
+                    </>
+                ) : (
+                    <>
+                        <div className="msg-btn-wrapper">
+                            <MessageCopyButton textContent={message.content} className="msg-copy-btn" />
+                            {!isEditing && message.status !== 'failed' && (
+                                <button
+                                    onClick={() => onStartEdit(message.id, message.content)}
+                                    className="msg-edit-btn"
+                                    aria-label="Edit message"
+                                    title="Edit message"
+                                >
+                                    <EditIcon />
+                                </button>
+                            )}
+                        </div>
+                        <div className="message-meta-time">
+                            <span className="message-timestamp">
+                                {message.status === 'sending' 
+                                    ? 'Sending...' 
+                                    : formatMessageTime(message.timestamp)}
+                            </span>
+                        </div>
+                    </>
+                )}
+            </div>
+        </div>
+    );
+};
+
+export default ChatMessage;

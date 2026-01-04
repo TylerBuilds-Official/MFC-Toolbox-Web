@@ -11,6 +11,7 @@ export type MessageSegment =
     | { type: 'text'; content: string }
     | { type: 'artifact'; artifact: EmbeddedArtifact };
 
+
 /**
  * Parse message content and extract artifact markers.
  * 
@@ -21,6 +22,8 @@ export type MessageSegment =
  *   { type: 'text', content: "\nLet me know!" }
  * ]
  */
+
+
 export function parseMessageContent(content: string): MessageSegment[] {
     const segments: MessageSegment[] = [];
     

@@ -1,10 +1,14 @@
 /**
  * DataSessionItem - Individual session in the sessions sidebar
  * Displays tool name, status, parameters preview, and timestamp
+ * Shows detailed tooltip on hover
  */
 
+import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import type { DataSession } from '../../types/data';
 import { useConfirm } from '../ConfirmDialog';
+import DataSessionTooltip from './DataSessionTooltip';
 import styles from '../../styles/data_page/DataSessionSidebar.module.css';
 
 interface DataSessionItemProps {
@@ -34,6 +38,20 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
 
 const DataSessionItem = ({ session, isActive, onSelect, onDelete }: DataSessionItemProps) => {
     const { confirm } = useConfirm();
+    const [showTooltip, setShowTooltip] = useState(false);
+    const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
+    const itemRef = useRef<HTMLDivElement>(null);
+    
+    // Update tooltip position when showing
+    useEffect(() => {
+        if (showTooltip && itemRef.current) {
+            const rect = itemRef.current.getBoundingClientRect();
+            setTooltipPosition({
+                top: rect.top + rect.height / 2,
+                left: rect.left - 16, // 16px gap from the item
+            });
+        }
+    }, [showTooltip]);
     
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
@@ -103,8 +121,11 @@ const DataSessionItem = ({ session, isActive, onSelect, onDelete }: DataSessionI
 
     return (
         <div
+            ref={itemRef}
             className={`${styles.sessionItem} ${isActive ? styles.active : ''}`}
             onClick={onSelect}
+            onMouseEnter={() => setShowTooltip(true)}
+            onMouseLeave={() => setShowTooltip(false)}
         >
             <div className={styles.sessionIcon}>{icon}</div>
             
@@ -138,6 +159,15 @@ const DataSessionItem = ({ session, isActive, onSelect, onDelete }: DataSessionI
                     <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
                 </svg>
             </button>
+
+            {/* Hover Tooltip - rendered via portal to escape overflow clipping */}
+            {showTooltip && createPortal(
+                <DataSessionTooltip 
+                    session={session} 
+                    position={tooltipPosition}
+                />,
+                document.body
+            )}
         </div>
     );
 };

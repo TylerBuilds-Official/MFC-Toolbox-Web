@@ -24,6 +24,7 @@ export interface DataSession {
     created_at: string;
     updated_at: string;
     title: string | null;
+    summary: string | null;
     has_results?: boolean;
 }
 

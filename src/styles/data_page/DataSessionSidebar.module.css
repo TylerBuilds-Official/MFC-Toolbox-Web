@@ -136,6 +136,7 @@
    ============================================ */
 
 .sessionItem {
+    position: relative;
     display: flex;
     align-items: flex-start;
     gap: var(--space-3);
@@ -152,6 +153,8 @@
     background: var(--bg-hover-light);
     border-color: var(--accent-muted);
 }
+
+
 
 .sessionItem.active {
     background: var(--bg-hover-light);
@@ -230,6 +233,15 @@
 .deleteBtn:hover {
     background: var(--bg-hover);
     color: var(--error, #ef4444);
+}
+
+.deleteBtn:focus {
+    outline: none;
+}
+
+.deleteBtn:focus-visible {
+    outline: 2px solid var(--accent-primary);
+    outline-offset: 2px;
 }
 
 /* Status Badges */

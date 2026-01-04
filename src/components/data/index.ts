@@ -14,3 +14,4 @@ export { default as DataTable } from './DataTable';
 export { default as DataDetailCard } from './DataDetailCard';
 export { default as DataSessionSidebar } from './DataSessionSidebar';
 export { default as DataSessionItem } from './DataSessionItem';
+export { default as DataSessionTooltip } from './DataSessionTooltip';

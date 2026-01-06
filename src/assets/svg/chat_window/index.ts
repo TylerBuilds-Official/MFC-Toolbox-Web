@@ -1,5 +1,5 @@
-export { default as RetryIcon }    from './RetryIcon';
-export { default as WarningIcon }  from './WarningIcon';
+export { default as RetryIcon }    from './retryIcon';
+export { default as WarningIcon }  from './warningIcon';
 export { default as NewChatIcon }  from './NewChatIcon';
 export { default as SettingsIcon } from './SettingsIcon';
 export { default as SendIcon }     from './SendIcon';

@@ -1,0 +1,482 @@
+/* ============================================
+   DataGroupFolder - Collapsible group folder in sidebar
+   ============================================ */
+
+/* Group Folder Container */
+.groupFolder {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: var(--space-1);
+}
+
+/* Group Header (the clickable folder row) */
+.groupHeader {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+    user-select: none;
+}
+
+.groupHeader:hover {
+    background: var(--bg-hover-light);
+    border-color: var(--accent-muted);
+}
+
+.groupHeader.expanded {
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    border-bottom-color: transparent;
+}
+
+/* Expand/collapse chevron */
+.expandIcon {
+    flex-shrink: 0;
+    color: var(--text-muted);
+    transition: transform 0.2s ease;
+}
+
+.expandIcon.expanded {
+    transform: rotate(90deg);
+}
+
+/* Folder icon with optional color */
+.folderIcon {
+    flex-shrink: 0;
+    color: var(--text-secondary);
+    transition: color 0.2s ease;
+}
+
+.groupHeader:hover .folderIcon {
+    color: var(--text-primary);
+}
+
+/* Group name and info */
+.groupInfo {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.groupName {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.groupMeta {
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+}
+
+/* Session count badge */
+.sessionCount {
+    font-size: 0.6875rem;
+    font-weight: 500;
+    padding: 2px 6px;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+}
+
+/* Group actions (edit, delete) */
+.groupActions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.groupHeader:hover .groupActions {
+    opacity: 1;
+}
+
+.groupActionBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.groupActionBtn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.groupActionBtn.danger:hover {
+    color: var(--error, #ef4444);
+}
+
+/* Expanded content (child sessions) */
+.groupContent {
+    display: none;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-2);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-top: none;
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+    margin-left: 0;
+}
+
+.groupContent.expanded {
+    display: flex;
+}
+
+/* Empty group state */
+.emptyGroup {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-3);
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-style: italic;
+}
+
+/* Sessions inside group have slightly different styling */
+.groupContent .sessionItem {
+    background: var(--bg-secondary);
+}
+
+/* Drop target indicator for drag-and-drop */
+.groupHeader.dropTarget {
+    background: var(--accent-muted);
+    border-color: var(--accent-primary);
+    border-style: dashed;
+}
+
+/* ============================================
+   DataGroupModal - Create/Edit group modal
+   ============================================ */
+
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+    width: 100%;
+    max-width: 400px;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    animation: slideUp 0.2s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modalHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-4);
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.modalHeader h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.modalCloseBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.modalCloseBtn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.modalBody {
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.formGroup label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.formGroup input,
+.formGroup textarea {
+    width: 100%;
+    padding: var(--space-2) var(--space-3);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    transition: border-color 0.2s ease;
+}
+
+.formGroup input:focus,
+.formGroup textarea:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
+.formGroup input::placeholder,
+.formGroup textarea::placeholder {
+    color: var(--text-muted);
+}
+
+.formGroup textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+/* Color picker */
+.colorPicker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.colorOption {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.colorOption:hover {
+    transform: scale(1.1);
+}
+
+.colorOption.selected {
+    border-color: var(--text-primary);
+}
+
+.colorOption.none {
+    background: var(--bg-secondary);
+    border: 2px dashed var(--border-primary);
+}
+
+.colorOption.none.selected {
+    border-style: solid;
+    border-color: var(--text-primary);
+}
+
+.modalFooter {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    border-top: 1px solid var(--border-primary);
+}
+
+.modalBtn {
+    padding: var(--space-2) var(--space-4);
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+.modalBtnCancel {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    color: var(--text-primary);
+}
+
+.modalBtnCancel:hover {
+    background: var(--bg-hover);
+}
+
+.modalBtnPrimary {
+    background: var(--accent-primary);
+    border: 1px solid var(--accent-primary);
+    color: white;
+}
+
+.modalBtnPrimary:hover {
+    opacity: 0.9;
+}
+
+.modalBtnPrimary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ============================================
+   Context Menu for session assignment
+   ============================================ */
+
+.contextMenu {
+    position: fixed;
+    min-width: 180px;
+    padding: var(--space-1) 0;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    z-index: 3000;
+    overflow: visible;
+    animation: fadeIn 0.15s ease;
+}
+
+.contextMenuItem {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    width: calc(100% - var(--space-2));
+    margin: 0 var(--space-1);
+    padding: var(--space-2) var(--space-2);
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 0.8125rem;
+    font-weight: 400;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    text-align: left;
+}
+
+.contextMenuItem:hover {
+    background: var(--bg-hover);
+}
+
+.contextMenuItem.danger {
+    color: var(--error, #ef4444);
+}
+
+.contextMenuDivider {
+    height: 1px;
+    background: var(--border-primary);
+    margin: var(--space-1) 0;
+}
+
+.contextMenuLabel {
+    padding: var(--space-2) var(--space-3);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Submenu for "Move to group" */
+.submenuContainer {
+    position: relative;
+}
+
+.submenu {
+    position: absolute;
+    right: 100%;
+    top: 0;
+    min-width: 160px;
+    padding: var(--space-1) 0;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    z-index: 3001;
+    overflow: hidden;
+}
+
+/* ============================================
+   New Group Button (in sidebar header)
+   ============================================ */
+
+.newGroupBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.newGroupBtn:hover {
+    background: var(--bg-hover);
+    color: var(--accent-primary);
+}
+
+/* ============================================
+   Drag and Drop Styles
+   ============================================ */
+
+.dragging {
+    opacity: 0.5;
+}
+
+.dropTarget {
+    background: var(--accent-muted) !important;
+    border-color: var(--accent-primary) !important;
+}

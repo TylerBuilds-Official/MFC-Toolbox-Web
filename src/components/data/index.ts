@@ -15,3 +15,6 @@ export { default as DataDetailCard } from './DataDetailCard';
 export { default as DataSessionSidebar } from './DataSessionSidebar';
 export { default as DataSessionItem } from './DataSessionItem';
 export { default as DataSessionTooltip } from './DataSessionTooltip';
+export { default as DataGroupFolder } from './DataGroupFolder';
+export { default as DataGroupModal } from './DataGroupModal';
+export { default as SessionContextMenu } from './SessionContextMenu';

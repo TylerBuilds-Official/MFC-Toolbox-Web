@@ -1,0 +1,219 @@
+/**
+ * DataPageSummary Styles
+ * Collapsible summary section at bottom of visualization panel
+ */
+
+.container {
+    border-top: 1px solid var(--border-primary);
+    background: var(--bg-secondary);
+}
+
+/* =============================================================================
+   Header - Collapse Toggle
+   ============================================================================= */
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: var(--space-2) var(--space-4);
+    
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    
+    transition: background-color 0.15s ease;
+}
+
+.header:hover {
+    background: var(--bg-hover);
+}
+
+.header.headerExpanded {
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.headerLeft {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.chevron {
+    color: var(--text-muted);
+    transition: transform 0.2s ease;
+    transform: rotate(0deg);
+}
+
+.chevron.expanded {
+    transform: rotate(90deg);
+}
+
+.headerTitle {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.timestamp {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* =============================================================================
+   Content Area - Smooth Expand/Collapse Animation
+   ============================================================================= */
+
+.contentWrapper {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.25s ease-out;
+}
+
+.contentWrapper.expanded {
+    grid-template-rows: 1fr;
+}
+
+.content {
+    overflow: hidden;
+    padding: 0 var(--space-4);
+    opacity: 0;
+    transition: opacity 0.2s ease-out, padding 0.25s ease-out;
+}
+
+.contentWrapper.expanded .content {
+    padding: var(--space-3) var(--space-4) var(--space-4);
+    opacity: 1;
+}
+
+/* =============================================================================
+   Grid Layout - Summary + Details
+   ============================================================================= */
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 280px;
+    gap: var(--space-4);
+}
+
+@media (max-width: 900px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* =============================================================================
+   AI Summary Section
+   ============================================================================= */
+
+.summarySection {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.sectionHeader {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--accent-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.sectionHeader svg {
+    opacity: 0.8;
+}
+
+.summaryText {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--text-primary);
+}
+
+/* =============================================================================
+   Details Section
+   ============================================================================= */
+
+.detailsSection {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding-left: var(--space-4);
+    border-left: 1px solid var(--border-subtle);
+}
+
+@media (max-width: 900px) {
+    .detailsSection {
+        padding-left: 0;
+        padding-top: var(--space-3);
+        border-left: none;
+        border-top: 1px solid var(--border-subtle);
+    }
+}
+
+.detailGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.detailLabel {
+    font-size: 0.625rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.detailValue {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+}
+
+/* =============================================================================
+   Parameters List
+   ============================================================================= */
+
+.paramsGroup {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.paramsList {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.paramItem {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-size: 0.8125rem;
+}
+
+.paramLabel {
+    font-weight: 500;
+    color: var(--text-muted);
+}
+
+.paramValue {
+    color: var(--text-secondary);
+}
+
+/* =============================================================================
+   Dark Mode
+   ============================================================================= */
+
+:global(.dark) .header:hover {
+    background: rgba(255, 255, 255, 0.03);
+}

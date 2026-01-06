@@ -1,6 +1,6 @@
 /**
  * Data Visualization Types
- * Matches backend DataSession, DataResult, and related models
+ * Matches backend DataSession, DataResult, DataGroup, and related models
  */
 
 export interface VisualizationConfig {
@@ -8,6 +8,17 @@ export interface VisualizationConfig {
     x_axis?: string;
     y_axis?: string;
     options?: Record<string, unknown>;
+}
+
+export interface DataGroup {
+    id: number;
+    user_id: number;
+    name: string;
+    description: string | null;
+    color: string | null;
+    created_at: string;
+    updated_at: string;
+    session_count: number;
 }
 
 export interface DataSession {
@@ -102,4 +113,26 @@ export interface CreateDataSessionRequest {
 export interface UpdateDataSessionRequest {
     visualization_config?: VisualizationConfig;
     status?: string;
+}
+
+// Group API types
+export interface DataGroupsResponse {
+    groups: DataGroup[];
+    count: number;
+}
+
+export interface CreateDataGroupRequest {
+    name: string;
+    description?: string;
+    color?: string;
+}
+
+export interface UpdateDataGroupRequest {
+    name?: string;
+    description?: string;  // Empty string clears
+    color?: string;        // Empty string clears
+}
+
+export interface AssignSessionToGroupRequest {
+    group_id: number;
 }

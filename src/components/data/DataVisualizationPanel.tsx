@@ -11,6 +11,7 @@ import DataChartTypeToggle from './DataChartTypeToggle';
 import DataAxisControls from './DataAxisControls';
 import DataTable from './DataTable';
 import DataDetailCard from './DataDetailCard';
+import DataPageSummary from './DataPageSummary';
 import styles from '../../styles/data_page/DataVisualizationPanel.module.css';
 
 interface DataVisualizationPanelProps {
@@ -123,6 +124,9 @@ const DataVisualizationPanel = ({ session, result, isLoading }: DataVisualizatio
                 {chartType === 'card'  && <DataDetailCard result={result} />}
                 {['bar', 'line', 'pie'].includes(chartType) && <DataChartCanvas result={result} />}
             </div>
+
+            {/* Session Summary */}
+            <DataPageSummary session={session} result={result} />
         </div>
     );
 };

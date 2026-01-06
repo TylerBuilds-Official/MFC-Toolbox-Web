@@ -1,6 +1,6 @@
 /**
  * Data Visualization Store
- * Zustand store for managing data sessions, results, and UI state
+ * Zustand store for managing data sessions, results, groups, and UI state
  */
 
 import { create } from 'zustand';
@@ -8,6 +8,7 @@ import type {
     DataSession,
     DataResult,
     DataTool,
+    DataGroup,
     VisualizationConfig,
 } from '../types/data';
 
@@ -15,6 +16,7 @@ interface DataState {
     // Data
     tools: DataTool[];
     sessions: DataSession[];
+    groups: DataGroup[];
     activeSession: DataSession | null;
     activeResult: DataResult | null;
     
@@ -24,6 +26,7 @@ interface DataState {
     error: string | null;
     sidebarOpen: boolean;
     sessionSidebarOpen: boolean;
+    expandedGroups: Set<number>;  // Track which group folders are expanded
     
     // Visualization State
     chartType: VisualizationConfig['chart_type'];
@@ -46,6 +49,14 @@ interface DataActions {
     updateSession: (session: DataSession) => void;
     removeSession: (sessionId: number) => void;
     
+    // Groups
+    setGroups: (groups: DataGroup[]) => void;
+    addGroup: (group: DataGroup) => void;
+    updateGroup: (group: DataGroup) => void;
+    removeGroup: (groupId: number) => void;
+    toggleGroupExpanded: (groupId: number) => void;
+    setGroupExpanded: (groupId: number, expanded: boolean) => void;
+    
     // Results
     setActiveResult: (result: DataResult | null) => void;
     
@@ -66,6 +77,7 @@ interface DataActions {
 const initialState: DataState = {
     tools: [],
     sessions: [],
+    groups: [],
     activeSession: null,
     activeResult: null,
     isLoading: false,
@@ -73,6 +85,7 @@ const initialState: DataState = {
     error: null,
     sidebarOpen: false,
     sessionSidebarOpen: false,
+    expandedGroups: new Set(),
     chartType: 'bar',
     xAxis: null,
     yAxis: null,
@@ -123,6 +136,48 @@ export const useDataStore = create<DataState & DataActions>((set) => ({
             ? null
             : state.activeResult,
     })),
+    
+    // Groups
+    setGroups: (groups) => set({ groups }),
+    
+    addGroup: (group) => set((state) => ({
+        groups: [group, ...state.groups],
+    })),
+    
+    updateGroup: (group) => set((state) => ({
+        groups: state.groups.map((g) => 
+            g.id === group.id ? group : g
+        ),
+    })),
+    
+    removeGroup: (groupId) => set((state) => {
+        const newExpanded = new Set(state.expandedGroups);
+        newExpanded.delete(groupId);
+        return {
+            groups: state.groups.filter((g) => g.id !== groupId),
+            expandedGroups: newExpanded,
+        };
+    }),
+    
+    toggleGroupExpanded: (groupId) => set((state) => {
+        const newExpanded = new Set(state.expandedGroups);
+        if (newExpanded.has(groupId)) {
+            newExpanded.delete(groupId);
+        } else {
+            newExpanded.add(groupId);
+        }
+        return { expandedGroups: newExpanded };
+    }),
+    
+    setGroupExpanded: (groupId, expanded) => set((state) => {
+        const newExpanded = new Set(state.expandedGroups);
+        if (expanded) {
+            newExpanded.add(groupId);
+        } else {
+            newExpanded.delete(groupId);
+        }
+        return { expandedGroups: newExpanded };
+    }),
     
     // Results
     setActiveResult: (result) => set((state) => {
@@ -199,6 +254,7 @@ export const useDataStore = create<DataState & DataActions>((set) => ({
 export const useActiveSession = () => useDataStore((state) => state.activeSession);
 export const useActiveResult = () => useDataStore((state) => state.activeResult);
 export const useDataTools = () => useDataStore((state) => state.tools);
+export const useDataGroups = () => useDataStore((state) => state.groups);
 export const useVisualizationConfig = () => useDataStore((state) => ({
     chartType: state.chartType,
     xAxis: state.xAxis,
@@ -211,3 +267,22 @@ export const useActiveChartConfig = () => useDataStore((state) => {
     const tool = state.tools.find(t => t.name === state.activeSession?.tool_name);
     return tool?.chart_config ?? null;
 });
+
+// Helper function to organize sessions by group (use with useMemo in components)
+export const organizeSessionsByGroup = (sessions: DataSession[]) => {
+    const grouped: Record<number, DataSession[]> = {};
+    const ungrouped: DataSession[] = [];
+    
+    sessions.forEach((session) => {
+        if (session.session_group_id) {
+            if (!grouped[session.session_group_id]) {
+                grouped[session.session_group_id] = [];
+            }
+            grouped[session.session_group_id].push(session);
+        } else {
+            ungrouped.push(session);
+        }
+    });
+    
+    return { grouped, ungrouped };
+};

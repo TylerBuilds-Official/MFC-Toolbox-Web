@@ -10,13 +10,17 @@ import type {
     DataSession,
     DataResult,
     DataTool,
+    DataGroup,
     DataToolsResponse,
     DataSessionsResponse,
     DataSessionResponse,
     ExecuteSessionResponse,
     SessionGroupResponse,
+    DataGroupsResponse,
     CreateDataSessionRequest,
     UpdateDataSessionRequest,
+    CreateDataGroupRequest,
+    UpdateDataGroupRequest,
 } from '../types/data';
 
 export function useDataApi() {
@@ -33,6 +37,14 @@ export function useDataApi() {
     const updateSessionInStore = useDataStore((state) => state.updateSession);
     const removeSessionFromStore = useDataStore((state) => state.removeSession);
     const setActiveResult = useDataStore((state) => state.setActiveResult);
+    const setGroups = useDataStore((state) => state.setGroups);
+    const addGroupToStore = useDataStore((state) => state.addGroup);
+    const updateGroupInStore = useDataStore((state) => state.updateGroup);
+    const removeGroupFromStore = useDataStore((state) => state.removeGroup);
+
+    // ============================================
+    // Tools
+    // ============================================
 
     /**
      * Fetch available data tools
@@ -54,6 +66,10 @@ export function useDataApi() {
         }
     }, [api, setLoading, setError, setTools]);
 
+    // ============================================
+    // Sessions
+    // ============================================
+
     /**
      * Fetch user's data sessions
      */
@@ -62,6 +78,8 @@ export function useDataApi() {
         offset?: number;
         tool_name?: string;
         status?: string;
+        group_id?: number;
+        ungrouped?: boolean;
     }): Promise<DataSession[]> => {
         setLoading(true);
         setError(null);
@@ -72,6 +90,8 @@ export function useDataApi() {
             if (params?.offset) queryParams.set('offset', params.offset.toString());
             if (params?.tool_name) queryParams.set('tool_name', params.tool_name);
             if (params?.status) queryParams.set('status', params.status);
+            if (params?.group_id) queryParams.set('group_id', params.group_id.toString());
+            if (params?.ungrouped) queryParams.set('ungrouped', 'true');
 
             const query = queryParams.toString();
             const endpoint = `/data/sessions${query ? `?${query}` : ''}`;
@@ -259,8 +279,153 @@ export function useDataApi() {
         }
     }, [api, setLoading, setError, removeSessionFromStore]);
 
+    // ============================================
+    // Groups
+    // ============================================
+
+    /**
+     * Fetch user's data groups
+     */
+    const fetchGroups = useCallback(async (): Promise<DataGroup[]> => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            const response = await api.get<DataGroupsResponse>('/data/groups');
+            setGroups(response.groups);
+            return response.groups;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to fetch groups';
+            setError(message);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    }, [api, setLoading, setError, setGroups]);
+
+    /**
+     * Create a new group
+     */
+    const createGroup = useCallback(async (
+        request: CreateDataGroupRequest
+    ): Promise<DataGroup> => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            const group = await api.post<DataGroup>('/data/groups', request);
+            addGroupToStore(group);
+            return group;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to create group';
+            setError(message);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    }, [api, setLoading, setError, addGroupToStore]);
+
+    /**
+     * Update a group
+     */
+    const updateGroup = useCallback(async (
+        groupId: number,
+        updates: UpdateDataGroupRequest
+    ): Promise<DataGroup> => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            const group = await api.patch<DataGroup>(`/data/groups/${groupId}`, updates);
+            updateGroupInStore(group);
+            return group;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to update group';
+            setError(message);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    }, [api, setLoading, setError, updateGroupInStore]);
+
+    /**
+     * Delete a group
+     */
+    const deleteGroup = useCallback(async (groupId: number): Promise<void> => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            await api.delete(`/data/groups/${groupId}`);
+            removeGroupFromStore(groupId);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to delete group';
+            setError(message);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    }, [api, setLoading, setError, removeGroupFromStore]);
+
+    /**
+     * Assign a session to a group
+     */
+    const assignSessionToGroup = useCallback(async (
+        sessionId: number,
+        groupId: number
+    ): Promise<void> => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            await api.post(`/data/sessions/${sessionId}/group`, { group_id: groupId });
+            // Update session in store with new group
+            const sessions = useDataStore.getState().sessions;
+            const session = sessions.find(s => s.id === sessionId);
+            if (session) {
+                updateSessionInStore({ ...session, session_group_id: groupId });
+            }
+            // Update group session counts
+            await fetchGroups();
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to assign session to group';
+            setError(message);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    }, [api, setLoading, setError, updateSessionInStore, fetchGroups]);
+
+    /**
+     * Remove a session from its group
+     */
+    const removeSessionFromGroup = useCallback(async (sessionId: number): Promise<void> => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            await api.delete(`/data/sessions/${sessionId}/group`);
+            // Update session in store with no group
+            const sessions = useDataStore.getState().sessions;
+            const session = sessions.find(s => s.id === sessionId);
+            if (session) {
+                updateSessionInStore({ ...session, session_group_id: null });
+            }
+            // Update group session counts
+            await fetchGroups();
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to remove session from group';
+            setError(message);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    }, [api, setLoading, setError, updateSessionInStore, fetchGroups]);
+
     return useMemo(() => ({
+        // Tools
         fetchTools,
+        // Sessions
         fetchSessions,
         fetchSession,
         createSession,
@@ -270,6 +435,13 @@ export function useDataApi() {
         fetchSessionGroup,
         createAndExecute,
         deleteSession,
+        // Groups
+        fetchGroups,
+        createGroup,
+        updateGroup,
+        deleteGroup,
+        assignSessionToGroup,
+        removeSessionFromGroup,
     }), [
         fetchTools,
         fetchSessions,
@@ -281,5 +453,11 @@ export function useDataApi() {
         fetchSessionGroup,
         createAndExecute,
         deleteSession,
+        fetchGroups,
+        createGroup,
+        updateGroup,
+        deleteGroup,
+        assignSessionToGroup,
+        removeSessionFromGroup,
     ]);
 }

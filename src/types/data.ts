@@ -25,7 +25,10 @@ export interface DataSession {
     updated_at: string;
     title: string | null;
     summary: string | null;
+    // Result preview metadata
     has_results?: boolean;
+    row_count?: number | null;
+    columns?: string[] | null;
 }
 
 export interface DataResult {

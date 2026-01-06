@@ -1,0 +1,161 @@
+mfc-mcp-webui/
+├── public/
+├── src/
+│   ├── assets/
+│   │   ├── svg/
+│   │       ├── chat_window/
+│   │       │   ├── CheckIcon.tsx
+│   │       │   ├── EditIcon.tsx
+│   │       │   ├── NewChatIcon.tsx
+│   │       │   ├── SendIcon.tsx
+│   │       │   ├── SettingsIcon.tsx
+│   │       │   ├── StopIcon.tsx
+│   │       │   ├── index.ts
+│   │       │   ├── retryIcon.tsx
+│   │       │   └── warningIcon.tsx
+│   │       ├── toolbox/
+│   │           ├── buttonWrench.tsx
+│   │           ├── emptyToolbox.tsx
+│   │           ├── headerWrench.tsx
+│   │           ├── paramSubmit.tsx
+│   │           ├── sidebarToggleWrench.tsx
+│   │           ├── toolExpand.tsx
+│   │           ├── toolboxCloseButton.tsx
+│   │           ├── toolboxError.tsx
+│   │           └── toolboxIcons.tsx
+│   ├── auth/
+│   │   ├── AuthContext.tsx
+│   │   ├── ProtectedRoute.tsx
+│   │   ├── authConfig.ts
+│   │   ├── index.ts
+│   │   ├── types.ts
+│   │   └── useApi.ts
+│   ├── components/
+│   │   ├── artifacts/
+│   │   │   ├── DataArtifactCard.tsx
+│   │   │   └── index.ts
+│   │   ├── chat_window/
+│   │   │   ├── ChatHeader.tsx
+│   │   │   ├── ChatInputArea.tsx
+│   │   │   ├── ChatMessage.tsx
+│   │   │   ├── ChatMessageList.tsx
+│   │   │   ├── CommandContextMenu.tsx
+│   │   │   ├── MessageEditor.tsx
+│   │   │   ├── TypingIndicator.tsx
+│   │   │   ├── chatWindow.tsx
+│   │   │   ├── constants.ts
+│   │   │   └── index.ts
+│   │   ├── data/
+│   │   │   ├── DataAxisControls.tsx
+│   │   │   ├── DataChartCanvas.tsx
+│   │   │   ├── DataChartTypeToggle.tsx
+│   │   │   ├── DataDetailCard.tsx
+│   │   │   ├── DataEmptyState.tsx
+│   │   │   ├── DataPage.tsx
+│   │   │   ├── DataSessionHeader.tsx
+│   │   │   ├── DataSessionItem.tsx
+│   │   │   ├── DataSessionSidebar.tsx
+│   │   │   ├── DataSessionTooltip.tsx
+│   │   │   ├── DataTable.tsx
+│   │   │   ├── DataToolSidebar.tsx
+│   │   │   ├── DataVisualizationPanel.tsx
+│   │   │   └── index.ts
+│   │   ├── AuthButton.tsx
+│   │   ├── CodeBlock.tsx
+│   │   ├── ConfirmDialog.tsx
+│   │   ├── ConversationItem.tsx
+│   │   ├── ConversationSidebar.tsx
+│   │   ├── LoadingDots.tsx
+│   │   ├── MessageContent.tsx
+│   │   ├── MessageCopyButton.tsx
+│   │   ├── RegenResponseButton.tsx
+│   │   ├── ThinkingBlock.tsx
+│   │   ├── Toast.tsx
+│   │   ├── ToolboxSidebar.tsx
+│   │   ├── loadingSpinner.tsx
+│   │   └── modelSelector.tsx
+│   ├── hooks/
+│   │   ├── chat/
+│   │   │   ├── index.ts
+│   │   │   ├── useChatInput.ts
+│   │   │   ├── useChatMessages.ts
+│   │   │   ├── useChatModel.ts
+│   │   │   ├── useMessageEditor.ts
+│   │   │   └── useStreamingChat.ts
+│   │   └── index.ts
+│   ├── layout/
+│   │   ├── footer.tsx
+│   │   ├── layout.tsx
+│   │   └── navbar.tsx
+│   ├── pages/
+│   │   ├── home.tsx
+│   │   └── settings.tsx
+│   ├── services/
+│   │   ├── api.ts
+│   │   ├── chatService.ts
+│   │   └── index.ts
+│   ├── store/
+│   │   ├── index.ts
+│   │   ├── useDataApi.ts
+│   │   └── useDataStore.ts
+│   ├── styles/
+│   │   ├── artifacts/
+│   │   │   └── DataArtifactCard.module.css
+│   │   ├── data_page/
+│   │   │   ├── DataAxisControls.module.css
+│   │   │   ├── DataChartCanvas.module.css
+│   │   │   ├── DataChartTypeToggle.module.css
+│   │   │   ├── DataDetailCard.module.css
+│   │   │   ├── DataEmptyState.module.css
+│   │   │   ├── DataPage.module.css
+│   │   │   ├── DataSessionHeader.module.css
+│   │   │   ├── DataSessionSidebar.module.css
+│   │   │   ├── DataSessionTooltip.module.css
+│   │   │   ├── DataTable.module.css
+│   │   │   ├── DataToolSidebar.module.css
+│   │   │   └── DataVisualizationPanel.module.css
+│   │   ├── auth.css
+│   │   ├── chatWindow.css
+│   │   ├── commandContextMenu.css
+│   │   ├── confirmDialog.css
+│   │   ├── conversationSidebar.css
+│   │   ├── footer.css
+│   │   ├── globals.css
+│   │   ├── home.css
+│   │   ├── layout.css
+│   │   ├── loadingDots.css
+│   │   ├── loadingSpinner.css
+│   │   ├── navbar.css
+│   │   ├── settings.css
+│   │   ├── thinkingBlock.css
+│   │   ├── toast.css
+│   │   └── toolboxSidebar.css
+│   ├── triggers/
+│   │   ├── clear.ts
+│   │   ├── fail.ts
+│   │   ├── help.ts
+│   │   ├── index.ts
+│   │   └── types.ts
+│   ├── types/
+│   │   ├── artifact.ts
+│   │   ├── chat.ts
+│   │   ├── conversation.ts
+│   │   ├── data.ts
+│   │   ├── index.ts
+│   │   ├── message.ts
+│   │   ├── streaming.ts
+│   │   └── tools.ts
+│   ├── utils/
+│   │   └── artifactParser.ts
+│   ├── App.tsx
+│   └── main.tsx
+├── eslint.config.js
+├── index.html
+├── localhost+3-key.pem
+├── localhost+3.pem
+├── package-lock.json
+├── package.json
+├── tsconfig.app.json
+├── tsconfig.json
+├── tsconfig.node.json
+└── vite.config.ts

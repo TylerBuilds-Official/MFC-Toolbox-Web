@@ -77,25 +77,25 @@ const DataSessionItem = ({ session, isActive, onSelect, onDelete }: DataSessionI
             .join(' ');
     };
 
-    const getParamsPreview = (): string => {
-        if (!session.tool_params || Object.keys(session.tool_params).length === 0) {
-            return 'No parameters';
-        }
-        
-        // Show first 1-2 key params
-        const entries = Object.entries(session.tool_params);
-        const preview = entries
-            .slice(0, 2)
-            .map(([key, value]) => {
-                const displayValue = typeof value === 'string' 
-                    ? value 
-                    : JSON.stringify(value);
-                return `${key}: ${displayValue}`;
-            })
-            .join(', ');
-        
-        return entries.length > 2 ? `${preview}, ...` : preview;
-    };
+    // const getParamsPreview = (): string => {
+    //     if (!session.tool_params || Object.keys(session.tool_params).length === 0) {
+    //         return 'No parameters';
+    //     }
+    //
+    //     // Show first 1-2 key params
+    //     const entries = Object.entries(session.tool_params);
+    //     const preview = entries
+    //         .slice(0, 2)
+    //         .map(([key, value]) => {
+    //             const displayValue = typeof value === 'string'
+    //                 ? value
+    //                 : JSON.stringify(value);
+    //             return `${key}: ${displayValue}`;
+    //         })
+    //         .join(', ');
+    //
+    //     return entries.length > 2 ? `${preview}, ...` : preview;
+    // };
 
     const handleDeleteClick = async (e: React.MouseEvent) => {
         e.stopPropagation();
@@ -139,9 +139,9 @@ const DataSessionItem = ({ session, isActive, onSelect, onDelete }: DataSessionI
                     </span>
                 </div>
                 
-                <span className={styles.sessionParams}>
-                    {getParamsPreview()}
-                </span>
+                {/*<span className={styles.sessionParams}>*/}
+                {/*    {getParamsPreview()}*/}
+                {/*</span>*/}
                 
                 <span className={styles.sessionDate}>
                     {formatDate(session.created_at)}

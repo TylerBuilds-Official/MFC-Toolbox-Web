@@ -4,13 +4,13 @@
  */
 
 import { create } from 'zustand';
+import type { DataGroup } from '../types';
 import type {
     DataSession,
     DataResult,
     DataTool,
-    DataGroup,
     VisualizationConfig,
-} from '../types/data';
+} from '../types';
 
 interface DataState {
     // Data

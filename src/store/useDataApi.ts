@@ -6,11 +6,11 @@
 import { useCallback, useMemo } from 'react';
 import { useApi } from '../auth';
 import { useDataStore } from '../store/useDataStore';
+import { type DataGroup } from '../types';
 import type {
     DataSession,
     DataResult,
     DataTool,
-    DataGroup,
     DataToolsResponse,
     DataSessionsResponse,
     DataSessionResponse,
@@ -21,7 +21,8 @@ import type {
     UpdateDataSessionRequest,
     CreateDataGroupRequest,
     UpdateDataGroupRequest,
-} from '../types/data';
+} from '../types';
+
 
 export function useDataApi() {
     const api = useApi();

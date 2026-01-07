@@ -4,14 +4,14 @@
  */
 
 import { useState } from 'react';
-import type { DataGroup, DataSession } from '../../types/data';
-import { useDataStore } from '../../store/useDataStore';
-import { useDataApi } from '../../store/useDataApi';
+import { type DataGroup } from '../../types';
+import { type DataSession } from '../../types';
+import { useDataStore } from '../../store';
+import { useDataApi } from '../../store';
 import { useConfirm } from '../ConfirmDialog';
 import DataIcons from '../../assets/svg/data/dataIcons';
 import DataSessionItem from './DataSessionItem';
 import styles from '../../styles/data_page/DataGroups.module.css';
-import sidebarStyles from '../../styles/data_page/DataSessionSidebar.module.css';
 
 interface DataGroupFolderProps {
     group: DataGroup;

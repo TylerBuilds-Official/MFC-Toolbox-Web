@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import type { DataGroup } from '../../types/data';
+import {type DataGroup } from '../../types/data';
 import DataIcons from '../../assets/svg/data/dataIcons';
 import styles from '../../styles/data_page/DataGroups.module.css';
 

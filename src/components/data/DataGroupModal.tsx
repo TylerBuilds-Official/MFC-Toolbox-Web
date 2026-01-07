@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import type { DataGroup } from '../../types/data';
+import { type DataGroup } from '../../types';
 import styles from '../../styles/data_page/DataGroups.module.css';
 
 interface DataGroupModalProps {

@@ -49,3 +49,6 @@ export * from './data';
 
 // Conversation Project types
 export * from './conversationProject';
+
+// Memory types
+export * from './memory';

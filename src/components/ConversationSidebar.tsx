@@ -55,7 +55,7 @@ const ConversationSidebar = ({
     const invites = useConversationProjectStore((s) => s.invites);
     const expandedProjects = useConversationProjectStore((s) => s.expandedProjects);
     const toggleProjectExpanded = useConversationProjectStore((s) => s.toggleProjectExpanded);
-    const isProjectsLoading = useConversationProjectStore((s) => s.isLoading);
+    // const isProjectsLoading = useConversationProjectStore((s) => s.isLoading);
 
     // API
     const projectApi = useConversationProjectApi();

@@ -32,6 +32,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     externalPrompt,
     onPromptConsumed,
     activeConversationId,
+    activeProjectId,
     initialMessages,
     onConversationCreated,
 }) => {
@@ -56,7 +57,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         chatMessages,
         chatModel,
         showToast,
-        onConversationCreated
+        onConversationCreated,
+        activeProjectId
     );
 
 

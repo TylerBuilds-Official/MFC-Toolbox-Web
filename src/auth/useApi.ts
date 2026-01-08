@@ -138,7 +138,8 @@ export function useApi() {
             model: string,
             provider: string,
             conversationId: number | null,
-            callbacks: StreamCallbacks
+            callbacks: StreamCallbacks,
+            projectId?: number | null
         ): Promise<AbortController> => {
             const token = await getAccessToken();
             
@@ -150,6 +151,9 @@ export function useApi() {
             const params = new URLSearchParams({ message, model, provider });
             if (conversationId !== null) {
                 params.append("conversation_id", conversationId.toString());
+            }
+            if (projectId) {
+                params.append("project_id", projectId.toString());
             }
 
             const url = `${API_BASE_URL}/chat/stream?${params.toString()}`;

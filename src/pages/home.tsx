@@ -181,6 +181,7 @@ const Home = () => {
                     externalPrompt={pendingPrompt}
                     onPromptConsumed={handlePromptConsumed}
                     activeConversationId={activeConversationId}
+                    activeProjectId={activeProjectId}
                     initialMessages={messages}
                     onConversationCreated={handleConversationCreated}
                     onMessagesUpdated={handleMessagesUpdated}

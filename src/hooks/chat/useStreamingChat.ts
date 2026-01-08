@@ -20,7 +20,8 @@ export function useStreamingChat(
     chatMessages: UseChatMessagesReturn,
     chatModel: UseChatModelReturn,
     showToast: ShowToastFn,
-    onConversationCreated: (id: number) => void
+    onConversationCreated: (id: number) => void,
+    projectId?: number | null
 ) {
     // State
     const [isStreaming, setIsStreaming]             = useState(false);
@@ -173,7 +174,8 @@ export function useStreamingChat(
 
                         resetStreamingState();
                     }
-                }
+                },
+                projectId
             );
 
             abortControllerRef.current = abortController;
@@ -198,7 +200,8 @@ export function useStreamingChat(
         chatMessages,
         onConversationCreated,
         showToast,
-        resetStreamingState
+        resetStreamingState,
+        projectId
     ]);
 
 

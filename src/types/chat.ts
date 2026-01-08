@@ -17,6 +17,7 @@ export interface ChatWindowProps {
     externalPrompt?: string | null;
     onPromptConsumed?: () => void;
     activeConversationId: number | null;
+    activeProjectId?: number | null;
     initialMessages: Message[];
     onConversationCreated: (id: number) => void;
     onMessagesUpdated?: (messages: Message[]) => void;

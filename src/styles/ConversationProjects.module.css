@@ -1,0 +1,706 @@
+/* ============================================
+   ConversationProjects - Project folder styles
+   ============================================ */
+
+/* Projects Section in Sidebar */
+.projectsSection {
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--border-primary);
+    margin-bottom: var(--space-2);
+}
+
+.sectionHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-1) var(--space-3);
+}
+
+.sectionTitle {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.sectionActions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+.newProjectBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.newProjectBtn:hover {
+    background: var(--bg-hover);
+    color: var(--accent-primary);
+}
+
+/* Shared With Me Divider */
+.sharedDivider {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    margin-top: var(--space-2);
+}
+
+.sharedDivider::before,
+.sharedDivider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border-primary);
+}
+
+.sharedLabel {
+    font-size: 0.625rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+}
+
+/* Project Folder Container */
+.projectFolder {
+    display: flex;
+    flex-direction: column;
+    margin: 0 var(--space-2) var(--space-1);
+}
+
+/* Project Header (the clickable folder row) */
+.projectHeader {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+    user-select: none;
+}
+
+.projectHeader:hover {
+    background: var(--bg-hover-light);
+    border-color: var(--accent-muted);
+}
+
+.projectHeader.expanded {
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    border-bottom-color: transparent;
+}
+
+/* Expand/collapse chevron */
+.expandIcon {
+    flex-shrink: 0;
+    color: var(--text-muted);
+    transition: transform 0.2s ease;
+}
+
+.expandIcon.expanded {
+    transform: rotate(90deg);
+}
+
+/* Folder icon with optional color */
+.folderIcon {
+    flex-shrink: 0;
+    color: var(--text-secondary);
+    transition: color 0.2s ease;
+}
+
+.projectHeader:hover .folderIcon {
+    color: var(--text-primary);
+}
+
+/* Project name and info */
+.projectInfo {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.projectName {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.projectMeta {
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+}
+
+/* Share type indicators */
+.shareIndicator {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    color: var(--text-muted);
+}
+
+.shareIndicator.locked {
+    color: var(--warning, #f59e0b);
+}
+
+.shareIndicator.open {
+    color: var(--accent-primary);
+}
+
+/* Conversation count badge */
+.conversationCount {
+    font-size: 0.6875rem;
+    font-weight: 500;
+    padding: 2px 6px;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+}
+
+/* Project actions (edit, delete, invite) */
+.projectActions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.projectHeader:hover .projectActions {
+    opacity: 1;
+}
+
+.projectActionBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.projectActionBtn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.projectActionBtn.danger:hover {
+    color: var(--error, #ef4444);
+}
+
+/* Expanded content (child conversations) */
+.projectContent {
+    display: none;
+    flex-direction: column;
+    gap: var(--space-1);
+    padding: var(--space-2);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-top: none;
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+.projectContent.expanded {
+    display: flex;
+}
+
+/* Empty project state */
+.emptyProject {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-3);
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-style: italic;
+}
+
+/* Add conversation button inside project */
+.addConversationBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    border: 1px dashed var(--border-primary);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.addConversationBtn:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent-muted);
+    color: var(--text-primary);
+}
+
+/* Drop target indicator for drag-and-drop */
+.projectHeader.dropTarget {
+    background: var(--accent-muted);
+    border-color: var(--accent-primary);
+    border-style: dashed;
+}
+
+/* ============================================
+   Project Badges on Conversations
+   ============================================ */
+
+.projectBadges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+}
+
+.projectBadge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    font-size: 0.625rem;
+    font-weight: 500;
+    border-radius: var(--radius-sm);
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-primary);
+}
+
+.projectBadge .badgeDot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+/* Multiple projects indicator */
+.multiProjectIndicator {
+    font-size: 0.625rem;
+    color: var(--text-muted);
+    padding: 2px 4px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-sm);
+}
+
+/* ============================================
+   Invite Banner
+   ============================================ */
+
+.inviteBanner {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    margin: var(--space-2);
+    background: linear-gradient(135deg, var(--accent-muted) 0%, var(--bg-tertiary) 100%);
+    border: 1px solid var(--accent-primary);
+    border-radius: var(--radius-md);
+}
+
+.inviteIcon {
+    flex-shrink: 0;
+    color: var(--accent-primary);
+}
+
+.inviteInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.inviteTitle {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.inviteProject {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.inviteActions {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.inviteBtn {
+    padding: var(--space-1) var(--space-2);
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+.inviteBtnAccept {
+    background: var(--accent-primary);
+    border: none;
+    color: white;
+}
+
+.inviteBtnAccept:hover {
+    opacity: 0.9;
+}
+
+.inviteBtnDecline {
+    background: transparent;
+    border: 1px solid var(--border-primary);
+    color: var(--text-secondary);
+}
+
+.inviteBtnDecline:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+/* ============================================
+   Project Modal
+   ============================================ */
+
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-lg);
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    animation: slideUp 0.2s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modalHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-4);
+    border-bottom: 1px solid var(--border-primary);
+}
+
+.modalHeader h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.modalCloseBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.modalCloseBtn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.modalBody {
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.formGroup label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.formGroup input,
+.formGroup textarea,
+.formGroup select {
+    width: 100%;
+    padding: var(--space-2) var(--space-3);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    transition: border-color 0.2s ease;
+}
+
+.formGroup input:focus,
+.formGroup textarea:focus,
+.formGroup select:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+}
+
+.formGroup input::placeholder,
+.formGroup textarea::placeholder {
+    color: var(--text-muted);
+}
+
+.formGroup textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+.formHint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+/* Project type selector */
+.typeSelector {
+    display: flex;
+    gap: var(--space-2);
+}
+
+.typeOption {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    background: var(--bg-secondary);
+    border: 2px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.typeOption:hover {
+    background: var(--bg-hover);
+}
+
+.typeOption.selected {
+    border-color: var(--accent-primary);
+    background: var(--accent-muted);
+}
+
+.typeIcon {
+    color: var(--text-secondary);
+}
+
+.typeOption.selected .typeIcon {
+    color: var(--accent-primary);
+}
+
+.typeLabel {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    text-align: center;
+}
+
+.typeDescription {
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+/* Color picker */
+.colorPicker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.colorOption {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.colorOption:hover {
+    transform: scale(1.1);
+}
+
+.colorOption.selected {
+    border-color: var(--text-primary);
+}
+
+.colorOption.none {
+    background: var(--bg-secondary);
+    border: 2px dashed var(--border-primary);
+}
+
+.colorOption.none.selected {
+    border-style: solid;
+    border-color: var(--text-primary);
+}
+
+/* Permissions section */
+.permissionsSection {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+}
+
+.permissionRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+}
+
+.permissionLabel {
+    font-size: 0.8125rem;
+    color: var(--text-primary);
+}
+
+.permissionToggle {
+    display: flex;
+    gap: var(--space-1);
+}
+
+.permissionBtn {
+    padding: var(--space-1) var(--space-2);
+    font-size: 0.6875rem;
+    font-weight: 500;
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.permissionBtn.active {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+    color: white;
+}
+
+.modalFooter {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-2);
+    padding: var(--space-4);
+    border-top: 1px solid var(--border-primary);
+}
+
+.modalBtn {
+    padding: var(--space-2) var(--space-4);
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+.modalBtnCancel {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    color: var(--text-primary);
+}
+
+.modalBtnCancel:hover {
+    background: var(--bg-hover);
+}
+
+.modalBtnPrimary {
+    background: var(--accent-primary);
+    border: 1px solid var(--accent-primary);
+    color: white;
+}
+
+.modalBtnPrimary:hover {
+    opacity: 0.9;
+}
+
+.modalBtnPrimary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ============================================
+   Ungrouped Section Label
+   ============================================ */
+
+.ungroupedLabel {
+    padding: var(--space-2) var(--space-3);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}

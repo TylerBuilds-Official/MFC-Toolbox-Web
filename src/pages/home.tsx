@@ -27,6 +27,7 @@ const Home = () => {
 
     // Active conversation state
     const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
+    const [activeProjectId, setActiveProjectId] = useState<number | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
 
     // Load conversations on mount
@@ -53,6 +54,7 @@ const Home = () => {
             const data = await api.get<ConversationWithMessages>(`/conversations/${conversationId}`);
             setMessages(data.messages);
             setActiveConversationId(conversationId);
+            setActiveProjectId(null); // Clear project context when loading existing conversation
         } catch (error) {
             console.error("Failed to load conversation:", error);
         }
@@ -62,9 +64,10 @@ const Home = () => {
         loadConversation(conversationId);
     };
 
-    const handleNewConversation = () => {
+    const handleNewConversation = (projectId?: number) => {
         // Clear active conversation - ChatWindow will create new one on first message
         setActiveConversationId(null);
+        setActiveProjectId(projectId ?? null);
         setMessages([]);
     };
 

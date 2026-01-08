@@ -46,3 +46,6 @@ export * from './artifact';
 
 // Data types
 export * from './data';
+
+// Conversation Project types
+export * from './conversationProject';

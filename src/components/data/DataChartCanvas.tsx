@@ -3,25 +3,16 @@
  * Supports both single-series and multi-series (pivoted) data
  */
 
-import { useMemo } from 'react';
-import {
-    BarChart,
-    Bar,
-    LineChart,
-    Line,
-    PieChart,
-    Pie,
-    Cell,
-    XAxis,
-    YAxis,
-    CartesianGrid,
-    Tooltip,
-    Legend,
-    ResponsiveContainer,
-} from 'recharts';
+import { useMemo, useRef } from 'react';
+
+import { BarChart, Bar, LineChart, Line,
+         PieChart, Pie, Cell, XAxis,
+         YAxis, CartesianGrid, Tooltip,
+         Legend, ResponsiveContainer } from 'recharts';
+
 import { useDataStore, useActiveChartConfig } from '../../store/useDataStore';
-import type { DataResult } from '../../types/data';
-import { formatColumnName, formatTickValue, formatTooltipValue, formatYAxisValue } from '../../services/api';
+import type { DataResult } from '../../types';
+import { formatColumnName, formatTickValue, formatTooltipValue, formatYAxisValue } from '../../services';
 import styles from '../../styles/data_page/DataChartCanvas.module.css';
 
 interface DataChartCanvasProps {
@@ -30,6 +21,69 @@ interface DataChartCanvasProps {
 
 // Alias for cleaner code in this file
 const formatLabel = formatColumnName;
+
+/**
+ * Custom tooltip that flips to the left when on the right side of the chart
+ * Prevents overflow and horizontal scrollbar issues
+ */
+interface CustomTooltipProps {
+    active?: boolean;
+    payload?: Array<{
+        value: number;
+        name: string;
+        color: string;
+    }>;
+    label?: string | number;
+    coordinate?: { x: number; y: number };
+    chartWidth?: number;
+    labelFormatter?: (label: string) => string;
+    valueFormatter?: (value: number, name: string) => [string, string];
+}
+
+const CustomTooltip = ({ 
+    active, 
+    payload, 
+    label, 
+    coordinate, 
+    chartWidth = 0,
+    labelFormatter,
+    valueFormatter,
+}: CustomTooltipProps) => {
+    if (!active || !payload?.length) return null;
+
+    // Determine if we're on the right half of the chart
+    const cursorX = coordinate?.x || 0;
+    const isRightHalf = chartWidth > 0 && cursorX > chartWidth / 2;
+
+    const formattedLabel = labelFormatter ? labelFormatter(String(label)) : String(label);
+
+    return (
+        <div 
+            className={styles.customTooltip}
+            style={{
+                transform: isRightHalf ? 'none' : 'translateX(16px)',
+            }}
+        >
+            <p className={styles.tooltipLabel}>{formattedLabel}</p>
+            {payload.map((entry, index: number) => {
+                const [formattedValue, formattedName] = valueFormatter 
+                    ? valueFormatter(entry.value, entry.name)
+                    : [entry.value?.toLocaleString() || '0', formatLabel(entry.name)];
+                
+                return (
+                    <p key={index} className={styles.tooltipItem}>
+                        <span 
+                            className={styles.tooltipDot} 
+                            style={{ backgroundColor: entry.color }}
+                        />
+                        <span className={styles.tooltipName}>{formattedName}:</span>
+                        <span className={styles.tooltipValue}>{formattedValue}</span>
+                    </p>
+                );
+            })}
+        </div>
+    );
+};
 
 // Color palette for charts
 const COLORS = [
@@ -44,7 +98,7 @@ const COLORS = [
 ];
 
 /**
- * Calculate optimal tick interval based on data length
+ * Calculate the optimal tick interval based on data length
  * Aims for ~10-15 visible ticks max to prevent label overlap
  */
 const getTickInterval = (dataLength: number): number | "preserveStartEnd" => {
@@ -110,9 +164,19 @@ const pivotData = (
     };
 };
 
+/** Legend item type for custom legend */
+interface LegendItem {
+    label: string;
+    color: string;
+}
+
 const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
     const { chartType, xAxis, yAxis } = useDataStore();
     const chartConfig = useActiveChartConfig();
+    const chartWrapperRef = useRef<HTMLDivElement>(null);
+
+    // Get chart width for tooltip positioning
+    const getChartWidth = () => chartWrapperRef.current?.clientWidth || 0;
 
     // Check if we should use multi-series pivot
     const useMultiSeries = chartConfig?.series_by && chartConfig?.x_axis && chartConfig?.y_axis;
@@ -170,6 +234,27 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
         };
     }, [result, xAxis, yAxis, chartConfig, useMultiSeries]);
 
+    // Build legend items for custom legend
+    const legendItems: LegendItem[] = useMemo(() => {
+        // Pie charts use Recharts' built-in legend
+        if (chartType === 'pie') return [];
+        
+        // Multi-series: one item per series
+        if (useMultiSeries && seriesNames.length > 0) {
+            return seriesNames.map((name, index) => ({
+                label: formatLabel(name),
+                color: COLORS[index % COLORS.length],
+            }));
+        }
+        
+        // Single-series: show Y-axis label
+        if (axisLabels.y) {
+            return [{ label: axisLabels.y, color: COLORS[0] }];
+        }
+        
+        return [];
+    }, [chartType, useMultiSeries, seriesNames, axisLabels.y]);
+
     // No data to display
     if (!chartData.length) {
         return (
@@ -190,8 +275,8 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
 
     // Render multi-series line chart
     const renderMultiSeriesLineChart = () => (
-        <ResponsiveContainer width="100%" height={400}>
-            <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+        <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData} margin={{ top: 80, right: 30, left: 60, bottom: 80 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-primary)" />
                 <XAxis
                     dataKey="xValue"
@@ -204,8 +289,8 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
                     height={80}
                     label={{
                         value: axisLabels.x,
-                        position: 'insideBottom',
-                        offset: -10,
+                        position: 'bottom',
+                        offset: 0,
                         fill: 'var(--text-secondary)',
                     }}
                 />
@@ -216,21 +301,24 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
                     label={{
                         value: axisLabels.y,
                         angle: -90,
-                        position: 'insideLeft',
+                        position: 'center',
+                        dx: -20,
                         fill: 'var(--text-secondary)',
                     }}
                 />
                 <Tooltip
-                    contentStyle={{
-                        background: 'var(--bg-primary)',
-                        border: '1px solid var(--border-primary)',
-                        borderRadius: '8px',
-                    }}
-                    labelStyle={{ color: 'var(--text-primary)' }}
-                    labelFormatter={formatTooltipValue}
-                    formatter={(value: number | undefined, name: string | undefined): [string, string] => [(value ?? 0).toLocaleString(), formatLabel(name ?? '')]}
+                    content={(props) => (
+                        <CustomTooltip
+                            active={props.active}
+                            payload={props.payload as CustomTooltipProps['payload']}
+                            label={props.label}
+                            coordinate={props.coordinate}
+                            chartWidth={getChartWidth()}
+                            labelFormatter={formatTooltipValue}
+                            valueFormatter={(value, name) => [value?.toLocaleString() ?? '0', formatLabel(name)]}
+                        />
+                    )}
                 />
-                <Legend formatter={formatLabel} />
                 {seriesNames.map((name, index) => (
                     <Line
                         key={name}
@@ -249,8 +337,8 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
 
     // Render multi-series bar chart
     const renderMultiSeriesBarChart = () => (
-        <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+        <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData} margin={{ top: 80, right: 30, left: 60, bottom: 80 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border-primary)" />
                 <XAxis
                     dataKey="xValue"
@@ -261,6 +349,12 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
                     angle={-45}
                     textAnchor="end"
                     height={80}
+                    label={{
+                        value: axisLabels.x,
+                        position: 'bottom',
+                        offset: 0,
+                        fill: 'var(--text-secondary)',
+                    }}
                 />
                 <YAxis
                     stroke="var(--text-secondary)"
@@ -269,21 +363,24 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
                     label={{
                         value: axisLabels.y,
                         angle: -90,
-                        position: 'insideLeft',
+                        position: 'center',
+                        dx: -20,
                         fill: 'var(--text-secondary)',
                     }}
                 />
                 <Tooltip
-                    contentStyle={{
-                        background: 'var(--bg-primary)',
-                        border: '1px solid var(--border-primary)',
-                        borderRadius: '8px',
-                    }}
-                    labelStyle={{ color: 'var(--text-primary)' }}
-                    labelFormatter={formatTooltipValue}
-                    formatter={(value: number | undefined, name: string | undefined): [string, string] => [(value ?? 0).toLocaleString(), formatLabel(name ?? '')]}
+                    content={(props) => (
+                        <CustomTooltip
+                            active={props.active}
+                            payload={props.payload as CustomTooltipProps['payload']}
+                            label={props.label}
+                            coordinate={props.coordinate}
+                            chartWidth={getChartWidth()}
+                            labelFormatter={formatTooltipValue}
+                            valueFormatter={(value, name) => [value?.toLocaleString() ?? '0', formatLabel(name)]}
+                        />
+                    )}
                 />
-                <Legend formatter={formatLabel} />
                 {seriesNames.map((name, index) => (
                     <Bar
                         key={name}
@@ -302,8 +399,8 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
         switch (chartType) {
             case 'bar':
                 return (
-                    <ResponsiveContainer width="100%" height={400}>
-                        <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                    <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={chartData} margin={{ top: 80, right: 30, left: 60, bottom: 80 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="var(--border-primary)" />
                             <XAxis
                                 dataKey="name"
@@ -314,22 +411,37 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
                                 angle={-45}
                                 textAnchor="end"
                                 height={80}
+                                label={{
+                                    value: axisLabels.x,
+                                    position: 'bottom',
+                                    offset: 0,
+                                    fill: 'var(--text-secondary)',
+                                }}
                             />
                             <YAxis
                                 stroke="var(--text-secondary)"
                                 tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
                                 tickFormatter={formatYAxisValue}
+                                label={{
+                                    value: axisLabels.y,
+                                    angle: -90,
+                                    position: 'center',
+                                    dx: -20,
+                                    fill: 'var(--text-secondary)',
+                                }}
                             />
                             <Tooltip
-                                contentStyle={{
-                                    background: 'var(--bg-primary)',
-                                    border: '1px solid var(--border-primary)',
-                                    borderRadius: '8px',
-                                }}
-                                labelStyle={{ color: 'var(--text-primary)' }}
-                                formatter={(value: number | undefined): [string, string] => [(value ?? 0).toLocaleString(), axisLabels.y]}
+                                content={(props) => (
+                                    <CustomTooltip
+                                        active={props.active}
+                                        payload={props.payload as CustomTooltipProps['payload']}
+                                        label={props.label}
+                                        coordinate={props.coordinate}
+                                        chartWidth={getChartWidth()}
+                                        valueFormatter={(value) => [value?.toLocaleString() ?? '0', axisLabels.y]}
+                                    />
+                                )}
                             />
-                            <Legend />
                             <Bar
                                 dataKey="value"
                                 name={axisLabels.y}
@@ -342,9 +454,8 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
 
             case 'line':
                 return (
-                    <ResponsiveContainer width="100%" height={400}>
-                        <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
-
+                    <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={chartData} margin={{ top: 80, right: 30, left: 60, bottom: 80 }}>
                             <CartesianGrid strokeDasharray="3 3" stroke="var(--border-primary)" />
                             <XAxis
                                 dataKey="name"
@@ -354,23 +465,38 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
                                 interval={getTickInterval(chartData.length)}
                                 angle={-45}
                                 textAnchor="end"
-                                height={80}/>
-
+                                height={80}
+                                label={{
+                                    value: axisLabels.x,
+                                    position: 'bottom',
+                                    offset: 0,
+                                    fill: 'var(--text-secondary)',
+                                }}
+                            />
                             <YAxis
                                 stroke="var(--text-secondary)"
                                 tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
-                                tickFormatter={formatYAxisValue}/>
-
-                            <Tooltip
-                                contentStyle={{
-                                    background: 'var(--bg-primary)',
-                                    border: '1px solid var(--border-primary)',
-                                    borderRadius: '8px',
+                                tickFormatter={formatYAxisValue}
+                                label={{
+                                    value: axisLabels.y,
+                                    angle: -90,
+                                    position: 'center',
+                                    dx: -20,
+                                    fill: 'var(--text-secondary)',
                                 }}
-                                labelStyle={{ color: 'var(--text-primary)' }}
-                                formatter={(value: number | undefined): [string, string] => [(value ?? 0).toLocaleString(), axisLabels.y]}/>
-
-                            <Legend />
+                            />
+                            <Tooltip
+                                content={(props) => (
+                                    <CustomTooltip
+                                        active={props.active}
+                                        payload={props.payload as CustomTooltipProps['payload']}
+                                        label={props.label}
+                                        coordinate={props.coordinate}
+                                        chartWidth={getChartWidth()}
+                                        valueFormatter={(value) => [value?.toLocaleString() ?? '0', axisLabels.y]}
+                                    />
+                                )}
+                            />
                             <Line
                                 type="monotone"
                                 dataKey="value"
@@ -378,15 +504,15 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
                                 stroke={COLORS[0]}
                                 strokeWidth={2}
                                 dot={{ fill: COLORS[0], strokeWidth: 2 }}
-                                activeDot={{ r: 6 }}/>
-
+                                activeDot={{ r: 6 }}
+                            />
                         </LineChart>
                     </ResponsiveContainer>
                 );
 
             case 'pie':
                 return (
-                    <ResponsiveContainer width="100%" height={400}>
+                    <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                             <Pie
                                 data={chartData}
@@ -396,21 +522,19 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
                                 label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
                                 outerRadius={150}
                                 fill="#8884d8"
-                                dataKey="value">
-
+                                dataKey="value"
+                            >
                                 {chartData.map((_, index) => (
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                 ))}
-
                             </Pie>
-
                             <Tooltip
                                 contentStyle={{
                                     background: 'var(--bg-primary)',
                                     border: '1px solid var(--border-primary)',
                                     borderRadius: '8px',
-                                }}/>
-
+                                }}
+                            />
                             <Legend />
                         </PieChart>
                     </ResponsiveContainer>
@@ -442,9 +566,34 @@ const DataChartCanvas = ({ result }: DataChartCanvasProps) => {
         return renderSingleSeriesChart();
     };
 
+    // Render custom legend
+    const renderLegend = () => {
+        if (legendItems.length === 0) return null;
+        
+        return (
+            <div className={styles.legendContainer}>
+                <span className={styles.legendHeader}>Legend</span>
+                <div className={styles.legendItems}>
+                    {legendItems.map((item, index) => (
+                        <div key={index} className={styles.legendItem}>
+                            <span 
+                                className={styles.legendDot} 
+                                style={{ backgroundColor: item.color }}
+                            />
+                            <span className={styles.legendLabel}>{item.label}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+    };
+
     return (
         <div className={styles.canvas}>
-            {renderChart()}
+            <div className={styles.chartWrapper} ref={chartWrapperRef}>
+                {renderChart()}
+            </div>
+            {renderLegend()}
         </div>
     );
 };

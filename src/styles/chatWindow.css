@@ -166,6 +166,7 @@
 .chat-message.assistant {
   align-self: flex-start;
   align-items: flex-start;
+  max-width: 100%;
 }
 
 .message-bubble {
@@ -188,10 +189,11 @@
 }
 
 .chat-message.assistant .message-bubble {
-  background-color: var(--bg-elevated);
+  background-color: transparent;
   color: var(--text-primary);
-  border: 1px solid var(--border-subtle);
-  border-bottom-left-radius: var(--radius-sm);
+  border: none;
+  border-radius: 0;
+  padding: 0;
 }
 
 /* Message metadata */
@@ -201,6 +203,10 @@
   justify-content: space-between; /* In case you add actions on right later */
   margin-top: var(--space-1);
   padding: 0 var(--space-2);
+}
+
+.chat-message.assistant .message-meta {
+  padding-left: 0;
 }
 
 .msg-btn-wrapper {

@@ -1,7 +1,26 @@
 import { useCallback, useState, useEffect } from "react";
 import type { Message } from "../../types/message";
-import type { DisplayMessage, MessageStatus } from "../../types/chat";
+import type { DisplayMessage, MessageStatus, ContentBlock } from "../../types/chat";
 import { WELCOME_MESSAGE } from "../../components/chat_window/constants";
+
+
+/**
+ * Parse content_blocks JSON string from API into ContentBlock array.
+ * Returns undefined if parsing fails or no blocks present.
+ */
+function parseContentBlocks(contentBlocksJson?: string): ContentBlock[] | undefined {
+    if (!contentBlocksJson) return undefined;
+    
+    try {
+        const parsed = JSON.parse(contentBlocksJson);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed as ContentBlock[];
+        }
+    } catch (e) {
+        console.warn('[useChatMessages] Failed to parse content_blocks:', e);
+    }
+    return undefined;
+}
 
 
 export function useChatMessages(
@@ -23,12 +42,13 @@ export function useChatMessages(
     useEffect(() => {
         if (initialMessages.length > 0) {
             const converted: DisplayMessage[] = initialMessages.map(msg => ({
-                id:        msg.id,
-                role:      msg.role,
-                content:   msg.content,
-                timestamp: msg.created_at,
-                status:    'sent' as MessageStatus,
-                thinking:  msg.thinking
+                id:            msg.id,
+                role:          msg.role,
+                content:       msg.content,
+                timestamp:     msg.created_at,
+                status:        'sent' as MessageStatus,
+                thinking:      msg.thinking,
+                contentBlocks: parseContentBlocks(msg.content_blocks)
             }));
             setDisplayMessages(converted);
         } else if (activeConversationId === null) {
@@ -48,9 +68,16 @@ export function useChatMessages(
     }, []);
 
 
-    const updateMessageContent = useCallback((messageId: number, content: string, thinking?: string) => {
+    const updateMessageContent = useCallback((messageId: number, content: string, thinking?: string, contentBlocks?: ContentBlock[]) => {
         setDisplayMessages(prev => prev.map(msg =>
-            msg.id === messageId ? { ...msg, content, thinking: thinking || msg.thinking } : msg
+            msg.id === messageId 
+                ? { 
+                    ...msg, 
+                    content, 
+                    thinking: thinking || msg.thinking,
+                    contentBlocks: contentBlocks || msg.contentBlocks
+                } 
+                : msg
         ));
     }, []);
 
@@ -97,11 +124,18 @@ export function useChatMessages(
         messageId: number,
         content: string,
         thinking?: string,
-        status: MessageStatus = 'sent'
+        status: MessageStatus = 'sent',
+        contentBlocks?: ContentBlock[]
     ) => {
         setDisplayMessages(prev => prev.map(msg =>
             msg.id === messageId
-                ? { ...msg, status, content: content || msg.content, thinking: thinking || undefined }
+                ? { 
+                    ...msg, 
+                    status, 
+                    content: content || msg.content, 
+                    thinking: thinking || undefined,
+                    contentBlocks: contentBlocks || msg.contentBlocks
+                }
                 : msg
         ));
     }, []);

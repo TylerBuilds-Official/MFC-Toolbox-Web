@@ -323,10 +323,10 @@ function handleStreamEvent(event: StreamEvent, callbacks: StreamCallbacks): void
             callbacks.onContent(event.text);
             break;
         case 'tool_start':
-            callbacks.onToolStart(event.name);
+            callbacks.onToolStart(event.name, event.params);
             break;
         case 'tool_end':
-            callbacks.onToolEnd(event.name, event.result);
+            callbacks.onToolEnd(event.name, event.params, event.result);
             break;
         case 'stream_end':
             callbacks.onStreamEnd(event.conversation_id, event.title);

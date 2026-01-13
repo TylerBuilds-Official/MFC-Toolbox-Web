@@ -50,11 +50,13 @@ export interface ContentEndEvent {
 export interface ToolStartEvent {
     type: 'tool_start';
     name: string;
+    params?: Record<string, unknown>;
 }
 
 export interface ToolEndEvent {
     type: 'tool_end';
     name: string;
+    params?: Record<string, unknown>;
     result: string;
 }
 
@@ -95,8 +97,8 @@ export interface StreamCallbacks {
     onThinking: (text: string) => void;
     onThinkingEnd: () => void;
     onContent: (text: string) => void;
-    onToolStart: (name: string) => void;
-    onToolEnd: (name: string, result: string) => void;
+    onToolStart: (name: string, params?: Record<string, unknown>) => void;
+    onToolEnd: (name: string, params: Record<string, unknown> | undefined, result: string) => void;
     onStreamEnd: (conversationId: number, title?: string) => void;
     onError: (message: string) => void;
 }

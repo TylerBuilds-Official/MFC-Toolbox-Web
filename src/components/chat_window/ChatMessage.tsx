@@ -1,8 +1,9 @@
 import React from 'react';
-import type { DisplayMessage } from '../../types/chat';
+import type { DisplayMessage, ContentBlock } from '../../types/chat';
 import { formatMessageTime } from '../../services/chatService';
 
 import ThinkingBlock from '../ThinkingBlock';
+import ToolCallBlock from '../ToolCallBlock';
 import MessageContent from '../MessageContent';
 import MessageCopyButton from '../MessageCopyButton';
 import RegenResponseButton from '../RegenResponseButton';
@@ -20,6 +21,7 @@ interface ChatMessageProps {
     streamingMessageId: number | null;
     thinkingContent: string;
     isThinkingActive: boolean;
+    streamingContentBlocks: ContentBlock[];
     
     // Editing state
     editingMessageId: number | null;
@@ -42,6 +44,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     streamingMessageId,
     thinkingContent,
     isThinkingActive,
+    streamingContentBlocks,
     editingMessageId,
     editedContent,
     isRegenerating,
@@ -54,6 +57,9 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
 }) => {
     const isEditing   = editingMessageId === message.id;
     const isStreaming = message.id === streamingMessageId;
+    
+    // Use streaming blocks if this is the streaming message, otherwise use stored blocks
+    const contentBlocks = isStreaming ? streamingContentBlocks : (message.contentBlocks || []);
 
     const handleEditKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === "Enter" && e.ctrlKey && !e.shiftKey) {
@@ -83,24 +89,66 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                 />
             ) : (
                 <>
-                    {/* Thinking block for assistant messages */}
-                    {message.role === "assistant" && (message.thinking || (isStreaming && thinkingContent)) && (
-                        <ThinkingBlock
-                            content={message.thinking || thinkingContent}
-                            isStreaming={isStreaming && isThinkingActive}
-                        />
-                    )}
+                    {/* Render content blocks for assistant messages */}
+                    {message.role === "assistant" && contentBlocks.length > 0 ? (
+                        <div className="message-bubble markdown-content">
+                            {contentBlocks.map((block, blockIndex) => {
+                                if (block.type === 'thinking') {
+                                    return (
+                                        <ThinkingBlock
+                                            key={`thinking-${blockIndex}`}
+                                            content={block.content}
+                                            isStreaming={block.isStreaming}
+                                        />
+                                    );
+                                }
+                                if (block.type === 'tool_call') {
+                                    return (
+                                        <ToolCallBlock
+                                            key={`tool-${blockIndex}`}
+                                            name={block.name}
+                                            params={block.params}
+                                            result={block.result}
+                                            isComplete={block.isComplete}
+                                        />
+                                    );
+                                }
+                                if (block.type === 'text') {
+                                    return (
+                                        <MessageContent
+                                            key={`text-${blockIndex}`}
+                                            content={block.content}
+                                            isStreaming={isStreaming && blockIndex === contentBlocks.length - 1}
+                                        />
+                                    );
+                                }
+                                return null;
+                            })}
 
-                    <div className="message-bubble markdown-content">
-                        {message.status === 'streaming' && !message.content ? (
-                            <TypingIndicator />
-                        ) : (
-                            <MessageContent
-                                content={message.content}
-                                isStreaming={message.status === 'streaming'}
-                            />
-                        )}
-                    </div>
+                        </div>
+                    ) : (
+                        /* Fallback for messages without contentBlocks (legacy or user messages) */
+                        <>
+                            {/* Legacy thinking block for old assistant messages */}
+                            {message.role === "assistant" && (message.thinking || (isStreaming && thinkingContent)) && (
+                                <ThinkingBlock
+                                    content={message.thinking || thinkingContent}
+                                    isStreaming={isStreaming && isThinkingActive}
+                                />
+                            )}
+
+                            <div className="message-bubble markdown-content">
+                                {message.status === 'streaming' && !message.content ? (
+                                    <TypingIndicator />
+                                ) : (
+                                    <MessageContent
+                                        content={message.content}
+                                        isStreaming={message.status === 'streaming'}
+                                    />
+                                )}
+                            </div>
+                        </>
+                    )}
                 </>
             )}
 

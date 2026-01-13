@@ -5,6 +5,7 @@ export type { Message } from './message';
 export type {
     MessageStatus,
     DisplayMessage,
+    ContentBlock,
     ChatWindowProps,
     StreamingState,
     EditingState,

@@ -228,6 +228,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                     streamingMessageId={streaming.streamingMessageId}
                     thinkingContent={streaming.thinkingContent}
                     isThinkingActive={streaming.isThinkingActive}
+                    streamingContentBlocks={streaming.contentBlocks}
                     editingMessageId={editor.editingMessageId}
                     editedContent={editor.editedContent}
                     isRegenerating={streaming.isRegenerating}

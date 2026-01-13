@@ -8,5 +8,6 @@ export interface Message {
     provider: string;
     tokens_used: number | null;
     created_at: string;
-    thinking?: string;  // Extended thinking content (Claude only)
+    thinking?: string;           // Extended thinking content (Claude only)
+    content_blocks?: string;     // JSON string of structured content blocks
 }

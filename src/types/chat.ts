@@ -3,6 +3,12 @@ import type { Message } from "./message";
 
 export type MessageStatus = 'sending' | 'streaming' | 'sent' | 'failed';
 
+/** Content block types for interleaved rendering */
+export type ContentBlock = 
+    | { type: 'text'; content: string }
+    | { type: 'thinking'; content: string; isStreaming?: boolean }
+    | { type: 'tool_call'; name: string; params?: Record<string, unknown>; result?: string; isComplete?: boolean };
+
 export type DisplayMessage = {
     id: number;
     role: 'user' | 'assistant';
@@ -10,7 +16,8 @@ export type DisplayMessage = {
     timestamp: string;
     status?: MessageStatus;
     error?: string;
-    thinking?: string;
+    thinking?: string;              // Legacy: all thinking concatenated
+    contentBlocks?: ContentBlock[]; // New: ordered blocks for inline rendering
 }
 
 export interface ChatWindowProps {

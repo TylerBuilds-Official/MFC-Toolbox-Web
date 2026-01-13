@@ -1,5 +1,5 @@
 import React from 'react';
-import type { DisplayMessage } from '../../types/chat';
+import type { DisplayMessage, ContentBlock } from '../../types/chat';
 import ChatMessage from './ChatMessage';
 
 
@@ -11,6 +11,7 @@ interface ChatMessageListProps {
     streamingMessageId: number | null;
     thinkingContent: string;
     isThinkingActive: boolean;
+    streamingContentBlocks: ContentBlock[];
     
     // Editing state
     editingMessageId: number | null;
@@ -33,6 +34,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
     streamingMessageId,
     thinkingContent,
     isThinkingActive,
+    streamingContentBlocks,
     editingMessageId,
     editedContent,
     isRegenerating,
@@ -53,6 +55,7 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
                     streamingMessageId={streamingMessageId}
                     thinkingContent={thinkingContent}
                     isThinkingActive={isThinkingActive}
+                    streamingContentBlocks={streamingContentBlocks}
                     editingMessageId={editingMessageId}
                     editedContent={editedContent}
                     isRegenerating={isRegenerating}

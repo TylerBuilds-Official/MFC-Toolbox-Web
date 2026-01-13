@@ -2,7 +2,7 @@ import { useCallback, useState, useRef, useEffect } from "react";
 import { useApi } from "../../auth";
 import type { UseChatMessagesReturn } from "./useChatMessages";
 import type { UseChatModelReturn } from "./useChatModel";
-import type { MessageStatus } from "../../types/chat";
+import type { MessageStatus, ContentBlock } from "../../types/chat";
 
 
 type ShowToastFn = (message: string, variant?: 'success' | 'error' | 'warning' | 'info', options?: { duration?: number; action?: { label: string; onClick: () => void } }) => void;
@@ -31,10 +31,14 @@ export function useStreamingChat(
     const [thinkingContent, setThinkingContent]     = useState("");
     const [isThinkingActive, setIsThinkingActive]   = useState(false);
     const [isRegenerating, setIsRegenerating]       = useState(false);
+    const [contentBlocks, setContentBlocks]         = useState<ContentBlock[]>([]);
 
     // Refs
     const thinkingContentRef  = useRef("");
     const streamingContentRef = useRef("");
+    const contentBlocksRef    = useRef<ContentBlock[]>([]);
+    const currentThinkingRef  = useRef<string>("");  // Current thinking block content
+    const needsSpaceRef       = useRef(false);       // Track if next text needs leading space
     const abortControllerRef  = useRef<AbortController | null>(null);
     const sendMessageRef      = useRef<SendMessageFn>(null!);
 
@@ -46,8 +50,12 @@ export function useStreamingChat(
         setStreamingContent("");
         setThinkingContent("");
         setIsThinkingActive(false);
+        setContentBlocks([]);
         thinkingContentRef.current  = "";
         streamingContentRef.current = "";
+        contentBlocksRef.current    = [];
+        currentThinkingRef.current  = "";
+        needsSpaceRef.current       = false;
         abortControllerRef.current  = null;
     }, []);
 
@@ -79,8 +87,12 @@ export function useStreamingChat(
         setStreamingContent("");
         setThinkingContent("");
         setIsThinkingActive(false);
+        setContentBlocks([]);
         thinkingContentRef.current  = "";
         streamingContentRef.current = "";
+        contentBlocksRef.current    = [];
+        currentThinkingRef.current  = "";
+        needsSpaceRef.current       = false;
 
         // Handle simulated failure
         if (simulateFailure) {
@@ -105,32 +117,108 @@ export function useStreamingChat(
                     },
                     onThinkingStart: () => {
                         setIsThinkingActive(true);
+                        currentThinkingRef.current = "";
+                        // Add a new thinking block
+                        const newBlock: ContentBlock = { type: 'thinking', content: '', isStreaming: true };
+                        contentBlocksRef.current = [...contentBlocksRef.current, newBlock];
+                        setContentBlocks([...contentBlocksRef.current]);
                     },
                     onThinking: (text) => {
+                        // Accumulate to legacy ref
                         thinkingContentRef.current += text;
                         setThinkingContent(thinkingContentRef.current);
+                        
+                        // Update current thinking block
+                        currentThinkingRef.current += text;
+                        const blocks = contentBlocksRef.current;
+                        const lastBlock = blocks[blocks.length - 1];
+                        if (lastBlock?.type === 'thinking') {
+                            lastBlock.content = currentThinkingRef.current;
+                            setContentBlocks([...blocks]);
+                        }
                     },
                     onThinkingEnd: () => {
                         setIsThinkingActive(false);
+                        needsSpaceRef.current = true;
+                        
+                        // Mark thinking block as complete
+                        const blocks = contentBlocksRef.current;
+                        const lastBlock = blocks[blocks.length - 1];
+                        if (lastBlock?.type === 'thinking') {
+                            lastBlock.isStreaming = false;
+                            setContentBlocks([...blocks]);
+                        }
                     },
                     onContent: (text) => {
-                        streamingContentRef.current += text;
+                        // Add leading space if needed after thinking/tool
+                        let textToAdd = text;
+                        if (needsSpaceRef.current && text && !text.startsWith(' ') && !text.startsWith('\n')) {
+                            textToAdd = ' ' + text;
+                        }
+                        needsSpaceRef.current = false;
+                        
+                        streamingContentRef.current += textToAdd;
                         setStreamingContent(streamingContentRef.current);
+                        
+                        // Update or create text block
+                        const blocks = contentBlocksRef.current;
+                        const lastBlock = blocks[blocks.length - 1];
+                        if (lastBlock?.type === 'text') {
+                            lastBlock.content += textToAdd;
+                        } else {
+                            blocks.push({ type: 'text', content: textToAdd });
+                        }
+                        contentBlocksRef.current = blocks;
+                        setContentBlocks([...blocks]);
+                        
                         chatMessages.updateMessageContent(
                             assistantMessageId,
                             streamingContentRef.current,
-                            thinkingContentRef.current
+                            thinkingContentRef.current,
+                            [...blocks]
                         );
                     },
-                    onToolStart: (name) => {
-                        console.log(`[useStreamingChat] Tool started: ${name}`);
+                    onToolStart: (name, params) => {
+                        console.log(`[useStreamingChat] Tool started: ${name}`, params);
+                        // Add tool call block
+                        const newBlock: ContentBlock = { type: 'tool_call', name, params, isComplete: false };
+                        contentBlocksRef.current = [...contentBlocksRef.current, newBlock];
+                        setContentBlocks([...contentBlocksRef.current]);
+                        
+                        chatMessages.updateMessageContent(
+                            assistantMessageId,
+                            streamingContentRef.current,
+                            thinkingContentRef.current,
+                            [...contentBlocksRef.current]
+                        );
                     },
-                    onToolEnd: (name, result) => {
-                        console.log(`[useStreamingChat] Tool ended: ${name}`, result);
+                    onToolEnd: (name, params, result) => {
+                        console.log(`[useStreamingChat] Tool ended: ${name}`, params, result);
+                        needsSpaceRef.current = true;
+                        
+                        // Update tool call block with params and result
+                        const blocks = contentBlocksRef.current;
+                        const toolBlock = [...blocks].reverse().find(
+                            b => b.type === 'tool_call' && b.name === name && !b.isComplete
+                        );
+                        if (toolBlock && toolBlock.type === 'tool_call') {
+                            toolBlock.params = params;
+                            toolBlock.result = result;
+                            toolBlock.isComplete = true;
+                            setContentBlocks([...blocks]);
+                            
+                            chatMessages.updateMessageContent(
+                                assistantMessageId,
+                                streamingContentRef.current,
+                                thinkingContentRef.current,
+                                [...blocks]
+                            );
+                        }
                     },
                     onStreamEnd: (finalConversationId, _title) => {
                         const finalContent  = streamingContentRef.current;
                         const finalThinking = thinkingContentRef.current;
+                        const finalBlocks   = [...contentBlocksRef.current];
 
                         if (!skipUserMessage) {
                             chatMessages.updateMessageStatus(userMessageId, 'sent');
@@ -140,7 +228,8 @@ export function useStreamingChat(
                             assistantMessageId,
                             finalContent,
                             finalThinking,
-                            'sent'
+                            'sent',
+                            finalBlocks
                         );
 
                         if (finalConversationId !== chatMessages.conversationId) {
@@ -219,13 +308,15 @@ export function useStreamingChat(
 
         const finalContent  = streamingContentRef.current;
         const finalThinking = thinkingContentRef.current;
+        const finalBlocks   = [...contentBlocksRef.current];
 
         if (streamingMessageId) {
             chatMessages.finalizeMessage(
                 streamingMessageId,
                 finalContent || "_Generation cancelled by user._",
                 finalThinking,
-                'sent' as MessageStatus
+                'sent' as MessageStatus,
+                finalBlocks
             );
         }
 
@@ -236,8 +327,12 @@ export function useStreamingChat(
         setStreamingContent("");
         setThinkingContent("");
         setIsThinkingActive(false);
+        setContentBlocks([]);
         thinkingContentRef.current  = "";
         streamingContentRef.current = "";
+        contentBlocksRef.current    = [];
+        currentThinkingRef.current  = "";
+        needsSpaceRef.current       = false;
     }, [streamingMessageId, chatMessages]);
 
 
@@ -276,6 +371,7 @@ export function useStreamingChat(
         streamingContent,
         thinkingContent,
         isThinkingActive,
+        contentBlocks,
 
         // Actions
         sendMessage,

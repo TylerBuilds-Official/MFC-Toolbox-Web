@@ -14,6 +14,8 @@ export interface Conversation {
 export interface ConversationWithMessages {
     conversation: Conversation;
     messages: Message[];
+    conversation_provider: string | null;
+    conversation_model: string | null;
 }
 
 export interface ConversationsResponse {

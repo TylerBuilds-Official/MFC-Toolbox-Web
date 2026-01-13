@@ -28,6 +28,11 @@ export interface ChatWindowProps {
     initialMessages: Message[];
     onConversationCreated: (id: number) => void;
     onMessagesUpdated?: (messages: Message[]) => void;
+    // Model state (lifted from useChatModel)
+    selectedModel: string;
+    currentProvider: string;
+    onModelChange: (model: string) => void;
+    isModelReady: boolean;
 }
 
 export interface StreamingState {

@@ -1,8 +1,13 @@
 import { useCallback, useState, useRef, useEffect } from "react";
 import { useApi } from "../../auth";
 import type { UseChatMessagesReturn } from "./useChatMessages";
-import type { UseChatModelReturn } from "./useChatModel";
 import type { MessageStatus, ContentBlock } from "../../types/chat";
+
+// Minimal model state needed for streaming
+interface ChatModelState {
+    selectedModel: string;
+    currentProvider: string;
+}
 
 
 type ShowToastFn = (message: string, variant?: 'success' | 'error' | 'warning' | 'info', options?: { duration?: number; action?: { label: string; onClick: () => void } }) => void;
@@ -18,7 +23,7 @@ type SendMessageFn = (
 export function useStreamingChat(
     api: ReturnType<typeof useApi>,
     chatMessages: UseChatMessagesReturn,
-    chatModel: UseChatModelReturn,
+    chatModel: ChatModelState,
     showToast: ShowToastFn,
     onConversationCreated: (id: number) => void,
     projectId?: number | null

@@ -10,7 +10,6 @@ import type { DisplayMessage, ChatWindowProps } from "../../types";
 // Hooks
 import {
     useChatMessages,
-    useChatModel,
     useChatInput,
     useMessageEditor,
     useStreamingChat,
@@ -35,6 +34,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     activeProjectId,
     initialMessages,
     onConversationCreated,
+    // Model state (lifted to parent)
+    selectedModel,
+    currentProvider,
+    onModelChange,
+    isModelReady,
 }) => {
     const { user }      = useAuth();
     const api           = useApi();
@@ -47,10 +51,17 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     // Initialize Hooks
     // ========================================================================
 
-    const chatModel    = useChatModel(api);
     const chatMessages = useChatMessages(initialMessages, activeConversationId, onConversationCreated);
     const chatInput    = useChatInput();
     const editor       = useMessageEditor();
+
+    // Create a model-like object for useStreamingChat compatibility
+    const chatModel = {
+        selectedModel,
+        currentProvider,
+        handleModelChange: onModelChange,
+        isReady: isModelReady,
+    };
 
     const streaming = useStreamingChat(
         api,
@@ -65,14 +76,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     // ========================================================================
     // Effects
     // ========================================================================
-
-    // Load default model on mount
-    useEffect(() => {
-        if (user) {
-            chatModel.loadDefaultModel();
-        }
-    }, [user, chatModel.loadDefaultModel]);
-
 
     // Handle external prompt
     useEffect(() => {
@@ -144,7 +147,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
 
     const handleSendMessage = useCallback(async () => {
-        if (!chatInput.input.trim() || !chatModel.selectedModel) return;
+        if (!chatInput.input.trim() || !selectedModel) return;
 
         const messageContent = chatInput.input.trim();
         chatInput.clearInput();
@@ -180,7 +183,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         }
 
         await streaming.sendMessage(messageContent);
-    }, [chatInput, chatModel.selectedModel, chatMessages, showToast, streaming]);
+    }, [chatInput, selectedModel, chatMessages, showToast, streaming]);
 
 
     const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -204,7 +207,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     // Render
     // ========================================================================
 
-    if (!chatModel.isReady) {
+    if (!isModelReady) {
         return (
             <div className="chat-window-container">
                 <div className="chat-window">
@@ -242,8 +245,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
                 <ChatInputArea
                     input={chatInput.input}
-                    selectedModel={chatModel.selectedModel}
-                    currentProvider={chatModel.currentProvider}
+                    selectedModel={selectedModel}
+                    currentProvider={currentProvider}
                     isTyping={streaming.isTyping}
                     isStreaming={streaming.isStreaming}
                     showCommandMenu={chatInput.showCommandMenu}
@@ -253,7 +256,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                     onKeyDown={handleKeyDown}
                     onSend={handleSendMessage}
                     onStop={streaming.stopGeneration}
-                    onModelChange={chatModel.handleModelChange}
+                    onModelChange={onModelChange}
                     onCommandSelect={handleCommandSelect}
                     onCloseCommandMenu={chatInput.closeCommandMenu}
                 />

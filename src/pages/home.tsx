@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useApi } from '../auth';
 import { useAuth } from '../auth';
 import { useToast } from '../components/Toast';
+import { useChatModel } from '../hooks/chat/useChatModel';
 import type { Conversation, ConversationWithMessages, ConversationsResponse } from '../types/conversation';
 import type { Message } from '../types/message';
 import '../styles/home.css';
@@ -15,6 +16,9 @@ const Home = () => {
     const { user } = useAuth();
     const api = useApi();
     const { showToast } = useToast();
+
+    // Model state (lifted from ChatWindow)
+    const chatModel = useChatModel(api);
 
     // Toolbox state
     const [toolboxOpen, setToolboxOpen] = useState(false);
@@ -30,10 +34,11 @@ const Home = () => {
     const [activeProjectId, setActiveProjectId] = useState<number | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
 
-    // Load conversations on mount
+    // Load conversations and default model on mount
     useEffect(() => {
         if (user) {
             loadConversations();
+            chatModel.loadDefaultModel();
         }
     }, [user]);
 
@@ -54,7 +59,22 @@ const Home = () => {
             const data = await api.get<ConversationWithMessages>(`/conversations/${conversationId}`);
             setMessages(data.messages);
             setActiveConversationId(conversationId);
-            setActiveProjectId(null); // Clear project context when loading existing conversation
+            setActiveProjectId(null);
+
+            // Check if we need to switch provider/model for this conversation
+            if (data.conversation_provider && data.conversation_model) {
+                const switched = chatModel.setConversationContext(
+                    data.conversation_provider,
+                    data.conversation_model
+                );
+                
+                if (switched) {
+                    const providerName = data.conversation_provider === 'anthropic' 
+                        ? 'Anthropic' 
+                        : 'OpenAI';
+                    showToast(`Switched to ${providerName} for this conversation`, 'info');
+                }
+            }
         } catch (error) {
             console.error("Failed to load conversation:", error);
         }
@@ -69,6 +89,9 @@ const Home = () => {
         setActiveConversationId(null);
         setActiveProjectId(projectId ?? null);
         setMessages([]);
+        
+        // Reset model to user's defaults
+        chatModel.resetToDefaults();
     };
 
     const handleRenameConversation = async (conversationId: number, newTitle: string) => {
@@ -185,6 +208,11 @@ const Home = () => {
                     initialMessages={messages}
                     onConversationCreated={handleConversationCreated}
                     onMessagesUpdated={handleMessagesUpdated}
+                    // Model state props
+                    selectedModel={chatModel.selectedModel}
+                    currentProvider={chatModel.currentProvider}
+                    onModelChange={chatModel.handleModelChange}
+                    isModelReady={chatModel.isReady}
                 />
             </div>
         </div>

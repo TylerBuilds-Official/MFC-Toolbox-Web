@@ -388,7 +388,7 @@
 .chat-input {
   flex: 1;
   min-height: 24px;
-  max-height: 120px;
+  max-height: 520px;
   height: auto;
   background: transparent;
   border: none;
@@ -407,7 +407,7 @@
 
 .chat-input:focus {
   outline: none;
-  box-shadow: 0 0 0 2px var(--accent-muted);
+  box-shadow: 0 0 0 1px var(--accent-muted);
   border-radius: var(--radius-md);
 }
 

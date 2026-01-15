@@ -18,6 +18,7 @@ export type {
     Conversation,
     ConversationWithMessages,
     ConversationsResponse,
+    PaginatedMessagesResponse,
 } from './conversation';
 
 // Streaming types

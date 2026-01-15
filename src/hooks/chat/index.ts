@@ -12,3 +12,6 @@ export type { UseMessageEditorReturn } from './useMessageEditor';
 
 export { useStreamingChat } from './useStreamingChat';
 export type { UseStreamingChatReturn } from './useStreamingChat';
+
+export { usePaginatedMessages } from './usePaginatedMessages';
+export type { UsePaginatedMessagesReturn } from './usePaginatedMessages';

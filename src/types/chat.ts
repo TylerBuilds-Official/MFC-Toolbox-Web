@@ -33,6 +33,10 @@ export interface ChatWindowProps {
     currentProvider: string;
     onModelChange: (model: string) => void;
     isModelReady: boolean;
+    // Pagination state
+    hasMoreMessages?: boolean;
+    isLoadingMoreMessages?: boolean;
+    onLoadMoreMessages?: () => void;
 }
 
 export interface StreamingState {

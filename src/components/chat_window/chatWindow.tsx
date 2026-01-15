@@ -39,6 +39,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     currentProvider,
     onModelChange,
     isModelReady,
+    // Pagination state
+    hasMoreMessages = false,
+    isLoadingMoreMessages = false,
+    onLoadMoreMessages,
 }) => {
     const { user }      = useAuth();
     const api           = useApi();
@@ -288,6 +292,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                     onSaveEdit={handleSaveEdit}
                     onEditChange={handleEditChange}
                     onRegenerate={handleRegenerate}
+                    // Pagination
+                    hasMore={hasMoreMessages}
+                    isLoadingMore={isLoadingMoreMessages}
+                    onLoadMore={onLoadMoreMessages}
                 />
 
                 <ChatInputArea

@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
-import type { DisplayMessage, ContentBlock } from '../../types/chat';
-import { formatMessageTime } from '../../services/chatService';
+import type { DisplayMessage, ContentBlock } from '../../types';
+import { formatMessageTime } from '../../services';
 
 import ThinkingBlock from '../ThinkingBlock';
 import ToolCallBlock from '../ToolCallBlock';

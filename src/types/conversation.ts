@@ -16,9 +16,19 @@ export interface ConversationWithMessages {
     messages: Message[];
     conversation_provider: string | null;
     conversation_model: string | null;
+    // Pagination info
+    has_more: boolean;
+    oldest_id: number | null;
+    total_count: number;
+}
+
+export interface PaginatedMessagesResponse {
+    messages: Message[];
+    has_more: boolean;
+    oldest_id: number | null;
+    total_count: number;
 }
 
 export interface ConversationsResponse {
     conversations: Conversation[];
 }
-

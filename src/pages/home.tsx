@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useApi } from '../auth';
 import { useAuth } from '../auth';
 import { useToast } from '../components/Toast';
 import { useChatModel } from '../hooks/chat/useChatModel';
+import { usePaginatedMessages } from '../hooks/chat/usePaginatedMessages';
 import type { Conversation, ConversationWithMessages, ConversationsResponse } from '../types/conversation';
 import type { Message } from '../types/message';
 import '../styles/home.css';
@@ -11,6 +12,8 @@ import ChatWindow from "../components/chat_window/chatWindow";
 import ToolboxSidebar from "../components/ToolboxSidebar";
 import ConversationSidebar from "../components/ConversationSidebar";
 import SidebarToggleWrench from "../assets/svg/toolbox/sidebarToggleWrench";
+
+const SCROLL_THRESHOLD = 200; // pixels from top to trigger load
 
 const Home = () => {
     const { user } = useAuth();
@@ -32,7 +35,26 @@ const Home = () => {
     // Active conversation state
     const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
     const [activeProjectId, setActiveProjectId] = useState<number | null>(null);
-    const [messages, setMessages] = useState<Message[]>([]);
+    
+    // Initial pagination state (will be populated when loading conversation)
+    const [initialMessages, setInitialMessages] = useState<Message[]>([]);
+    const [initialHasMore, setInitialHasMore] = useState(false);
+    const [initialOldestId, setInitialOldestId] = useState<number | null>(null);
+
+    // Paginated messages hook
+    const pagination = usePaginatedMessages({
+        api,
+        conversationId: activeConversationId,
+        initialMessages,
+        initialHasMore,
+        initialOldestId,
+    });
+
+    // Ref for scroll position restoration
+    const scrollRestorationRef = useRef<{ scrollHeight: number; scrollTop: number } | null>(null);
+    
+    // Flag to scroll to bottom after initial conversation load
+    const shouldScrollToBottomRef = useRef(false);
 
     // Load conversations and default model on mount
     useEffect(() => {
@@ -41,6 +63,58 @@ const Home = () => {
             chatModel.loadDefaultModel();
         }
     }, [user]);
+
+    // Scroll to bottom after initial conversation load
+    useEffect(() => {
+        if (shouldScrollToBottomRef.current && pagination.messages.length > 0) {
+            // Use requestAnimationFrame to ensure DOM has updated
+            requestAnimationFrame(() => {
+                window.scrollTo(0, document.documentElement.scrollHeight);
+                shouldScrollToBottomRef.current = false;
+            });
+        }
+    }, [pagination.messages.length]);
+
+    // Scroll detection for loading older messages
+    useEffect(() => {
+        const handleScroll = () => {
+            // Don't trigger if we're in the middle of scrolling to bottom
+            if (shouldScrollToBottomRef.current) return;
+            
+            // Only trigger if we have more to load and aren't already loading
+            if (!pagination.hasMore || pagination.isLoadingMore) return;
+            
+            const scrollTop = window.scrollY || document.documentElement.scrollTop;
+            
+            if (scrollTop < SCROLL_THRESHOLD) {
+                // Store scroll position before loading
+                scrollRestorationRef.current = {
+                    scrollHeight: document.documentElement.scrollHeight,
+                    scrollTop: scrollTop
+                };
+                pagination.loadOlderMessages();
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, [pagination.hasMore, pagination.isLoadingMore, pagination.loadOlderMessages]);
+
+    // Restore scroll position after prepending messages
+    useEffect(() => {
+        if (scrollRestorationRef.current && !pagination.isLoadingMore) {
+            const { scrollHeight: oldHeight, scrollTop: oldScrollTop } = scrollRestorationRef.current;
+            const newHeight = document.documentElement.scrollHeight;
+            const heightDiff = newHeight - oldHeight;
+            
+            // Restore scroll position so user stays at same visual position
+            if (heightDiff > 0) {
+                window.scrollTo(0, oldScrollTop + heightDiff);
+            }
+            
+            scrollRestorationRef.current = null;
+        }
+    }, [pagination.messages.length, pagination.isLoadingMore]);
 
     const loadConversations = async () => {
         setConversationsLoading(true);
@@ -57,9 +131,25 @@ const Home = () => {
     const loadConversation = async (conversationId: number) => {
         try {
             const data = await api.get<ConversationWithMessages>(`/conversations/${conversationId}`);
-            setMessages(data.messages);
+            
+            // Set initial state for pagination hook
+            setInitialMessages(data.messages);
+            setInitialHasMore(data.has_more);
+            setInitialOldestId(data.oldest_id);
+            
             setActiveConversationId(conversationId);
             setActiveProjectId(null);
+
+            // Reset pagination with new data
+            pagination.resetPagination(
+                data.messages, 
+                data.has_more, 
+                data.oldest_id,
+                data.total_count
+            );
+            
+            // Flag to scroll to bottom after messages render
+            shouldScrollToBottomRef.current = true;
 
             // Check if we need to switch provider/model for this conversation
             if (data.conversation_provider && data.conversation_model) {
@@ -88,7 +178,10 @@ const Home = () => {
         // Clear active conversation - ChatWindow will create new one on first message
         setActiveConversationId(null);
         setActiveProjectId(projectId ?? null);
-        setMessages([]);
+        setInitialMessages([]);
+        setInitialHasMore(false);
+        setInitialOldestId(null);
+        pagination.resetPagination([], false, null);
         
         // Reset model to user's defaults
         chatModel.resetToDefaults();
@@ -122,7 +215,10 @@ const Home = () => {
             // If we deleted the active conversation, clear it
             if (activeConversationId === conversationId) {
                 setActiveConversationId(null);
-                setMessages([]);
+                setInitialMessages([]);
+                setInitialHasMore(false);
+                setInitialOldestId(null);
+                pagination.resetPagination([], false, null);
             }
         } catch (error) {
             console.error("Failed to delete conversation:", error);
@@ -132,16 +228,22 @@ const Home = () => {
     const handleConversationCreated = (conversationId: number) => {
         if (conversationId === -1) {
             setActiveConversationId(null);
-            setMessages([]);
+            setInitialMessages([]);
+            setInitialHasMore(false);
+            setInitialOldestId(null);
+            pagination.resetPagination([], false, null);
         } else {
             setActiveConversationId(conversationId);
+            // New conversation won't have pagination initially
+            setInitialHasMore(false);
+            setInitialOldestId(null);
             loadConversations();
         }
     };
 
-    const handleMessagesUpdated = (newMessages: Message[]) => {
-        setMessages(newMessages);
-    };
+    const handleMessagesUpdated = useCallback((newMessages: Message[]) => {
+        pagination.setMessages(newMessages);
+    }, [pagination.setMessages]);
 
     // Toolbox handlers
     const handleToolSelect = (prompt: string) => {
@@ -205,7 +307,7 @@ const Home = () => {
                     onPromptConsumed={handlePromptConsumed}
                     activeConversationId={activeConversationId}
                     activeProjectId={activeProjectId}
-                    initialMessages={messages}
+                    initialMessages={pagination.messages}
                     onConversationCreated={handleConversationCreated}
                     onMessagesUpdated={handleMessagesUpdated}
                     // Model state props
@@ -213,6 +315,10 @@ const Home = () => {
                     currentProvider={chatModel.currentProvider}
                     onModelChange={chatModel.handleModelChange}
                     isModelReady={chatModel.isReady}
+                    // Pagination props
+                    hasMoreMessages={pagination.hasMore}
+                    isLoadingMoreMessages={pagination.isLoadingMore}
+                    onLoadMoreMessages={pagination.loadOlderMessages}
                 />
             </div>
         </div>

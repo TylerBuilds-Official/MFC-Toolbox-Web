@@ -118,6 +118,53 @@
   scroll-behavior: smooth;
 }
 
+/* Pagination indicators */
+.chat-messages-loading-more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.chat-messages-has-more {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-3);
+}
+
+.load-more-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.load-more-btn:hover {
+  color: var(--accent-primary);
+  background-color: var(--accent-muted);
+  border-color: var(--border-accent);
+}
+
+.chat-messages-beginning {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-3);
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-style: italic;
+}
+
 /* Scrollbar styling */
 .chat-messages::-webkit-scrollbar {
   width: 6px;

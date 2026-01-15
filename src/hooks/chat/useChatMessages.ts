@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState, useEffect, useRef } from "react";
 import type { Message } from "../../types/message";
 import type { DisplayMessage, MessageStatus, ContentBlock } from "../../types/chat";
 import { WELCOME_MESSAGE } from "../../components/chat_window/constants";
@@ -22,6 +22,21 @@ function parseContentBlocks(contentBlocksJson?: string): ContentBlock[] | undefi
     return undefined;
 }
 
+/**
+ * Convert a Message from API to DisplayMessage for rendering.
+ */
+function convertToDisplayMessage(msg: Message): DisplayMessage {
+    return {
+        id:            msg.id,
+        role:          msg.role,
+        content:       msg.content,
+        timestamp:     msg.created_at,
+        status:        'sent' as MessageStatus,
+        thinking:      msg.thinking,
+        contentBlocks: parseContentBlocks(msg.content_blocks)
+    };
+}
+
 
 export function useChatMessages(
     initialMessages: Message[],
@@ -30,6 +45,9 @@ export function useChatMessages(
 ) {
     const [displayMessages, setDisplayMessages] = useState<DisplayMessage[]>([WELCOME_MESSAGE]);
     const [conversationId, setConversationId]   = useState<number | null>(null);
+    
+    // Track which conversation we've loaded to detect initial vs subsequent loads
+    const lastLoadedConversationId = useRef<number | null>(null);
 
 
     // Sync conversationId with activeConversationId prop
@@ -39,24 +57,35 @@ export function useChatMessages(
 
 
     // Convert and load initial messages when they change
+    // Smart merging: preserve session messages (new messages sent during session)
     useEffect(() => {
         if (initialMessages.length > 0) {
-            const converted: DisplayMessage[] = initialMessages.map(msg => ({
-                id:            msg.id,
-                role:          msg.role,
-                content:       msg.content,
-                timestamp:     msg.created_at,
-                status:        'sent' as MessageStatus,
-                thinking:      msg.thinking,
-                contentBlocks: parseContentBlocks(msg.content_blocks)
-            }));
-            setDisplayMessages(converted);
+            const isInitialLoad = lastLoadedConversationId.current !== activeConversationId;
+            
+            if (isInitialLoad) {
+                // First load for this conversation - replace entirely
+                const converted = initialMessages.map(convertToDisplayMessage);
+                setDisplayMessages(converted);
+                lastLoadedConversationId.current = activeConversationId;
+            } else {
+                // Subsequent load (e.g., loading older messages) - merge with session messages
+                // Session messages are those with IDs higher than the max loaded ID
+                // (they were added during the current session and haven't been reloaded)
+                setDisplayMessages(prev => {
+                    const maxLoadedId = Math.max(...initialMessages.map(m => m.id));
+                    const sessionMessages = prev.filter(m => m.id > maxLoadedId);
+                    const converted = initialMessages.map(convertToDisplayMessage);
+                    return [...converted, ...sessionMessages];
+                });
+            }
         } else if (activeConversationId === null) {
+            // New conversation - show welcome message
             setDisplayMessages([{
                 ...WELCOME_MESSAGE,
                 id:        Date.now(),
                 timestamp: new Date().toISOString()
             }]);
+            lastLoadedConversationId.current = null;
         }
     }, [initialMessages, activeConversationId]);
 
@@ -148,6 +177,7 @@ export function useChatMessages(
             timestamp: new Date().toISOString()
         }]);
         setConversationId(null);
+        lastLoadedConversationId.current = null;
         onConversationCreated(-1);
     }, [onConversationCreated]);
 

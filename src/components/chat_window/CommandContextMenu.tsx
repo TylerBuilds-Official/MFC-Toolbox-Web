@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, memo } from 'react';
 import { getAvailableTriggers, type Trigger } from '../../triggers';
 import { useAuth } from '../../auth';
 import '../../styles/commandContextMenu.css';
@@ -338,4 +338,4 @@ const CommandContextMenu: React.FC<CommandContextMenuProps> = ({
 };
 
 
-export default CommandContextMenu;
+export default memo(CommandContextMenu);

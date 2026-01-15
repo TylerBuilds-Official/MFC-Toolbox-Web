@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import type { Trigger } from '../../triggers';
 import CommandContextMenu from './CommandContextMenu';
 import ModelSelector from '../modelSelector';
@@ -94,4 +94,4 @@ const ChatInputArea: React.FC<ChatInputAreaProps> = ({
     );
 };
 
-export default ChatInputArea;
+export default memo(ChatInputArea);

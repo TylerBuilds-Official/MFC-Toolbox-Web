@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { NewChatIcon, SettingsIcon } from '../../assets/svg/chat_window';
 
 
@@ -43,4 +43,4 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ isStreaming, onNewChat }) => {
     );
 };
 
-export default ChatHeader;
+export default memo(ChatHeader);

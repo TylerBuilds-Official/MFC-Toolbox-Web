@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import type { DisplayMessage, ContentBlock } from '../../types/chat';
 import ChatMessage from './ChatMessage';
 
@@ -72,4 +72,4 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
     );
 };
 
-export default ChatMessageList;
+export default memo(ChatMessageList);

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import '../styles/toolCallBlock.css';
 
 interface ToolCallBlockProps {
@@ -67,4 +67,4 @@ const ToolCallBlock: React.FC<ToolCallBlockProps> = ({ name, params, isComplete 
     );
 };
 
-export default ToolCallBlock;
+export default memo(ToolCallBlock);

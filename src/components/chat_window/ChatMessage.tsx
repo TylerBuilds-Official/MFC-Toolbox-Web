@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import type { DisplayMessage, ContentBlock } from '../../types/chat';
 import { formatMessageTime } from '../../services/chatService';
 
@@ -218,4 +218,36 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
     );
 };
 
-export default ChatMessage;
+// Custom comparison to prevent unnecessary re-renders
+const arePropsEqual = (prevProps: ChatMessageProps, nextProps: ChatMessageProps): boolean => {
+    // Always re-render if the message itself changed
+    if (prevProps.message !== nextProps.message) return false;
+    
+    // Check if THIS message is currently being edited
+    const wasEditing = prevProps.editingMessageId === prevProps.message.id;
+    const isEditing = nextProps.editingMessageId === nextProps.message.id;
+    if (wasEditing || isEditing) {
+        // Re-render if editing state or content changed
+        if (prevProps.editingMessageId !== nextProps.editingMessageId) return false;
+        if (prevProps.editedContent !== nextProps.editedContent) return false;
+    }
+    
+    // Check if THIS message is currently streaming
+    const wasStreaming = prevProps.streamingMessageId === prevProps.message.id;
+    const isStreaming = nextProps.streamingMessageId === nextProps.message.id;
+    if (wasStreaming || isStreaming) {
+        // Re-render if streaming state changed for this message
+        if (prevProps.streamingMessageId !== nextProps.streamingMessageId) return false;
+        if (prevProps.thinkingContent !== nextProps.thinkingContent) return false;
+        if (prevProps.isThinkingActive !== nextProps.isThinkingActive) return false;
+        if (prevProps.streamingContentBlocks !== nextProps.streamingContentBlocks) return false;
+    }
+    
+    // Re-render if regenerating state changed
+    if (prevProps.isRegenerating !== nextProps.isRegenerating) return false;
+    
+    // Props are equal enough - skip re-render
+    return true;
+};
+
+export default memo(ChatMessage, arePropsEqual);

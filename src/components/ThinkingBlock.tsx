@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo } from 'react';
 import '../styles/thinkingBlock.css';
 
 interface ThinkingBlockProps {
@@ -52,4 +52,4 @@ const ThinkingBlock: React.FC<ThinkingBlockProps> = ({ content, isStreaming = fa
     );
 };
 
-export default ThinkingBlock;
+export default memo(ThinkingBlock);

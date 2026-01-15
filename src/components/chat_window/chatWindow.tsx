@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useCallback } from "react";
+import React, { useEffect, useRef, useCallback, useMemo } from "react";
 import "../../styles/chatWindow.css";
 
 import { useAuth, useApi } from "../../auth";
@@ -56,12 +56,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     const editor       = useMessageEditor();
 
     // Create a model-like object for useStreamingChat compatibility
-    const chatModel = {
+    const chatModel = useMemo(() => ({
         selectedModel,
         currentProvider,
         handleModelChange: onModelChange,
         isReady: isModelReady,
-    };
+    }), [selectedModel, currentProvider, onModelChange, isModelReady]);
 
     const streaming = useStreamingChat(
         api,
@@ -71,6 +71,26 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         onConversationCreated,
         activeProjectId
     );
+
+
+    // ========================================================================
+    // Refs for stable callbacks
+    // ========================================================================
+
+    const chatInputRef    = useRef(chatInput);
+    const chatMessagesRef = useRef(chatMessages);
+    const streamingRef    = useRef(streaming);
+    const editorRef       = useRef(editor);
+    const selectedModelRef = useRef(selectedModel);
+
+    // Keep refs in sync
+    useEffect(() => {
+        chatInputRef.current    = chatInput;
+        chatMessagesRef.current = chatMessages;
+        streamingRef.current    = streaming;
+        editorRef.current       = editor;
+        selectedModelRef.current = selectedModel;
+    });
 
 
     // ========================================================================
@@ -87,43 +107,43 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
 
     // ========================================================================
-    // Event Handlers
+    // Stable Event Handlers (using refs)
     // ========================================================================
 
     const handleNewChat = useCallback(() => {
-        chatMessages.setConversationId(null);
-        chatMessages.setDisplayMessages([{
+        chatMessagesRef.current.setConversationId(null);
+        chatMessagesRef.current.setDisplayMessages([{
             ...WELCOME_MESSAGE,
             id:        Date.now(),
             timestamp: new Date().toISOString()
         }]);
         onConversationCreated(-1);
-    }, [chatMessages, onConversationCreated]);
+    }, [onConversationCreated]);
 
 
     const handleSaveEdit = useCallback(async (messageIndex: number) => {
-        const content = editor.finishEditing();
+        const content = editorRef.current.finishEditing();
         if (!content) return;
 
-        const editedMessage = chatMessages.displayMessages[messageIndex];
+        const editedMessage = chatMessagesRef.current.displayMessages[messageIndex];
         if (!editedMessage || editedMessage.role !== "user") return;
 
-        chatMessages.truncateToIndex(messageIndex);
-        await streaming.sendMessage(content);
-    }, [editor, chatMessages, streaming]);
+        chatMessagesRef.current.truncateToIndex(messageIndex);
+        await streamingRef.current.sendMessage(content);
+    }, []);
 
 
     const handleCommandSelect = useCallback(async (trigger: Trigger, params?: Record<string, string>) => {
-        chatInput.closeCommandMenu();
-        chatInput.clearInput();
+        chatInputRef.current.closeCommandMenu();
+        chatInputRef.current.clearInput();
 
         const commandMessage = `/${trigger.command}`;
 
         const triggerResult = await executeTrigger(commandMessage, {
             message:        commandMessage,
-            conversationId: chatMessages.conversationId,
+            conversationId: chatMessagesRef.current.conversationId,
             showToast,
-            clearMessages:  chatMessages.clearMessages,
+            clearMessages:  chatMessagesRef.current.clearMessages,
             params
         });
 
@@ -136,28 +156,29 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                     timestamp: new Date().toISOString(),
                     status:    'sent'
                 };
-                chatMessages.setDisplayMessages(prev => [...prev, responseMessage]);
+                chatMessagesRef.current.setDisplayMessages(prev => [...prev, responseMessage]);
             }
 
             if (triggerResult.simulateFailure) {
-                streaming.sendMessage(commandMessage, undefined, true);
+                streamingRef.current.sendMessage(commandMessage, undefined, true);
             }
         }
-    }, [chatInput, chatMessages, showToast, streaming]);
+    }, [showToast]);
 
 
     const handleSendMessage = useCallback(async () => {
-        if (!chatInput.input.trim() || !selectedModel) return;
+        const input = chatInputRef.current.input;
+        if (!input.trim() || !selectedModelRef.current) return;
 
-        const messageContent = chatInput.input.trim();
-        chatInput.clearInput();
+        const messageContent = input.trim();
+        chatInputRef.current.clearInput();
 
         // Check for trigger commands
         const triggerResult = await executeTrigger(messageContent, {
             message:        messageContent,
-            conversationId: chatMessages.conversationId,
+            conversationId: chatMessagesRef.current.conversationId,
             showToast,
-            clearMessages:  chatMessages.clearMessages
+            clearMessages:  chatMessagesRef.current.clearMessages
         });
 
         if (triggerResult) {
@@ -169,7 +190,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                     timestamp: new Date().toISOString(),
                     status:    'sent'
                 };
-                chatMessages.setDisplayMessages(prev => [...prev, responseMessage]);
+                chatMessagesRef.current.setDisplayMessages(prev => [...prev, responseMessage]);
             }
 
             if (triggerResult.preventDefault) {
@@ -177,18 +198,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             }
 
             if (triggerResult.simulateFailure) {
-                await streaming.sendMessage(messageContent, undefined, true);
+                await streamingRef.current.sendMessage(messageContent, undefined, true);
                 return;
             }
         }
 
-        await streaming.sendMessage(messageContent);
-    }, [chatInput, selectedModel, chatMessages, showToast, streaming]);
+        await streamingRef.current.sendMessage(messageContent);
+    }, [showToast]);
 
 
     const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
         // Let command menu handle its own keys
-        if (chatInput.showCommandMenu && ['ArrowUp', 'ArrowDown', 'Enter', 'Tab'].includes(e.key)) {
+        if (chatInputRef.current.showCommandMenu && ['ArrowUp', 'ArrowDown', 'Enter', 'Tab'].includes(e.key)) {
             return;
         }
 
@@ -197,10 +218,36 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             handleSendMessage();
         }
 
-        if (e.key === "Escape" && chatInput.showCommandMenu) {
-            chatInput.closeCommandMenu();
+        if (e.key === "Escape" && chatInputRef.current.showCommandMenu) {
+            chatInputRef.current.closeCommandMenu();
         }
-    }, [chatInput, handleSendMessage]);
+    }, [handleSendMessage]);
+
+
+    // Stable wrappers for ChatMessageList callbacks
+    const handleRetry = useCallback((id: number, content: string) => {
+        streamingRef.current.retryMessage(id, content);
+    }, []);
+
+    const handleStartEdit = useCallback((id: number, content: string) => {
+        editorRef.current.startEditing(id, content);
+    }, []);
+
+    const handleCancelEdit = useCallback(() => {
+        editorRef.current.cancelEditing();
+    }, []);
+
+    const handleEditChange = useCallback((content: string) => {
+        editorRef.current.updateEditContent(content);
+    }, []);
+
+    const handleRegenerate = useCallback((index: number) => {
+        streamingRef.current.regenerateResponse(index);
+    }, []);
+
+    const handleStop = useCallback(() => {
+        streamingRef.current.stopGeneration();
+    }, []);
 
 
     // ========================================================================
@@ -235,12 +282,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                     editingMessageId={editor.editingMessageId}
                     editedContent={editor.editedContent}
                     isRegenerating={streaming.isRegenerating}
-                    onRetry={streaming.retryMessage}
-                    onStartEdit={editor.startEditing}
-                    onCancelEdit={editor.cancelEditing}
+                    onRetry={handleRetry}
+                    onStartEdit={handleStartEdit}
+                    onCancelEdit={handleCancelEdit}
                     onSaveEdit={handleSaveEdit}
-                    onEditChange={editor.updateEditContent}
-                    onRegenerate={streaming.regenerateResponse}
+                    onEditChange={handleEditChange}
+                    onRegenerate={handleRegenerate}
                 />
 
                 <ChatInputArea
@@ -255,7 +302,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                     onInputChange={chatInput.handleInputChange}
                     onKeyDown={handleKeyDown}
                     onSend={handleSendMessage}
-                    onStop={streaming.stopGeneration}
+                    onStop={handleStop}
                     onModelChange={onModelChange}
                     onCommandSelect={handleCommandSelect}
                     onCloseCommandMenu={chatInput.closeCommandMenu}

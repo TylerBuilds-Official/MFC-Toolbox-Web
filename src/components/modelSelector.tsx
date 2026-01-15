@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, memo } from "react";
 import { useApi } from "../auth";
 import LoadingDots from "./LoadingDots.tsx";
 
@@ -123,4 +123,4 @@ const ModelSelector = ({ value, onChange, provider, disabled }: ModelSelectorPro
     );
 }
 
-export default ModelSelector;
+export default memo(ModelSelector);

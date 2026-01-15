@@ -5,7 +5,7 @@
  * between markdown text segments.
  */
 
-import React from 'react';
+import React, { memo } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { parseMessageContent, hasArtifacts } from '../utils/artifactParser';
@@ -94,4 +94,4 @@ const MessageContent: React.FC<MessageContentProps> = ({ content, isStreaming })
     );
 };
 
-export default MessageContent;
+export default memo(MessageContent);

@@ -4,7 +4,7 @@ export const WELCOME_MESSAGE: DisplayMessage = {
     id: Date.now(),
     role: 'assistant',
     // TODO ADD RANDOM USER AWARE WELCOME MESSAGING
-    content: 'Welcome to the MFC Toolbox! I\'m here to help with fabrication workflows, document processing, and more. What can I assist you with today?',
+    content: 'Welcome to FabCore AI! I\'m Atlas, your assistant for fabrication workflows, document processing, and more. What can I help you with today?',
     timestamp: new Date().toISOString(),
     status: 'sent'
 };

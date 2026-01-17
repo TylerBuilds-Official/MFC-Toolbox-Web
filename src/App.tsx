@@ -9,6 +9,18 @@ import Home from "./pages/home.tsx";
 import Settings from "./pages/settings.tsx";
 import { DataPage } from "./components/data";
 
+// Guide pages
+import GuideIndex from "./pages/guide";
+import {
+    ModelsGuide,
+    ChatGuide,
+    ToolboxGuide,
+    ConversationsGuide,
+    ProjectsGuide,
+    DataGuide,
+    MemoriesGuide,
+} from "./pages/guide/guide_pages";
+
 
 function App() {
     return (
@@ -33,6 +45,49 @@ function App() {
                                         <DataPage />
                                     </ProtectedRoute>
                                 } />
+                                
+                                {/* Guide routes */}
+                                <Route path="/guide" element={
+                                    <ProtectedRoute>
+                                        <GuideIndex />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/guide/models" element={
+                                    <ProtectedRoute>
+                                        <ModelsGuide />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/guide/chat" element={
+                                    <ProtectedRoute>
+                                        <ChatGuide />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/guide/toolbox" element={
+                                    <ProtectedRoute>
+                                        <ToolboxGuide />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/guide/conversations" element={
+                                    <ProtectedRoute>
+                                        <ConversationsGuide />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/guide/projects" element={
+                                    <ProtectedRoute>
+                                        <ProjectsGuide />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/guide/data" element={
+                                    <ProtectedRoute>
+                                        <DataGuide />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/guide/memories" element={
+                                    <ProtectedRoute>
+                                        <MemoriesGuide />
+                                    </ProtectedRoute>
+                                } />
+
                                 {/* Auth callback route - just redirects to home after auth */}
                                 <Route path="/auth/callback" element={
                                     <ProtectedRoute>

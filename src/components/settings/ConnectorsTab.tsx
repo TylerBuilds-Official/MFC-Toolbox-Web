@@ -176,7 +176,7 @@ const ConnectorsTab: React.FC = () => {
     const handleRemoveFolder = async (folderId: number, path: string) => {
         const confirmed = await confirm({
             title: 'Remove Folder Access',
-            message: `Remove access to "${path}"? Claude will no longer be able to access files in this folder.`,
+            message: `Remove access to "${path}"? Atlas will no longer be able to access files in this folder.`,
             confirmText: 'Remove',
             cancelText: 'Cancel',
             variant: 'danger',
@@ -231,7 +231,7 @@ const ConnectorsTab: React.FC = () => {
                                 <h3 className="settings-card-title">Local File Access</h3>
                             </div>
                             <p className="settings-card-description">
-                                Allow Claude to read and write files on your computer.
+                                Allow Atlas to read and write files on your computer.
                                 Only folders you explicitly allow can be accessed.
                             </p>
                         </div>
@@ -304,7 +304,7 @@ const ConnectorsTab: React.FC = () => {
 
                         {status.folders.length === 0 ? (
                             <div className="connector-folders-empty">
-                                <p>No folders configured. Add a folder to allow Claude access.</p>
+                                <p>No folders configured. Add a folder to allow Atlas access.</p>
                             </div>
                         ) : (
                             <div className="connector-folders-list">
@@ -367,7 +367,7 @@ const ConnectorsTab: React.FC = () => {
                 {/* Info Card */}
                 <div className="connector-info-card">
                     <p>
-                        <strong>ℹ️ How it works:</strong> The filesystem connector allows Claude to
+                        <strong>ℹ️ How it works:</strong> The filesystem connector allows Atlas to
                         read and write files on your computer through the Toolbox Agent. Only
                         folders you explicitly allow can be accessed, and you control the
                         permissions for each folder.

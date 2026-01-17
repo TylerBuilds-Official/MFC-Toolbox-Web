@@ -391,7 +391,7 @@ const MemoriesTab: React.FC = () => {
                         ) : filterType !== 'all' ? (
                             <p>No memories of type "{MEMORY_TYPE_LABELS[filterType]}" found.</p>
                         ) : (
-                            <p>No memories yet. The AI will save important facts as you chat.</p>
+                            <p>No memories yet. Atlas will save important facts as you chat.</p>
                         )}
                     </div>
                 ) : (

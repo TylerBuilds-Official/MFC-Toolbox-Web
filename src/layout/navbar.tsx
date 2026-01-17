@@ -12,9 +12,9 @@ const Navbar: React.FC = () => {
         <header className="navbar">
             <div className="container nav-inner">
                 <div className="navbar-brand">
-                    <div className="navbar-brand-icon">MF</div>
+                    <div className="navbar-brand-icon">FC</div>
                     <div className="navbar-brand-text">
-                        <span className="navbar-brand-title">MFC Toolbox</span>
+                        <span className="navbar-brand-title">FabCore AI</span>
                         <span className="navbar-brand-subtitle">Internal Tools</span>
                     </div>
                 </div>
@@ -57,6 +57,13 @@ const Navbar: React.FC = () => {
                         onClick={closeMenu}
                     >
                         Settings
+                    </NavLink>
+                    <NavLink 
+                        to="/guide" 
+                        className={({ isActive }) => isActive ? "active" : undefined} 
+                        onClick={closeMenu}
+                    >
+                        Guide
                     </NavLink>
                     <AuthButton className="nav-auth-btn" />
                 </nav>

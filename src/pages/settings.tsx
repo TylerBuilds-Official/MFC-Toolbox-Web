@@ -193,7 +193,7 @@ const SettingsPage: React.FC = () => {
             {/* Page Header */}
             <div className="settings-header">
                 <h1>Settings</h1>
-                <p>Configure your MFC Toolbox experience.</p>
+                <p>Configure your FabCore AI experience.</p>
             </div>
 
             {/* Tab Navigation */}

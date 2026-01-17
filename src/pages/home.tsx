@@ -297,8 +297,8 @@ const Home = () => {
 
             {/* Welcome Header */}
             <div className="welcome-header">
-                <h1>Welcome to the MFC Toolbox</h1>
-                <p>Your AI-powered assistant for fabrication workflows, document processing, and internal operations.</p>
+                <h1>Welcome to FabCore AI</h1>
+                <p>Meet Atlas, your AI-powered assistant for fabrication workflows, document processing, and internal operations.</p>
             </div>
 
             <div className="chat-section">

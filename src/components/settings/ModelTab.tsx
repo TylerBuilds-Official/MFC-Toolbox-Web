@@ -155,7 +155,7 @@ const ModelTab: React.FC<ModelTabProps> = ({
                                 <div className="settings-card-info">
                                     <h3 className="settings-card-title">Show reasoning</h3>
                                     <p className="settings-card-description">
-                                        See the AI's thought process before it responds. Not all models support this feature — when enabled, compatible models will display their reasoning.
+                                        See Atlas's thought process before it responds. Not all models support this feature — when enabled, compatible models will display their reasoning.
                                     </p>
                                 </div>
                                 <label className="settings-toggle">
@@ -177,7 +177,7 @@ const ModelTab: React.FC<ModelTabProps> = ({
                                     <div className="settings-card-info">
                                         <h3 className="settings-card-title">Thinking effort</h3>
                                         <p className="settings-card-description">
-                                            How much time the AI spends thinking before responding. Higher effort may give better answers but takes longer.
+                                            How much time Atlas spends thinking before responding. Higher effort may give better answers but takes longer.
                                         </p>
                                     </div>
                                 </div>
@@ -216,7 +216,7 @@ const ModelTab: React.FC<ModelTabProps> = ({
                                     <div className="settings-card-info">
                                         <h3 className="settings-card-title">Thinking depth</h3>
                                         <p className="settings-card-description">
-                                            How deeply the AI reasons through complex problems. Deeper thinking may give better answers but takes longer and costs more.
+                                            How deeply Atlas reasons through complex problems. Deeper thinking may give better answers but takes longer and costs more.
                                         </p>
                                     </div>
                                 </div>

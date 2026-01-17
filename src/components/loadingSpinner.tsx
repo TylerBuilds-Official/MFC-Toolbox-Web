@@ -2,9 +2,9 @@ import React from 'react';
 import '../styles/loadingSpinner.css';
 
 interface LoadingSpinnerProps {
-    size?: 'small' | 'medium' | 'large';
+    size?: 'tiny' | 'small' | 'medium' | 'large';
     message?: string;
-    variant?: 'primary' | 'secondary' | 'minimal';
+    variant?: 'primary' | 'secondary' | 'minimal' | 'inline';
 }
 
 const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({

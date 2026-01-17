@@ -19,3 +19,4 @@ export { default as AlertIcon } from './AlertIcon';
 // Tab icons
 export { default as BookmarkIcon } from './BookmarkIcon';
 export { default as GearIcon } from './GearIcon';
+export { default as CpuIcon } from './CpuIcon';

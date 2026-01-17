@@ -28,6 +28,14 @@
     padding: var(--space-4);
 }
 
+.loading-container.loading-inline {
+    /* Button/inline loading - no extra space */
+    min-height: unset;
+    padding: 0;
+    gap: 0;
+    flex-direction: row;
+}
+
 /* ============================================
    LOADING SPINNER
    ============================================ */
@@ -37,6 +45,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.loading-spinner-tiny {
+    width: 16px;
+    height: 16px;
 }
 
 .loading-spinner-small {
@@ -62,6 +75,12 @@
     border-right-color: var(--accent-primary);
     border-radius: 50%;
     animation: spin 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+}
+
+.loading-spinner-tiny .spinner-ring {
+    width: 16px;
+    height: 16px;
+    border-width: 2px;
 }
 
 .loading-spinner-small .spinner-ring {
@@ -119,6 +138,10 @@
     font-size: 1.5rem;
     z-index: 10;
     animation: pulse-logo 2s ease-in-out infinite;
+}
+
+.loading-spinner-tiny .spinner-logo {
+    display: none;
 }
 
 .loading-spinner-small .spinner-logo {

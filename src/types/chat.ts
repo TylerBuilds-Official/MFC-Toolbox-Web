@@ -37,6 +37,12 @@ export interface ChatWindowProps {
     hasMoreMessages?: boolean;
     isLoadingMoreMessages?: boolean;
     onLoadMoreMessages?: () => void;
+    // Conversation management
+    onDeleteConversation?: (conversationId: number) => void;
+    onRenameConversation?: (conversationId: number, newTitle: string) => void;
+    onMoveToProjects?: (conversationId: number, projectIds: number[]) => Promise<void>;
+    conversationTitle?: string;
+    conversationCreatedAt?: string;
 }
 
 export interface StreamingState {

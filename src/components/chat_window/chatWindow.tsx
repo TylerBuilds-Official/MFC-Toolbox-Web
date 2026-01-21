@@ -1,11 +1,16 @@
-import React, { useEffect, useRef, useCallback, useMemo } from "react";
+import React, { useEffect, useRef, useCallback, useMemo, useState } from "react";
 import "../../styles/chatWindow.css";
+import "../../styles/chatSettingsModal.css";
 
 import { useAuth, useApi } from "../../auth";
 import { useToast } from "../Toast";
+import { useConfirm } from "../ConfirmDialog";
 import { executeTrigger } from "../../triggers";
 import type { Trigger } from "../../triggers";
-import type { DisplayMessage, ChatWindowProps } from "../../types";
+import type { DisplayMessage, ChatWindowProps, ConversationProject } from "../../types";
+import { exportChat } from "../../utils/exportChat";
+import type { ExportFormat } from "../../utils/exportChat";
+import { publicApi } from "../../services/api";
 
 // Hooks
 import {
@@ -19,8 +24,16 @@ import {
 import ChatHeader from "./ChatHeader";
 import ChatMessageList from "./ChatMessageList";
 import ChatInputArea from "./ChatInputArea";
+import ChatSettingsModal from "./ChatSettingsModal";
 import LoadingSpinner from "../loadingSpinner";
-import { WELCOME_MESSAGE } from "./constants";
+import { createWelcomeMessage } from "./constants";
+
+
+// ============================================================================
+// Constants
+// ============================================================================
+
+const COMPACT_MODE_KEY = 'fabcore_compact_mode';
 
 
 // ============================================================================
@@ -43,19 +56,43 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     hasMoreMessages = false,
     isLoadingMoreMessages = false,
     onLoadMoreMessages,
+    // Conversation management callbacks (new)
+    onDeleteConversation,
+    onRenameConversation,
+    onMoveToProjects,
+    conversationTitle = 'New Conversation',
+    conversationCreatedAt,
 }) => {
     const { user }      = useAuth();
     const api           = useApi();
     const { showToast } = useToast();
+    const { confirm }   = useConfirm();
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
+
+
+    // ========================================================================
+    // Settings Modal State
+    // ========================================================================
+
+    const [showSettingsModal, setShowSettingsModal] = useState(false);
+    const [compactMode, setCompactMode] = useState(() => {
+        const stored = localStorage.getItem(COMPACT_MODE_KEY);
+        return stored === 'true';
+    });
+    const [models, setModels] = useState<{ openai: string[]; anthropic: string[] }>({
+        openai: [],
+        anthropic: [],
+    });
+    const [projects, setProjects] = useState<ConversationProject[]>([]);
+    const [currentProjectIds, setCurrentProjectIds] = useState<number[]>([]);
 
 
     // ========================================================================
     // Initialize Hooks
     // ========================================================================
 
-    const chatMessages = useChatMessages(initialMessages, activeConversationId, onConversationCreated);
+    const chatMessages = useChatMessages(initialMessages, activeConversationId, onConversationCreated, user?.display_name);
     const chatInput    = useChatInput();
     const editor       = useMessageEditor();
 
@@ -109,6 +146,146 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         }
     }, [externalPrompt, streaming.isTyping, streaming.sendMessage, onPromptConsumed]);
 
+    // Load models on mount
+    useEffect(() => {
+        publicApi.getModels()
+            .then((response) => {
+                setModels({
+                    openai: response.models.openai_models,
+                    anthropic: response.models.claude_models,
+                });
+            })
+            .catch((err) => {
+                console.error('[ChatWindow] Failed to load models:', err);
+            });
+    }, []);
+
+    // Load projects when settings modal opens
+    useEffect(() => {
+        if (showSettingsModal) {
+            api.get<{ projects: ConversationProject[] }>('/conversations/projects')
+                .then((response) => {
+                    setProjects(response.projects);
+                })
+                .catch((err) => {
+                    console.error('[ChatWindow] Failed to load projects:', err);
+                });
+
+            // Load current conversation's projects
+            if (activeConversationId) {
+                api.get<{ projects: { id: number }[] }>(`/conversations/${activeConversationId}/projects`)
+                    .then((response) => {
+                        setCurrentProjectIds(response.projects.map(p => p.id));
+                    })
+                    .catch((err) => {
+                        console.error('[ChatWindow] Failed to load conversation projects:', err);
+                    });
+            } else {
+                setCurrentProjectIds([]);
+            }
+        }
+    }, [showSettingsModal, activeConversationId, api]);
+
+    // Persist compact mode
+    useEffect(() => {
+        localStorage.setItem(COMPACT_MODE_KEY, String(compactMode));
+    }, [compactMode]);
+
+
+    // ========================================================================
+    // Settings Modal Handlers
+    // ========================================================================
+
+    const handleOpenSettings = useCallback(() => {
+        setShowSettingsModal(true);
+    }, []);
+
+    const handleCloseSettings = useCallback(() => {
+        setShowSettingsModal(false);
+    }, []);
+
+    const handleRename = useCallback((newTitle: string) => {
+        if (onRenameConversation && activeConversationId) {
+            onRenameConversation(activeConversationId, newTitle);
+            showToast('Conversation renamed', 'success');
+        }
+    }, [onRenameConversation, activeConversationId, showToast]);
+
+    const handleDelete = useCallback(async () => {
+        if (!activeConversationId) return;
+
+        const confirmed = await confirm({
+            title: 'Delete Conversation',
+            message: 'Are you sure you want to delete this conversation? This cannot be undone.',
+            confirmText: 'Delete',
+            cancelText: 'Cancel',
+            variant: 'danger'
+        });
+
+        if (confirmed && onDeleteConversation) {
+            onDeleteConversation(activeConversationId);
+            setShowSettingsModal(false);
+            showToast('Conversation deleted', 'success');
+        }
+    }, [activeConversationId, confirm, onDeleteConversation, showToast]);
+
+    const handleExport = useCallback((format: ExportFormat) => {
+        exportChat({
+            messages: chatMessages.displayMessages,
+            title: conversationTitle,
+            format,
+            createdAt: conversationCreatedAt,
+        });
+        showToast(`Exported as ${format.toUpperCase()}`, 'success');
+    }, [chatMessages.displayMessages, conversationTitle, conversationCreatedAt, showToast]);
+
+    const handleModelChangeFromSettings = useCallback((model: string) => {
+        onModelChange(model);
+        showToast(`Switched to ${model}`, 'success');
+    }, [onModelChange, showToast]);
+
+    const handleProviderChange = useCallback((provider: string) => {
+        // Provider change starts a new chat
+        // First, update the provider preference via API
+        api.post('/settings/provider', { provider })
+            .then(() => {
+                // Get the first model for the new provider
+                const newModels = provider === 'anthropic' ? models.anthropic : models.openai;
+                const defaultModel = newModels[0] || selectedModel;
+                
+                // Create new chat and switch model
+                chatMessagesRef.current.setConversationId(null);
+                chatMessagesRef.current.setDisplayMessages([createWelcomeMessage(user?.display_name)]);
+                onConversationCreated(-1);
+                onModelChange(defaultModel);
+                
+                setShowSettingsModal(false);
+                showToast(`Switched to ${provider}`, 'success');
+            })
+            .catch((err) => {
+                console.error('[ChatWindow] Failed to update provider:', err);
+                showToast('Failed to switch provider', 'error');
+            });
+    }, [api, models, selectedModel, user?.display_name, onConversationCreated, onModelChange, showToast]);
+
+    const handleProjectsChange = useCallback(async (projectIds: number[]) => {
+        if (!activeConversationId || !onMoveToProjects) return;
+
+        try {
+            await onMoveToProjects(activeConversationId, projectIds);
+            setCurrentProjectIds(projectIds);
+            setShowSettingsModal(false);
+            showToast('Projects updated', 'success');
+        } catch (err) {
+            console.error('[ChatWindow] Failed to update projects:', err);
+            showToast('Failed to update projects', 'error');
+        }
+    }, [activeConversationId, onMoveToProjects, showToast]);
+
+    const handleToggleCompact = useCallback((compact: boolean) => {
+        setCompactMode(compact);
+    }, []);
+
 
     // ========================================================================
     // Stable Event Handlers (using refs)
@@ -116,13 +293,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
     const handleNewChat = useCallback(() => {
         chatMessagesRef.current.setConversationId(null);
-        chatMessagesRef.current.setDisplayMessages([{
-            ...WELCOME_MESSAGE,
-            id:        Date.now(),
-            timestamp: new Date().toISOString()
-        }]);
+        chatMessagesRef.current.setDisplayMessages([createWelcomeMessage(user?.display_name)]);
         onConversationCreated(-1);
-    }, [onConversationCreated]);
+        setShowSettingsModal(false);
+    }, [onConversationCreated, user?.display_name]);
 
 
     const handleSaveEdit = useCallback(async (messageIndex: number) => {
@@ -255,6 +429,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
 
     // ========================================================================
+    // Computed Values
+    // ========================================================================
+
+    // Message count excluding welcome message
+    const messageCount = useMemo(() => {
+        return chatMessages.displayMessages.filter(m => 
+            !(m.role === 'assistant' && chatMessages.displayMessages.indexOf(m) === 0 && !activeConversationId)
+        ).length;
+    }, [chatMessages.displayMessages, activeConversationId]);
+
+
+    // ========================================================================
     // Render
     // ========================================================================
 
@@ -274,6 +460,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                 <ChatHeader
                     isStreaming={streaming.isStreaming}
                     onNewChat={handleNewChat}
+                    onOpenSettings={handleOpenSettings}
                 />
 
                 <ChatMessageList
@@ -296,6 +483,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                     hasMore={hasMoreMessages}
                     isLoadingMore={isLoadingMoreMessages}
                     onLoadMore={onLoadMoreMessages}
+                    // Display settings
+                    compactMode={compactMode}
                 />
 
                 <ChatInputArea
@@ -314,6 +503,30 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                     onModelChange={onModelChange}
                     onCommandSelect={handleCommandSelect}
                     onCloseCommandMenu={chatInput.closeCommandMenu}
+                />
+
+                {/* Settings Modal */}
+                <ChatSettingsModal
+                    isOpen={showSettingsModal}
+                    onClose={handleCloseSettings}
+                    conversationId={activeConversationId}
+                    conversationTitle={conversationTitle}
+                    messageCount={messageCount}
+                    createdAt={conversationCreatedAt || null}
+                    currentModel={selectedModel}
+                    currentProvider={currentProvider}
+                    models={models}
+                    projects={projects}
+                    currentProjectIds={currentProjectIds}
+                    compactMode={compactMode}
+                    onRename={handleRename}
+                    onDelete={handleDelete}
+                    onNewChat={handleNewChat}
+                    onExport={handleExport}
+                    onModelChange={handleModelChangeFromSettings}
+                    onProviderChange={handleProviderChange}
+                    onProjectsChange={handleProjectsChange}
+                    onToggleCompact={handleToggleCompact}
                 />
             </div>
         </div>

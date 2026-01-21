@@ -1,7 +1,7 @@
 import { useCallback, useState, useEffect, useRef } from "react";
 import type { Message } from "../../types/message";
 import type { DisplayMessage, MessageStatus, ContentBlock } from "../../types/chat";
-import { WELCOME_MESSAGE } from "../../components/chat_window/constants";
+import { createWelcomeMessage } from "../../components/chat_window/constants";
 
 
 /**
@@ -41,10 +41,14 @@ function convertToDisplayMessage(msg: Message): DisplayMessage {
 export function useChatMessages(
     initialMessages: Message[],
     activeConversationId: number | null,
-    onConversationCreated: (id: number) => void
+    onConversationCreated: (id: number) => void,
+    userName?: string
 ) {
-    const [displayMessages, setDisplayMessages] = useState<DisplayMessage[]>([WELCOME_MESSAGE]);
-    const [conversationId, setConversationId]   = useState<number | null>(null);
+    // Initialize with a user-aware welcome message
+    const [displayMessages, setDisplayMessages] = useState<DisplayMessage[]>(() => [
+        createWelcomeMessage(userName)
+    ]);
+    const [conversationId, setConversationId] = useState<number | null>(null);
     
     // Track which conversation we've loaded to detect initial vs subsequent loads
     const lastLoadedConversationId = useRef<number | null>(null);
@@ -54,6 +58,18 @@ export function useChatMessages(
     useEffect(() => {
         setConversationId(activeConversationId);
     }, [activeConversationId]);
+
+
+    // Update welcome message when userName becomes available (after auth loads)
+    useEffect(() => {
+        setDisplayMessages(prev => {
+            // Only update if we're showing a welcome message (single assistant message, no conversation loaded)
+            if (prev.length === 1 && prev[0].role === 'assistant' && activeConversationId === null) {
+                return [createWelcomeMessage(userName)];
+            }
+            return prev;
+        });
+    }, [userName, activeConversationId]);
 
 
     // Convert and load initial messages when they change
@@ -80,14 +96,10 @@ export function useChatMessages(
             }
         } else if (activeConversationId === null) {
             // New conversation - show welcome message
-            setDisplayMessages([{
-                ...WELCOME_MESSAGE,
-                id:        Date.now(),
-                timestamp: new Date().toISOString()
-            }]);
+            setDisplayMessages([createWelcomeMessage(userName)]);
             lastLoadedConversationId.current = null;
         }
-    }, [initialMessages, activeConversationId]);
+    }, [initialMessages, activeConversationId, userName]);
 
 
     const updateMessageStatus = useCallback((messageId: number, status: MessageStatus, error?: string) => {
@@ -171,15 +183,11 @@ export function useChatMessages(
 
 
     const clearMessages = useCallback(() => {
-        setDisplayMessages([{
-            ...WELCOME_MESSAGE,
-            id:        Date.now(),
-            timestamp: new Date().toISOString()
-        }]);
+        setDisplayMessages([createWelcomeMessage(userName)]);
         setConversationId(null);
         lastLoadedConversationId.current = null;
         onConversationCreated(-1);
-    }, [onConversationCreated]);
+    }, [onConversationCreated, userName]);
 
 
     const truncateToIndex = useCallback((index: number) => {

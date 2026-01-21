@@ -31,6 +31,9 @@ interface ChatMessageListProps {
     hasMore?: boolean;
     isLoadingMore?: boolean;
     onLoadMore?: () => void;
+    
+    // Display settings
+    compactMode?: boolean;
 }
 
 
@@ -54,9 +57,12 @@ const ChatMessageList: React.FC<ChatMessageListProps> = ({
     hasMore = false,
     isLoadingMore = false,
     onLoadMore,
+    // Display settings
+    compactMode = false,
 }) => {
+    const messagesClassName = `chat-messages${compactMode ? ' compact-mode' : ''}`;
     return (
-        <div className="chat-messages">
+        <div className={messagesClassName}>
             {/* Loading indicator at top when fetching older messages */}
             {isLoadingMore && (
                 <div className="chat-messages-loading-more">

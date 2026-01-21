@@ -6,5 +6,7 @@ export { default as ChatInputArea }   from './ChatInputArea';
 export { default as MessageEditor }   from './MessageEditor';
 export { default as TypingIndicator } from './TypingIndicator';
 export { default as CommandContextMenu } from './CommandContextMenu';
+export { default as ChatSettingsModal } from './ChatSettingsModal';
+export { default as ProjectPicker }   from './ProjectPicker';
 
-export { WELCOME_MESSAGE, DEFAULT_ERROR_MESSAGE } from './constants';
+export { WELCOME_MESSAGE, DEFAULT_ERROR_MESSAGE, createWelcomeMessage } from './constants';

@@ -1,6 +1,5 @@
 import type { Message } from "../types/message";
 import type { DisplayMessage, MessageStatus } from "../types/chat";
-import { WELCOME_MESSAGE } from "../components/chat_window/constants";
 
 
 // ============================================================================
@@ -64,14 +63,9 @@ export function createAssistantMessage(id?: number): DisplayMessage {
 
 /**
  * Create a fresh welcome message with current timestamp
+ * Re-exported from constants for backward compatibility
  */
-export function createWelcomeMessage(): DisplayMessage {
-    return {
-        ...WELCOME_MESSAGE,
-        id:        Date.now(),
-        timestamp: new Date().toISOString()
-    };
-}
+export { createWelcomeMessage } from "../components/chat_window/constants";
 
 
 /**

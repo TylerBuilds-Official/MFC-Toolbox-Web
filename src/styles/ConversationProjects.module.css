@@ -170,6 +170,10 @@
     color: var(--accent-primary);
 }
 
+.shareIndicator.private {
+    color: var(--text-muted);
+}
+
 /* Conversation count badge */
 .conversationCount {
     font-size: 0.6875rem;
@@ -692,6 +696,47 @@
     cursor: not-allowed;
 }
 
+.modalBtnDanger {
+    background: var(--error, #ef4444);
+    border: 1px solid var(--error, #ef4444);
+    color: white;
+}
+
+.modalBtnDanger:hover {
+    opacity: 0.9;
+}
+
+.modalBtnDanger:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Delete/Leave Warning */
+.deleteWarning {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    text-align: center;
+    color: var(--text-primary);
+}
+
+.deleteWarning svg {
+    color: var(--error, #ef4444);
+}
+
+.deleteWarning p {
+    font-size: 0.9375rem;
+    margin: 0;
+}
+
+.deleteHint {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
 /* ============================================
    Ungrouped Section Label
    ============================================ */
@@ -703,4 +748,319 @@
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
+}
+
+/* ============================================
+   Project Members Section
+   ============================================ */
+
+.membersSection {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.membersList {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    max-height: 200px;
+    overflow-y: auto;
+    padding: var(--space-2);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+}
+
+.memberRow {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    background: var(--bg-primary);
+    border-radius: var(--radius-sm);
+}
+
+.memberAvatar {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--accent-muted);
+    color: var(--accent-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.memberInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.memberName {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.memberEmail {
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.memberStatus {
+    font-size: 0.6875rem;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+}
+
+.memberStatus.owner {
+    background: var(--accent-muted);
+    color: var(--accent-primary);
+}
+
+.memberStatus.member {
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+}
+
+.memberStatus.invited {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.memberStatus.declined {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.memberStatus.expired {
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+}
+
+.memberRemoveBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.memberRow:hover .memberRemoveBtn {
+    opacity: 1;
+}
+
+.memberRemoveBtn:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.membersEmpty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-3);
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-style: italic;
+}
+
+.membersLoading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    color: var(--text-muted);
+    font-size: 0.75rem;
+}
+
+.spinIcon {
+    animation: membersSpin 1s linear infinite;
+}
+
+@keyframes membersSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   Community Projects Modal
+   ============================================ */
+
+.communityList {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.communityProject {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-md);
+    transition: border-color 0.2s ease;
+}
+
+.communityProject:hover {
+    border-color: var(--accent-muted);
+}
+
+.communityProjectIcon {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    flex-shrink: 0;
+    color: var(--text-secondary);
+}
+
+.communityProjectInfo {
+    flex: 1;
+    min-width: 0;
+}
+
+.communityProjectName {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.communityProjectDescription {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-1);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.communityProjectMeta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+}
+
+.communityProjectStats {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.communityJoinBtn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-3);
+    background: var(--accent-primary);
+    border: none;
+    border-radius: var(--radius-md);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+    flex-shrink: 0;
+}
+
+.communityJoinBtn:hover:not(:disabled) {
+    opacity: 0.9;
+}
+
+.communityJoinBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.communityStatusBadge {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    font-size: 0.75rem;
+    font-weight: 500;
+    flex-shrink: 0;
+}
+
+.communityStatusBadge.owned {
+    background: var(--accent-muted);
+    color: var(--accent-primary);
+}
+
+.communityStatusBadge.added {
+    background: rgba(34, 197, 94, 0.1);
+    color: #22c55e;
+}
+
+.communityEmpty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-6);
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.communityEmpty p {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.communityEmpty span {
+    font-size: 0.75rem;
+}
+
+.communityError {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    text-align: center;
+    color: var(--error, #ef4444);
+}
+
+.communityError button {
+    padding: var(--space-1) var(--space-3);
+    background: transparent;
+    border: 1px solid var(--border-primary);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+
+.communityError button:hover {
+    background: var(--bg-hover);
 }

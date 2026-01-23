@@ -3,8 +3,8 @@
 .tool-call-block {
     margin-bottom: 0.75rem;
     border-radius: 8px;
-    background: var(--color-bg-tertiary, #f0f4f8);
-    border: 1px solid var(--color-border, #e2e8f0);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
     overflow: hidden;
     transition: all 0.2s ease;
 }
@@ -15,8 +15,8 @@
 }
 
 .tool-call-block.running {
-    border-color: var(--color-warning, #f59e0b);
-    background: rgba(245, 158, 11, 0.05);
+    border-color: var(--warning);
+    background: var(--warning-muted);
 }
 
 .tool-call-header {
@@ -29,25 +29,25 @@
     border: none;
     cursor: pointer;
     text-align: left;
-    color: var(--color-text-secondary, #64748b);
+    color: var(--text-secondary);
     font-size: 0.85rem;
     font-weight: 500;
     transition: background 0.15s ease;
 }
 
 .tool-call-header:hover {
-    background: var(--color-bg-hover, rgba(0, 0, 0, 0.03));
+    background: var(--bg-hover-light);
 }
 
 .tool-call-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--color-success, #10b981);
+    color: var(--success);
 }
 
 .tool-call-block.running .tool-call-icon {
-    color: var(--color-warning, #f59e0b);
+    color: var(--warning);
 }
 
 .tool-spinner {
@@ -60,14 +60,14 @@
 }
 
 .tool-call-label {
-    color: var(--color-text-muted, #64748b);
+    color: var(--text-muted);
     flex-shrink: 0;
 }
 
 .tool-call-name {
     flex: 1;
-    font-family: var(--font-mono, 'JetBrains Mono', monospace);
-    color: var(--color-text-secondary, #64748b);
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
 }
 
 .tool-call-chevron {
@@ -99,31 +99,14 @@
 .tool-call-content pre {
     margin: 0;
     padding: 0.75rem;
-    background: var(--color-bg-secondary, #f8fafc);
+    background: var(--bg-secondary);
     border-radius: 6px;
-    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    font-family: var(--font-mono);
     font-size: 0.8rem;
     line-height: 1.5;
-    color: var(--color-text-secondary, #64748b);
+    color: var(--text-secondary);
     white-space: pre-wrap;
     word-break: break-word;
     max-height: 200px;
     overflow-y: auto;
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-    .tool-call-block {
-        background: var(--color-bg-tertiary, #1e293b);
-        border-color: var(--color-border, #334155);
-    }
-
-    .tool-call-block.running {
-        border-color: var(--color-warning, #f59e0b);
-        background: rgba(245, 158, 11, 0.1);
-    }
-
-    .tool-call-content pre {
-        background: var(--color-bg-secondary, #0f172a);
-    }
 }

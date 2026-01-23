@@ -62,6 +62,19 @@ export interface ProjectInvite {
     expires_at: string;
 }
 
+// Invite as seen by project owner (includes status)
+export type InviteStatus = 'pending' | 'accepted' | 'declined' | 'expired';
+
+export interface ProjectInviteOwnerView {
+    id: number;
+    email: string;
+    status: InviteStatus;
+    invited_by_name: string;
+    created_at: string;
+    expires_at: string;
+    responded_at: string | null;
+}
+
 // Minimal project info for badges/tags
 export interface ProjectSummary {
     id: number;
@@ -106,6 +119,12 @@ export interface ProjectInvitesResponse {
     count: number;
 }
 
+// Owner's view of invites for their project
+export interface ProjectInvitesOwnerResponse {
+    invites: ProjectInviteOwnerView[];
+    count: number;
+}
+
 export interface ConversationProjectsResponse {
     projects: ProjectSummary[];
     count: number;
@@ -137,4 +156,25 @@ export interface InviteRequest {
 
 export interface AddConversationRequest {
     project_id: number;
+}
+
+// Community project (for discovery/browse)
+export type CommunityProjectStatus = 'owner' | 'member' | 'available';
+
+export interface CommunityProject {
+    id: number;
+    name: string;
+    description: string | null;
+    color: string | null;
+    owner_name: string;
+    owner_email: string;
+    member_count: number;
+    conversation_count: number;
+    created_at: string;
+    user_status: CommunityProjectStatus;
+}
+
+export interface CommunityProjectsResponse {
+    projects: CommunityProject[];
+    count: number;
 }

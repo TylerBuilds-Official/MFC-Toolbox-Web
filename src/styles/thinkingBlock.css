@@ -3,8 +3,8 @@
 .thinking-block {
     margin-bottom: 0.75rem;
     border-radius: 8px;
-    background: var(--color-bg-tertiary, #f0f4f8);
-    border: 1px solid var(--color-border, #e2e8f0);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
     overflow: hidden;
     transition: all 0.2s ease;
 }
@@ -24,21 +24,21 @@
     border: none;
     cursor: pointer;
     text-align: left;
-    color: var(--color-text-secondary, #64748b);
+    color: var(--text-secondary);
     font-size: 0.85rem;
     font-weight: 500;
     transition: background 0.15s ease;
 }
 
 .thinking-header:hover {
-    background: var(--color-bg-hover, rgba(0, 0, 0, 0.03));
+    background: var(--bg-hover-light);
 }
 
 .thinking-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--color-primary, #6366f1);
+    color: var(--accent-primary);
 }
 
 .thinking-spinner {
@@ -83,28 +83,16 @@
 .thinking-content pre {
     margin: 0;
     padding: 0.75rem;
-    background: var(--color-bg-secondary, #f8fafc);
+    background: var(--bg-secondary);
     border-radius: 6px;
-    font-family: var(--font-mono, 'JetBrains Mono', monospace);
+    font-family: var(--font-mono);
     font-size: 0.8rem;
     line-height: 1.5;
-    color: var(--color-text-secondary, #64748b);
+    color: var(--text-secondary);
     white-space: pre-wrap;
     word-break: break-word;
     max-height: 300px;
     overflow-y: auto;
-}
-
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-    .thinking-block {
-        background: var(--color-bg-tertiary, #1e293b);
-        border-color: var(--color-border, #334155);
-    }
-
-    .thinking-content pre {
-        background: var(--color-bg-secondary, #0f172a);
-    }
 }
 
 /* Streaming animation for thinking content */
@@ -113,7 +101,7 @@
     display: inline-block;
     width: 2px;
     height: 1em;
-    background: var(--color-primary, #6366f1);
+    background: var(--accent-primary);
     animation: blink 1s infinite;
     vertical-align: text-bottom;
     margin-left: 2px;

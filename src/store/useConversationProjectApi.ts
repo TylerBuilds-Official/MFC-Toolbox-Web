@@ -9,13 +9,17 @@ import { useConversationProjectStore } from './useConversationProjectStore';
 import type {
     ConversationProject,
     ProjectInvite,
+    ProjectInviteOwnerView,
     ProjectMember,
     ProjectSummary,
+    CommunityProject,
     ProjectsResponse,
     ProjectConversationsResponse,
     ProjectMembersResponse,
     ProjectInvitesResponse,
+    ProjectInvitesOwnerResponse,
     ConversationProjectsResponse,
+    CommunityProjectsResponse,
     CreateProjectRequest,
     UpdateProjectRequest,
     InviteRequest,
@@ -342,6 +346,45 @@ export function useConversationProjectApi() {
         }
     }, [api, setLoading, setError, removeInviteFromStore]);
 
+    /**
+     * Fetch invites for a project (owner view)
+     * Returns pending, declined, and expired invites
+     */
+    const fetchProjectInvites = useCallback(async (
+        projectId: number
+    ): Promise<ProjectInviteOwnerView[]> => {
+        try {
+            const response = await api.get<ProjectInvitesOwnerResponse>(
+                `/conversations/projects/${projectId}/invites`
+            );
+            return response.invites;
+        } catch (error) {
+            console.error('Failed to fetch project invites:', error);
+            return [];
+        }
+    }, [api]);
+
+    /**
+     * Cancel a pending invite (owner only)
+     */
+    const cancelProjectInvite = useCallback(async (
+        projectId: number,
+        inviteId: number
+    ): Promise<void> => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            await api.delete(`/conversations/projects/${projectId}/invites/${inviteId}`);
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to cancel invite';
+            setError(message);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    }, [api, setLoading, setError]);
+
     // ============================================
     // Members
     // ============================================
@@ -398,6 +441,50 @@ export function useConversationProjectApi() {
         removeProjectFromStore(projectId);
     }, [removeMember, removeProjectFromStore]);
 
+    // ============================================
+    // Community (Open Projects)
+    // ============================================
+
+    /**
+     * Fetch all shared_open projects user hasn't joined yet
+     */
+    const fetchCommunityProjects = useCallback(async (): Promise<CommunityProject[]> => {
+        try {
+            const response = await api.get<CommunityProjectsResponse>(
+                '/conversations/projects/community'
+            );
+            return response.projects;
+        } catch (error) {
+            console.error('Failed to fetch community projects:', error);
+            return [];
+        }
+    }, [api]);
+
+    /**
+     * Join a shared_open project (no invite required)
+     */
+    const joinProject = useCallback(async (
+        projectId: number
+    ): Promise<{ success: boolean; message: string }> => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            const result = await api.post<{ success: boolean; message: string }>(
+                `/conversations/projects/${projectId}/join`
+            );
+            // Refresh projects to include the new one
+            await fetchProjects();
+            return result;
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'Failed to join project';
+            setError(message);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
+    }, [api, setLoading, setError, fetchProjects]);
+
     return useMemo(() => ({
         // Projects CRUD
         fetchProjects,
@@ -415,10 +502,15 @@ export function useConversationProjectApi() {
         inviteToProject,
         acceptInvite,
         declineInvite,
+        fetchProjectInvites,
+        cancelProjectInvite,
         // Members
         fetchProjectMembers,
         removeMember,
         leaveProject,
+        // Community
+        fetchCommunityProjects,
+        joinProject,
     }), [
         fetchProjects,
         fetchProject,
@@ -433,8 +525,12 @@ export function useConversationProjectApi() {
         inviteToProject,
         acceptInvite,
         declineInvite,
+        fetchProjectInvites,
+        cancelProjectInvite,
         fetchProjectMembers,
         removeMember,
         leaveProject,
+        fetchCommunityProjects,
+        joinProject,
     ]);
 }

@@ -1,9 +1,9 @@
 /**
- * ConversationSidebar - Enhanced with Projects support
+ * ConversationSidebar - Enhanced with Projects support and drag-and-drop
  */
 
-import { useState, useEffect } from 'react';
-import { Plus, MessageSquare, FolderPlus } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { Plus, MessageSquare, FolderPlus, Globe } from 'lucide-react';
 import type { Conversation } from '../types/conversation';
 import type { ConversationProject, ProjectConversation } from '../types';
 import ConversationItem from './ConversationItem';
@@ -14,12 +14,15 @@ import {
     InviteBanner,
     InviteModal,
     DeleteProjectModal,
+    LeaveProjectModal,
+    CommunityProjectsModal,
     type ProjectFormData,
 } from './conversation_projects';
 import {
     useConversationProjectStore,
     useConversationProjectApi,
 } from '../store';
+import { useAuth } from '../auth';
 import { useToast } from './Toast';
 import '../styles/conversationSidebar.css';
 import styles from '../styles/ConversationProjects.module.css';
@@ -67,10 +70,19 @@ const ConversationSidebar = ({
     const [inviteProject, setInviteProject] = useState<ConversationProject | null>(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteProject, setDeleteProject] = useState<ConversationProject | null>(null);
+    const [showLeaveModal, setShowLeaveModal] = useState(false);
+    const [leaveProject, setLeaveProject] = useState<ConversationProject | null>(null);
+    const [showCommunityModal, setShowCommunityModal] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+
+    // Get current user for leave functionality
+    const { user: currentUser } = useAuth();
 
     // Project conversations cache
     const [projectConversations, setProjectConversations] = useState<Record<number, ProjectConversation[]>>({});
+
+    // Drag and drop state
+    const [draggedConversationId, setDraggedConversationId] = useState<number | null>(null);
 
     // Load projects on mount
     useEffect(() => {
@@ -121,6 +133,7 @@ const ConversationSidebar = ({
 
     const handleSaveProject = async (data: ProjectFormData) => {
         setIsSaving(true);
+        const isSharedType = data.project_type === 'shared_locked' || data.project_type === 'shared_open';
         try {
             if (editingProject) {
                 await projectApi.updateProject(editingProject.id, {
@@ -129,7 +142,7 @@ const ConversationSidebar = ({
                     color: data.color || undefined,
                     custom_instructions: data.custom_instructions || undefined,
                     project_type: data.project_type,
-                    permissions: data.project_type === 'shared_open' ? data.permissions : undefined,
+                    permissions: isSharedType ? data.permissions : undefined,
                 });
                 showToast('Project updated', 'success');
             } else {
@@ -139,7 +152,7 @@ const ConversationSidebar = ({
                     color: data.color || undefined,
                     custom_instructions: data.custom_instructions || undefined,
                     project_type: data.project_type,
-                    permissions: data.project_type === 'shared_open' ? data.permissions : undefined,
+                    permissions: isSharedType ? data.permissions : undefined,
                 });
                 showToast('Project created', 'success');
             }
@@ -212,10 +225,129 @@ const ConversationSidebar = ({
         }
     };
 
+    const handleLeaveProject = (project: ConversationProject) => {
+        setLeaveProject(project);
+        setShowLeaveModal(true);
+    };
+
+    const handleConfirmLeave = async () => {
+        if (!leaveProject || !currentUser) return;
+        
+        setIsSaving(true);
+        try {
+            await projectApi.leaveProject(leaveProject.id, currentUser.id);
+            showToast('Left project', 'success');
+            setShowLeaveModal(false);
+            setLeaveProject(null);
+            // Clear cached conversations for this project
+            setProjectConversations((prev) => {
+                const next = { ...prev };
+                delete next[leaveProject.id];
+                return next;
+            });
+        } catch (error) {
+            showToast(error instanceof Error ? error.message : 'Failed to leave project', 'error');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     const handleNewConversationInProject = (projectId: number) => {
         onNewConversation(projectId);
         onClose();
     };
+
+    // =========================================================================
+    // Drag and Drop Handlers
+    // =========================================================================
+
+    const handleDragStart = useCallback((e: React.DragEvent, conversationId: number) => {
+        setDraggedConversationId(conversationId);
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', String(conversationId));
+    }, []);
+
+    const handleDragEnd = useCallback(() => {
+        setDraggedConversationId(null);
+    }, []);
+
+    const handleDropOnProject = useCallback(async (e: React.DragEvent, projectId: number) => {
+        e.preventDefault();
+        const conversationId = parseInt(e.dataTransfer.getData('text/plain'), 10);
+        if (!conversationId || isNaN(conversationId)) return;
+
+        try {
+            await projectApi.addConversationToProject(conversationId, projectId);
+            
+            // Update local cache - add to target project
+            const conversation = conversations.find(c => c.id === conversationId);
+            if (conversation) {
+                setProjectConversations((prev) => ({
+                    ...prev,
+                    [projectId]: [
+                        ...(prev[projectId] || []),
+                        {
+                            id: conversation.id,
+                            user_id: conversation.user_id,
+                            title: conversation.title,
+                            summary: conversation.summary,
+                            created_at: conversation.created_at,
+                            updated_at: conversation.updated_at,
+                            is_active: conversation.is_active,
+                            last_message_preview: conversation.last_message_preview,
+                            added_at: new Date().toISOString(),
+                        },
+                    ],
+                }));
+            }
+            
+            // Find the project name for the toast
+            const project = [...ownedProjects, ...sharedProjects].find(p => p.id === projectId);
+            showToast(`Moved to ${project?.name || 'project'}`, 'success');
+        } catch (error) {
+            console.error('Failed to move conversation to project:', error);
+            showToast('Failed to move conversation', 'error');
+        }
+        
+        setDraggedConversationId(null);
+    }, [conversations, ownedProjects, sharedProjects, projectApi, showToast]);
+
+    const handleRemoveFromProject = useCallback(async (conversationId: number, projectId: number) => {
+        try {
+            await projectApi.removeConversationFromProject(conversationId, projectId);
+            
+            // Update local cache - remove from project
+            setProjectConversations((prev) => ({
+                ...prev,
+                [projectId]: (prev[projectId] || []).filter(c => c.id !== conversationId),
+            }));
+            
+            showToast('Removed from project', 'success');
+        } catch (error) {
+            console.error('Failed to remove conversation from project:', error);
+            showToast('Failed to remove conversation', 'error');
+        }
+    }, [projectApi, showToast]);
+
+    const handleDropOnUngrouped = useCallback(async (e: React.DragEvent) => {
+        e.preventDefault();
+        const conversationId = parseInt(e.dataTransfer.getData('text/plain'), 10);
+        if (!conversationId || isNaN(conversationId)) return;
+
+        // Find which project(s) this conversation is in and remove from all
+        const projectsToRemoveFrom: number[] = [];
+        Object.entries(projectConversations).forEach(([projectId, convos]) => {
+            if (convos.some(c => c.id === conversationId)) {
+                projectsToRemoveFrom.push(parseInt(projectId, 10));
+            }
+        });
+
+        for (const projectId of projectsToRemoveFrom) {
+            await handleRemoveFromProject(conversationId, projectId);
+        }
+        
+        setDraggedConversationId(null);
+    }, [projectConversations, handleRemoveFromProject]);
 
     // Check if conversation belongs to any project
     const conversationProjectMap = new Map<number, number[]>();
@@ -289,6 +421,13 @@ const ConversationSidebar = ({
                                 <div className={styles.sectionActions}>
                                     <button
                                         className={styles.newProjectBtn}
+                                        onClick={() => setShowCommunityModal(true)}
+                                        title="Browse community projects"
+                                    >
+                                        <Globe size={16} />
+                                    </button>
+                                    <button
+                                        className={styles.newProjectBtn}
                                         onClick={handleCreateProject}
                                         title="New project"
                                     >
@@ -307,26 +446,36 @@ const ConversationSidebar = ({
                                     onEdit={() => handleEditProject(project)}
                                     onDelete={() => handleDeleteProject(project)}
                                     onInvite={() => handleInviteToProject(project)}
+                                    onLeave={() => handleLeaveProject(project)}
                                     onAddConversation={() => handleNewConversationInProject(project.id)}
+                                    onDrop={handleDropOnProject}
+                                    draggedConversationId={draggedConversationId}
                                 >
                                     {projectConversations[project.id]?.map((convo) => (
-                                        <ConversationItem
+                                        <div
                                             key={convo.id}
-                                            conversation={{
-                                                id: convo.id,
-                                                user_id: convo.user_id,
-                                                title: convo.title,
-                                                summary: convo.summary,
-                                                created_at: convo.created_at,
-                                                updated_at: convo.updated_at,
-                                                is_active: convo.is_active,
-                                                last_message_preview: convo.last_message_preview,
-                                            }}
-                                            isActive={convo.id === activeConversationId}
-                                            onSelect={() => handleSelectConversation(convo.id)}
-                                            onDelete={() => onDeleteConversation(convo.id)}
-                                            onRename={(newTitle) => onRenameConversation(convo.id, newTitle)}
-                                        />
+                                            draggable
+                                            onDragStart={(e) => handleDragStart(e, convo.id)}
+                                            onDragEnd={handleDragEnd}
+                                            style={{ opacity: draggedConversationId === convo.id ? 0.5 : 1 }}
+                                        >
+                                            <ConversationItem
+                                                conversation={{
+                                                    id: convo.id,
+                                                    user_id: convo.user_id,
+                                                    title: convo.title,
+                                                    summary: convo.summary,
+                                                    created_at: convo.created_at,
+                                                    updated_at: convo.updated_at,
+                                                    is_active: convo.is_active,
+                                                    last_message_preview: convo.last_message_preview,
+                                                }}
+                                                isActive={convo.id === activeConversationId}
+                                                onSelect={() => handleSelectConversation(convo.id)}
+                                                onDelete={() => onDeleteConversation(convo.id)}
+                                                onRename={(newTitle) => onRenameConversation(convo.id, newTitle)}
+                                            />
+                                        </div>
                                     ))}
                                 </ProjectFolder>
                             ))}
@@ -346,26 +495,36 @@ const ConversationSidebar = ({
                                             onEdit={() => handleEditProject(project)}
                                             onDelete={() => handleDeleteProject(project)}
                                             onInvite={() => handleInviteToProject(project)}
+                                            onLeave={() => handleLeaveProject(project)}
                                             onAddConversation={() => handleNewConversationInProject(project.id)}
+                                            onDrop={handleDropOnProject}
+                                            draggedConversationId={draggedConversationId}
                                         >
                                             {projectConversations[project.id]?.map((convo) => (
-                                                <ConversationItem
+                                                <div
                                                     key={convo.id}
-                                                    conversation={{
-                                                        id: convo.id,
-                                                        user_id: convo.user_id,
-                                                        title: convo.title,
-                                                        summary: convo.summary,
-                                                        created_at: convo.created_at,
-                                                        updated_at: convo.updated_at,
-                                                        is_active: convo.is_active,
-                                                        last_message_preview: convo.last_message_preview,
-                                                    }}
-                                                    isActive={convo.id === activeConversationId}
-                                                    onSelect={() => handleSelectConversation(convo.id)}
-                                                    onDelete={() => onDeleteConversation(convo.id)}
-                                                    onRename={(newTitle) => onRenameConversation(convo.id, newTitle)}
-                                                />
+                                                    draggable
+                                                    onDragStart={(e) => handleDragStart(e, convo.id)}
+                                                    onDragEnd={handleDragEnd}
+                                                    style={{ opacity: draggedConversationId === convo.id ? 0.5 : 1 }}
+                                                >
+                                                    <ConversationItem
+                                                        conversation={{
+                                                            id: convo.id,
+                                                            user_id: convo.user_id,
+                                                            title: convo.title,
+                                                            summary: convo.summary,
+                                                            created_at: convo.created_at,
+                                                            updated_at: convo.updated_at,
+                                                            is_active: convo.is_active,
+                                                            last_message_preview: convo.last_message_preview,
+                                                        }}
+                                                        isActive={convo.id === activeConversationId}
+                                                        onSelect={() => handleSelectConversation(convo.id)}
+                                                        onDelete={() => onDeleteConversation(convo.id)}
+                                                        onRename={(newTitle) => onRenameConversation(convo.id, newTitle)}
+                                                    />
+                                                </div>
                                             ))}
                                         </ProjectFolder>
                                     ))}
@@ -380,6 +539,13 @@ const ConversationSidebar = ({
                             <div className={styles.sectionHeader}>
                                 <span className={styles.sectionTitle}>Projects</span>
                                 <div className={styles.sectionActions}>
+                                    <button
+                                        className={styles.newProjectBtn}
+                                        onClick={() => setShowCommunityModal(true)}
+                                        title="Browse community projects"
+                                    >
+                                        <Globe size={16} />
+                                    </button>
                                     <button
                                         className={styles.newProjectBtn}
                                         onClick={handleCreateProject}
@@ -412,16 +578,27 @@ const ConversationSidebar = ({
                             {(ownedProjects.length > 0 || sharedProjects.length > 0) && (
                                 <div className={styles.ungroupedLabel}>Recent</div>
                             )}
-                            <div className="conversations-list">
+                            <div 
+                                className="conversations-list"
+                                onDragOver={(e) => e.preventDefault()}
+                                onDrop={handleDropOnUngrouped}
+                            >
                                 {ungroupedConversations.map((conversation) => (
-                                    <ConversationItem
+                                    <div
                                         key={conversation.id}
-                                        conversation={conversation}
-                                        isActive={conversation.id === activeConversationId}
-                                        onSelect={() => handleSelectConversation(conversation.id)}
-                                        onDelete={() => onDeleteConversation(conversation.id)}
-                                        onRename={(newTitle) => onRenameConversation(conversation.id, newTitle)}
-                                    />
+                                        draggable
+                                        onDragStart={(e) => handleDragStart(e, conversation.id)}
+                                        onDragEnd={handleDragEnd}
+                                        style={{ opacity: draggedConversationId === conversation.id ? 0.5 : 1 }}
+                                    >
+                                        <ConversationItem
+                                            conversation={conversation}
+                                            isActive={conversation.id === activeConversationId}
+                                            onSelect={() => handleSelectConversation(conversation.id)}
+                                            onDelete={() => onDeleteConversation(conversation.id)}
+                                            onRename={(newTitle) => onRenameConversation(conversation.id, newTitle)}
+                                        />
+                                    </div>
                                 ))}
                             </div>
                         </>
@@ -451,6 +628,22 @@ const ConversationSidebar = ({
                 onClose={() => { setShowDeleteModal(false); setDeleteProject(null); }}
                 onDelete={handleConfirmDelete}
                 project={deleteProject}
+                isLoading={isSaving}
+            />
+
+            <CommunityProjectsModal
+                isOpen={showCommunityModal}
+                onClose={() => setShowCommunityModal(false)}
+                onProjectJoined={() => {
+                    showToast('Joined project!', 'success');
+                }}
+            />
+
+            <LeaveProjectModal
+                isOpen={showLeaveModal}
+                onClose={() => { setShowLeaveModal(false); setLeaveProject(null); }}
+                onLeave={handleConfirmLeave}
+                project={leaveProject}
                 isLoading={isSaving}
             />
         </>

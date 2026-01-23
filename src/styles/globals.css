@@ -6,6 +6,7 @@
   /* Background Colors - Deep blue-gray palette */
   --bg-primary: #0a0d12;
   --bg-secondary: #0f1419;
+  --bg-tertiary: rgba(17, 20, 21, 0.29);
   --bg-surface: #151b23;
   --bg-elevated: rgba(28, 35, 45, 0.63);
   --bg-hover: #242d3a;
@@ -13,6 +14,7 @@
 
   /* Accent Colors - Professional blue */
   --accent-primary: #3b82f6;
+  --accent-primary-light: #818cf8;
   --accent-hover: #2563eb;
   --accent-muted: rgba(59, 130, 246, 0.15);
   --accent-glow: rgba(59, 130, 246, 0.25);

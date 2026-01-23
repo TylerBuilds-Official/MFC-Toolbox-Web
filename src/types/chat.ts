@@ -7,7 +7,7 @@ export type MessageStatus = 'sending' | 'streaming' | 'sent' | 'failed';
 export type ContentBlock = 
     | { type: 'text'; content: string }
     | { type: 'thinking'; content: string; isStreaming?: boolean }
-    | { type: 'tool_call'; name: string; params?: Record<string, unknown>; result?: string; isComplete?: boolean };
+    | { type: 'tool_call'; name: string; params?: Record<string, unknown>; result?: string; isComplete?: boolean; chatRenderHint?: string };
 
 export type DisplayMessage = {
     id: number;

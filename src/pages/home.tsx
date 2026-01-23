@@ -225,6 +225,15 @@ const Home = () => {
         }
     };
 
+    const handleMoveToProjects = async (conversationId: number, projectIds: number[]) => {
+        try {
+            await api.put(`/conversations/${conversationId}/projects`, { project_ids: projectIds });
+        } catch (error) {
+            console.error("Failed to update conversation projects:", error);
+            throw error;
+        }
+    };
+
     const handleConversationCreated = (conversationId: number) => {
         if (conversationId === -1) {
             setActiveConversationId(null);
@@ -253,6 +262,9 @@ const Home = () => {
     const handlePromptConsumed = () => {
         setPendingPrompt(null);
     };
+
+    // Get active conversation details for ChatWindow
+    const activeConversation = conversations.find(c => c.id === activeConversationId);
 
     return (
         <div className="home-page">
@@ -310,6 +322,9 @@ const Home = () => {
                     initialMessages={pagination.messages}
                     onConversationCreated={handleConversationCreated}
                     onMessagesUpdated={handleMessagesUpdated}
+                    // Conversation details
+                    conversationTitle={activeConversation?.title || 'New Conversation'}
+                    conversationCreatedAt={activeConversation?.created_at}
                     // Model state props
                     selectedModel={chatModel.selectedModel}
                     currentProvider={chatModel.currentProvider}
@@ -319,6 +334,10 @@ const Home = () => {
                     hasMoreMessages={pagination.hasMore}
                     isLoadingMoreMessages={pagination.isLoadingMore}
                     onLoadMoreMessages={pagination.loadOlderMessages}
+                    // Conversation management callbacks
+                    onDeleteConversation={handleDeleteConversation}
+                    onRenameConversation={handleRenameConversation}
+                    onMoveToProjects={handleMoveToProjects}
                 />
             </div>
         </div>

@@ -64,18 +64,31 @@ export function splitCamelCase(str: string): string {
 }
 
 /**
+ * Column Name Mapping - DB column names → Display names
+ */
+const COLUMN_NAME_MAP: Record<string, string> = {
+    'CEMPID': 'Employee ID',
+    'CFIRSTNAME': 'First Name',
+    'CLASTNAME': 'Last Name',
+};
+
+/**
  * Format a column/field name for display - handles camelCase, PascalCase, and snake_case
  * "PiecesProcessed" → "Pieces Processed"
  * "job_number" → "Job Number"
  */
 export function formatColumnName(value: string): string {
     if (!value) return '';
-    
+
+    if (value in COLUMN_NAME_MAP) {
+        return COLUMN_NAME_MAP[value];
+    }
+
     // Handle snake_case (convert to Title Case)
     if (value.includes('_')) {
         return formatToolName(value);
     }
-    
+
     // Handle camelCase/PascalCase
     return splitCamelCase(value);
 }

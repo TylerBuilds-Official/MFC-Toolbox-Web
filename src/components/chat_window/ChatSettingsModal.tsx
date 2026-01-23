@@ -65,7 +65,8 @@ function formatDate(timestamp: string): string {
 
 function formatModelName(model: string): string {
     // claude-sonnet-4-5-20250929 -> Claude Sonnet 4.5
-    // gpt-5.1 -> GPT 5.1
+    // gpt-4o -> GPT-4o
+    // gpt-4o-mini -> GPT-4o Mini
     if (model.startsWith('claude')) {
         return model
             .replace('claude-', 'Claude ')
@@ -78,7 +79,20 @@ function formatModelName(model: string): string {
             .join(' ');
     }
     if (model.startsWith('gpt')) {
-        return model.toUpperCase().replace('-', ' ');
+        // gpt-4o -> GPT-4o, gpt-4o-mini -> GPT-4o Mini
+        return model
+            .replace(/^gpt-/, 'GPT-')
+            .split('-')
+            .map((part, i) => i === 0 ? part : (part.length <= 2 ? part : part.charAt(0).toUpperCase() + part.slice(1)))
+            .join('-')
+            .replace(/-([A-Z])/g, ' $1'); // "GPT-4o-Mini" -> "GPT-4o Mini"
+    }
+    if (model.startsWith('o')) {
+        // o1, o3, o3-mini, o4-mini -> O1, O3, O3 Mini, O4 Mini
+        return model
+            .split('-')
+            .map((part, i) => i === 0 ? part.toUpperCase() : part.charAt(0).toUpperCase() + part.slice(1))
+            .join(' ');
     }
     return model;
 }

@@ -42,6 +42,9 @@ const detectValueType = (value: unknown, colName: string): ValueType => {
     if (isDateField) return 'date';
     if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) return 'date';
     
+    // Identifier fields - numeric but shouldn't be formatted with commas
+    if (col.includes('jobnumber') || col.includes('jobno') || col.includes('_id') || col === 'id') return 'string';
+    
     // Generic numeric
     if (isNumeric(value)) return 'number';
     

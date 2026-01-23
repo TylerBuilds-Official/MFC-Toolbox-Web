@@ -1,9 +1,9 @@
 /**
- * ProjectFolder - Collapsible project folder in sidebar
+ * ProjectFolder - Collapsible project folder in sidebar with drag-and-drop support
  */
 
 import { useState } from 'react';
-import { ChevronRight, Folder, FolderOpen, Lock, Users, Trash2, Settings, UserPlus, Plus } from 'lucide-react';
+import { ChevronRight, Folder, FolderOpen, Lock, Globe, Trash2, Settings, UserPlus, Plus, LogOut, User } from 'lucide-react';
 import type { ConversationProject } from '../../types';
 import styles from '../../styles/ConversationProjects.module.css';
 
@@ -14,8 +14,12 @@ interface ProjectFolderProps {
     onEdit: () => void;
     onDelete: () => void;
     onInvite: () => void;
+    onLeave: () => void;
     onAddConversation: () => void;
     children?: React.ReactNode;
+    // Drag and drop
+    onDrop?: (e: React.DragEvent, projectId: number) => void;
+    draggedConversationId?: number | null;
 }
 
 export function ProjectFolder({
@@ -25,10 +29,14 @@ export function ProjectFolder({
     onEdit,
     onDelete,
     onInvite,
+    onLeave,
     onAddConversation,
     children,
+    onDrop,
+    draggedConversationId,
 }: ProjectFolderProps) {
     const [showActions, setShowActions] = useState(false);
+    const [isDragOver, setIsDragOver] = useState(false);
 
     const isShared = project.project_type !== 'private';
     const isLocked = project.project_type === 'shared_locked';
@@ -42,13 +50,32 @@ export function ProjectFolder({
         onToggle();
     };
 
+    // Drag and drop handlers
+    const handleDragOver = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragOver(true);
+    };
+
+    const handleDragLeave = () => {
+        setIsDragOver(false);
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        e.preventDefault();
+        setIsDragOver(false);
+        onDrop?.(e, project.id);
+    };
+
     return (
         <div className={styles.projectFolder}>
             <div
-                className={`${styles.projectHeader} ${isExpanded ? styles.expanded : ''}`}
+                className={`${styles.projectHeader} ${isExpanded ? styles.expanded : ''} ${isDragOver ? styles.dropTarget : ''}`}
                 onClick={handleHeaderClick}
                 onMouseEnter={() => setShowActions(true)}
                 onMouseLeave={() => setShowActions(false)}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
             >
                 {/* Expand icon */}
                 <ChevronRight
@@ -74,17 +101,15 @@ export function ProjectFolder({
                 {/* Project info */}
                 <div className={styles.projectInfo}>
                     <span className={styles.projectName}>{project.name}</span>
-                    {project.description && (
+                    {isExpanded && project.description && (
                         <span className={styles.projectMeta}>{project.description}</span>
                     )}
                 </div>
 
-                {/* Share type indicator */}
-                {isShared && (
-                    <div className={`${styles.shareIndicator} ${isLocked ? styles.locked : ''} ${isOpen ? styles.open : ''}`}>
-                        {isLocked ? <Lock size={14} /> : <Users size={14} />}
-                    </div>
-                )}
+                {/* Project type indicator */}
+                <div className={`${styles.shareIndicator} ${isLocked ? styles.locked : ''} ${isOpen ? styles.open : ''} ${!isShared ? styles.private : ''}`}>
+                    {isLocked ? <User size={14} /> : isOpen ? <Globe size={14} /> : <Lock size={14} />}
+                </div>
 
                 {/* Conversation count */}
                 <span className={styles.conversationCount}>
@@ -93,7 +118,8 @@ export function ProjectFolder({
 
                 {/* Actions */}
                 <div className={styles.projectActions} style={{ opacity: showActions ? 1 : 0 }}>
-                    {project.is_owner && isShared && (
+                    {/* Only show invite button for shared_locked (invite-only) projects */}
+                    {project.is_owner && isLocked && (
                         <button
                             className={styles.projectActionBtn}
                             onClick={(e) => { e.stopPropagation(); onInvite(); }}
@@ -120,16 +146,31 @@ export function ProjectFolder({
                             <Trash2 size={14} />
                         </button>
                     )}
+                    {/* Leave button for non-owners of shared projects */}
+                    {!project.is_owner && isShared && (
+                        <button
+                            className={`${styles.projectActionBtn} ${styles.danger}`}
+                            onClick={(e) => { e.stopPropagation(); onLeave(); }}
+                            title="Leave project"
+                        >
+                            <LogOut size={14} />
+                        </button>
+                    )}
                 </div>
             </div>
 
             {/* Expanded content */}
-            <div className={`${styles.projectContent} ${isExpanded ? styles.expanded : ''}`}>
+            <div 
+                className={`${styles.projectContent} ${isExpanded ? styles.expanded : ''}`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+            >
                 {children}
                 
                 {project.conversation_count === 0 && (
                     <div className={styles.emptyProject}>
-                        No conversations yet
+                        {draggedConversationId ? 'Drop here to add' : 'Drag conversations here'}
                     </div>
                 )}
 

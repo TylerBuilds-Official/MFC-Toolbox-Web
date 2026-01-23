@@ -47,21 +47,25 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     activeProjectId,
     initialMessages,
     onConversationCreated,
+
     // Model state (lifted to parent)
     selectedModel,
     currentProvider,
     onModelChange,
     isModelReady,
+
     // Pagination state
     hasMoreMessages = false,
     isLoadingMoreMessages = false,
     onLoadMoreMessages,
-    // Conversation management callbacks (new)
+
+    // Conversation management callbacks
     onDeleteConversation,
     onRenameConversation,
     onMoveToProjects,
     conversationTitle = 'New Conversation',
     conversationCreatedAt,
+
 }) => {
     const { user }      = useAuth();
     const api           = useApi();
@@ -246,8 +250,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
     const handleProviderChange = useCallback((provider: string) => {
         // Provider change starts a new chat
-        // First, update the provider preference via API
-        api.post('/settings/provider', { provider })
+        // First, update the provider preference via API (provider is a query param)
+        api.post(`/settings/provider?provider=${provider}`)
             .then(() => {
                 // Get the first model for the new provider
                 const newModels = provider === 'anthropic' ? models.anthropic : models.openai;

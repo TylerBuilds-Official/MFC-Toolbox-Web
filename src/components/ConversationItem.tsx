@@ -47,11 +47,44 @@ const ConversationItem = ({
         return date.toLocaleDateString();
     };
 
+    const stripMarkdown = (text: string): string => {
+        return text
+            // Remove code blocks
+            .replace(/```[\s\S]*?```/g, '')
+            // Remove inline code
+            .replace(/`([^`]+)`/g, '$1')
+            // Remove headers
+            .replace(/^#{1,6}\s+/gm, '')
+            // Remove bold/italic (*** or ___)
+            .replace(/(\*\*\*|___)(.+?)\1/g, '$2')
+            // Remove bold (** or __)
+            .replace(/(\*\*|__)(.+?)\1/g, '$2')
+            // Remove italic (* or _)
+            .replace(/(\*|_)(.+?)\1/g, '$2')
+            // Remove strikethrough
+            .replace(/~~(.+?)~~/g, '$1')
+            // Remove links, keep text
+            .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+            // Remove images
+            .replace(/!\[([^\]]*)\]\([^)]+\)/g, '$1')
+            // Remove blockquotes
+            .replace(/^>\s?/gm, '')
+            // Remove horizontal rules
+            .replace(/^[-*_]{3,}$/gm, '')
+            // Remove list markers
+            .replace(/^[\s]*[-*+]\s+/gm, '')
+            .replace(/^[\s]*\d+\.\s+/gm, '')
+            // Clean up extra whitespace
+            .replace(/\n+/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    };
+
     const getPreviewText = (preview: string | null): string => {
         if (!preview || preview.trim() === '') {
             return "No messages yet";
         }
-        return preview;
+        return stripMarkdown(preview);
     };
 
     const handleDeleteClick = async (e: React.MouseEvent) => {

@@ -58,6 +58,7 @@ export interface ToolEndEvent {
     name: string;
     params?: Record<string, unknown>;
     result: string;
+    chat_render_hint?: string;
 }
 
 export interface DoneEvent {
@@ -98,7 +99,7 @@ export interface StreamCallbacks {
     onThinkingEnd: () => void;
     onContent: (text: string) => void;
     onToolStart: (name: string, params?: Record<string, unknown>) => void;
-    onToolEnd: (name: string, params: Record<string, unknown> | undefined, result: string) => void;
+    onToolEnd: (name: string, params: Record<string, unknown> | undefined, result: string, chatRenderHint?: string) => void;
     onStreamEnd: (conversationId: number, title?: string) => void;
     onError: (message: string) => void;
 }

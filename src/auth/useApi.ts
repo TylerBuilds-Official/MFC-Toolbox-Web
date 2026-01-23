@@ -326,7 +326,7 @@ function handleStreamEvent(event: StreamEvent, callbacks: StreamCallbacks): void
             callbacks.onToolStart(event.name, event.params);
             break;
         case 'tool_end':
-            callbacks.onToolEnd(event.name, event.params, event.result);
+            callbacks.onToolEnd(event.name, event.params, event.result, event.chat_render_hint);
             break;
         case 'stream_end':
             callbacks.onStreamEnd(event.conversation_id, event.title);

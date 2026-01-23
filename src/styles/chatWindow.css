@@ -32,14 +32,14 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-4) var(--space-6);
+  padding: var(--space-3) var(--space-6);
   background-color: var(--bg-elevated);
   border-bottom: 1px solid var(--border-subtle);
 }
 
 .chat-header-info {
   display: flex;
-  align-items: center;
+  align-items: anchor-center;
   gap: var(--space-3);
 }
 
@@ -47,11 +47,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, var(--accent-primary), #818cf8);
   border-radius: var(--radius-lg);
-  font-size: 1.25rem;
+}
+
+.chat-header-avatar img {
+  max-width: 36px;
+  max-height: 36px;
+  object-fit: contain;
+  animation: spin 42s linear infinite;
 }
 
 .chat-header-text h2 {
@@ -70,17 +73,46 @@
 }
 
 .status-indicator {
+  position: relative;
   width: 8px;
   height: 8px;
-  border-radius: var(--radius-full);
+  border-radius: 50%;
   background-color: var(--success);
-  animation: pulse 2s ease-in-out infinite;
+  animation: dotPulse 3s ease-in-out infinite;
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+/* Glow layer - pseudo element */
+.status-indicator::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  background: transparent;
+  animation: glowPulse 3s ease-in-out infinite;
 }
+
+/* Dot: gentle breathe 0.85 → 1 → 0.85 */
+@keyframes dotPulse {
+  0%, 100% {
+    transform: scale(0.85);
+  }
+  50% {
+    transform: scale(1);
+  }
+}
+
+/* Glow: soft fade in/out, minimal spread */
+@keyframes glowPulse {
+  0%, 100% {
+    opacity: 0;
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 3px 1px rgba(34, 197, 94, 0.35);
+  }
+}
+
 
 .chat-header-actions {
   display: flex;

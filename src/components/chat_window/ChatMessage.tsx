@@ -4,6 +4,7 @@ import { formatMessageTime } from '../../services';
 
 import ThinkingBlock from '../ThinkingBlock';
 import ToolCallBlock from '../ToolCallBlock';
+import SkillCallBlock from '../SkillCallBlock';
 import MessageContent from '../MessageContent';
 import MessageCopyButton from '../MessageCopyButton';
 import RegenResponseButton from '../RegenResponseButton';
@@ -103,6 +104,18 @@ const ChatMessage: React.FC<ChatMessageProps> = ({
                                     );
                                 }
                                 if (block.type === 'tool_call') {
+                                    // Debug log
+                                    console.log('[ChatMessage] Tool block:', block.name, 'chatRenderHint:', block.chatRenderHint);
+                                    // Route based on render hint
+                                    if (block.chatRenderHint === 'skill_read') {
+                                        return (
+                                            <SkillCallBlock
+                                                key={`skill-${blockIndex}`}
+                                                name={block.name}
+                                                isComplete={block.isComplete}
+                                            />
+                                        );
+                                    }
                                     return (
                                         <ToolCallBlock
                                             key={`tool-${blockIndex}`}

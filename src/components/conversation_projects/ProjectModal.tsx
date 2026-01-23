@@ -1,10 +1,18 @@
 /**
  * ProjectModal - Create/Edit project modal
+ * 
+ * Project Types:
+ * - private: Only owner can access
+ * - shared_locked: Invite-only shared project (UI: "Shared")
+ * - shared_open: Discoverable, anyone can join (UI: "Open")
+ * 
+ * Both shared types support custom permissions.
  */
 
 import { useState, useEffect } from 'react';
-import { X, Lock, Users, User } from 'lucide-react';
+import { X, Lock, Globe, User } from 'lucide-react';
 import type { ConversationProject, ProjectType, ProjectPermissions, PermissionLevel } from '../../types';
+import { ProjectMembersSection } from './ProjectMembersSection';
 import styles from '../../styles/ConversationProjects.module.css';
 
 // Available accent colors
@@ -57,6 +65,7 @@ export function ProjectModal({
     isLoading = false,
 }: ProjectModalProps) {
     const isEditing = !!project;
+    const isSharedType = (type: ProjectType) => type === 'shared_locked' || type === 'shared_open';
 
     // Form state
     const [name, setName] = useState('');
@@ -178,25 +187,25 @@ export function ProjectModal({
                                 onClick={() => setProjectType('shared_locked')}
                             >
                                 <Lock size={20} className={styles.typeIcon} />
-                                <span className={styles.typeLabel}>View Only</span>
-                                <span className={styles.typeDescription}>Members can view</span>
+                                <span className={styles.typeLabel}>Shared</span>
+                                <span className={styles.typeDescription}>Invite only</span>
                             </button>
                             <button
                                 type="button"
                                 className={`${styles.typeOption} ${projectType === 'shared_open' ? styles.selected : ''}`}
                                 onClick={() => setProjectType('shared_open')}
                             >
-                                <Users size={20} className={styles.typeIcon} />
-                                <span className={styles.typeLabel}>Collaborative</span>
-                                <span className={styles.typeDescription}>Custom permissions</span>
+                                <Globe size={20} className={styles.typeIcon} />
+                                <span className={styles.typeLabel}>Open</span>
+                                <span className={styles.typeDescription}>Anyone can join</span>
                             </button>
                         </div>
                     </div>
 
-                    {/* Permissions (only for shared_open) */}
-                    {projectType === 'shared_open' && (
+                    {/* Permissions (for both shared types) */}
+                    {isSharedType(projectType) && (
                         <div className={styles.formGroup}>
-                            <label>Permissions</label>
+                            <label>Member Permissions</label>
                             <div className={styles.permissionsSection}>
                                 <PermissionRow
                                     label="Chat in conversations"
@@ -213,11 +222,14 @@ export function ProjectModal({
                                     value={permissions.canEditInstructions}
                                     onChange={(v) => updatePermission('canEditInstructions', v)}
                                 />
-                                <PermissionRow
-                                    label="Invite members"
-                                    value={permissions.canInviteMembers}
-                                    onChange={(v) => updatePermission('canInviteMembers', v)}
-                                />
+                                {/* Only show invite permission for shared_locked (invite-only) */}
+                                {projectType === 'shared_locked' && (
+                                    <PermissionRow
+                                        label="Invite members"
+                                        value={permissions.canInviteMembers}
+                                        onChange={(v) => updatePermission('canInviteMembers', v)}
+                                    />
+                                )}
                                 <PermissionRow
                                     label="Remove conversations"
                                     value={permissions.canRemoveConversations}
@@ -225,6 +237,14 @@ export function ProjectModal({
                                 />
                             </div>
                         </div>
+                    )}
+
+                    {/* Members Section (only for existing shared projects) */}
+                    {isEditing && project && isSharedType(project.project_type) && (
+                        <ProjectMembersSection
+                            projectId={project.id}
+                            isOwner={project.is_owner}
+                        />
                     )}
 
                     {/* Custom Instructions */}

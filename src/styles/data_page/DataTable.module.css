@@ -31,10 +31,11 @@
 .table th {
     position: sticky;
     top: 0;
-    background: var(--bg-primary);
+    background: var(--bg-surface);
     font-weight: 600;
     color: var(--text-primary);
     border-bottom: 2px solid var(--border-primary);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
     z-index: 2;
 }
 
@@ -113,8 +114,9 @@
 }
 
 .summaryRow {
-    background: var(--bg-tertiary, var(--bg-primary));
+    background: var(--bg-surface);
     border-top: 2px solid var(--border-primary);
+    box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.08);
 }
 
 .summaryRow td {
@@ -124,7 +126,7 @@
 .summaryCell {
     font-weight: 600;
     color: var(--text-primary);
-    background: var(--bg-tertiary, var(--bg-primary));
+    background: var(--bg-surface);
     font-variant-numeric: tabular-nums;
 }
 
@@ -134,4 +136,54 @@
     text-transform: uppercase;
     font-size: 0.75rem;
     letter-spacing: 0.025em;
+}
+
+/* ============================================
+   Drag Handle & Column Reordering
+   ============================================ */
+
+.columnDragHandle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    cursor: grab;
+    transition: all 0.15s ease;
+    opacity: 0.3;
+    flex-shrink: 0;
+}
+
+.columnDragHandle:hover {
+    color: var(--text-secondary);
+    opacity: 1;
+}
+
+.columnDragHandle:active {
+    cursor: grabbing;
+}
+
+.sortableHeader:hover .columnDragHandle {
+    opacity: 0.7;
+}
+
+.headerLabel {
+    cursor: pointer;
+    flex: 1;
+}
+
+/* Dragging header state */
+.draggingHeader {
+    background: var(--bg-hover) !important;
+    box-shadow: var(--shadow-md);
+    opacity: 0.95;
+    z-index: 10;
+}
+
+.draggingHeader .columnDragHandle {
+    cursor: grabbing;
+    color: var(--accent-primary);
+    opacity: 1;
 }

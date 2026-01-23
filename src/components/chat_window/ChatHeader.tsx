@@ -1,5 +1,6 @@
 import React, { memo } from 'react';
 import { NewChatIcon, SettingsIcon } from '../../assets/svg/chat_window';
+import atlasLogo from '../../assets/png/atlas.png';
 
 
 interface ChatHeaderProps {
@@ -13,7 +14,7 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({ isStreaming, onNewChat, onOpenS
     return (
         <div className="chat-header">
             <div className="chat-header-info">
-                <div className="chat-header-avatar">🤖</div> { /* Add in custom avatar or SVG - EMOJI = TEMP */ }
+                <div className="chat-header-avatar"><img src={atlasLogo} alt="Atlas Logo" /></div> { /* Add in custom avatar or SVG - EMOJI = TEMP */ }
                 <div className="chat-header-text">
                     <h2>Atlas</h2>
                     <div className="chat-header-status">

@@ -197,8 +197,8 @@ export function useStreamingChat(
                             [...contentBlocksRef.current]
                         );
                     },
-                    onToolEnd: (name, params, result) => {
-                        console.log(`[useStreamingChat] Tool ended: ${name}`, params, result);
+                    onToolEnd: (name, params, result, chatRenderHint) => {
+                        console.log(`[useStreamingChat] Tool ended: ${name}`, params, result, chatRenderHint);
                         needsSpaceRef.current = true;
                         
                         // Update tool call block with params and result
@@ -210,6 +210,9 @@ export function useStreamingChat(
                             toolBlock.params = params;
                             toolBlock.result = result;
                             toolBlock.isComplete = true;
+                            if (chatRenderHint) {
+                                toolBlock.chatRenderHint = chatRenderHint;
+                            }
                             setContentBlocks([...blocks]);
                             
                             chatMessages.updateMessageContent(

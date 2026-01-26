@@ -6,10 +6,19 @@
   position: sticky;
   top: 0;
   z-index: var(--z-sticky);
-  background-color: rgba(15, 20, 25, 0.85);
+  background-color: var(--navbar-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-subtle);
+}
+
+/* Navbar background - theme specific */
+:root {
+  --navbar-bg: rgba(15, 20, 25, 0.85);
+}
+
+[data-theme="light"] {
+  --navbar-bg: rgba(255, 255, 255, 0.85);
 }
 
 .nav-inner {

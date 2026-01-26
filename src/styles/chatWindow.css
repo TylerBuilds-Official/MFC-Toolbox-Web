@@ -1492,3 +1492,55 @@
 .message-retry-btn svg {
   flex-shrink: 0;
 }
+
+/* ============================================
+   10. LIGHT MODE OVERRIDES
+   ============================================ */
+
+/* Code blocks stay dark in light mode (like VS Code, GitHub) */
+[data-theme="light"] .code-block-wrapper {
+  background-color: #1e293b;
+  border: 1px solid rgba(30, 41, 59, 0.2);
+  box-shadow: var(--shadow-md);
+}
+
+[data-theme="light"] .code-block-wrapper pre[class*="language-"],
+[data-theme="light"] .code-block-wrapper code[class*="language-"] {
+  background: #1e293b;
+}
+
+[data-theme="light"] .code-block-header {
+  background-color: #334155;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="light"] .code-block-language {
+  color: rgba(226, 232, 240, 0.7);
+}
+
+[data-theme="light"] .code-copy-btn {
+  color: rgba(226, 232, 240, 0.7);
+}
+
+[data-theme="light"] .code-copy-btn:hover {
+  color: #e2e8f0;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Inline code in light mode */
+[data-theme="light"] .chat-message.assistant .markdown-content code:not(pre code),
+[data-theme="light"] .chat-message.assistant .inline-code {
+  background-color: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #1e293b;
+}
+
+/* User message bubbles keep white text */
+[data-theme="light"] .chat-message.user .message-bubble {
+  color: white;
+}
+
+[data-theme="light"] .chat-message.user .message-bubble p {
+  color: white;
+}

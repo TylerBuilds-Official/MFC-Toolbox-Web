@@ -4,6 +4,7 @@ import { AuthProvider } from "./auth";
 import { ProtectedRoute } from "./auth";
 import { ToastProvider } from "./components/Toast";
 import { ConfirmProvider } from "./components/ConfirmDialog";
+import { ThemeProvider } from "./hooks";
 import Layout from "./layout/layout.tsx";
 import Home from "./pages/home.tsx";
 import Chat from "./pages/chat.tsx";
@@ -27,83 +28,85 @@ function App() {
     return (
         <BrowserRouter>
             <AuthProvider>
-                <ToastProvider>
-                    <ConfirmProvider>
-                        <Layout>
-                            <Routes>
-                                <Route path="/" element={
-                                    <ProtectedRoute>
-                                        <Home />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/chat" element={
-                                    <ProtectedRoute>
-                                        <Chat />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/settings" element={
-                                    <ProtectedRoute>
-                                        <Settings />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/data" element={
-                                    <ProtectedRoute>
-                                        <DataPage />
-                                    </ProtectedRoute>
-                                } />
-                                
-                                {/* Guide routes */}
-                                <Route path="/guide" element={
-                                    <ProtectedRoute>
-                                        <GuideIndex />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/guide/models" element={
-                                    <ProtectedRoute>
-                                        <ModelsGuide />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/guide/chat" element={
-                                    <ProtectedRoute>
-                                        <ChatGuide />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/guide/toolbox" element={
-                                    <ProtectedRoute>
-                                        <ToolboxGuide />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/guide/conversations" element={
-                                    <ProtectedRoute>
-                                        <ConversationsGuide />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/guide/projects" element={
-                                    <ProtectedRoute>
-                                        <ProjectsGuide />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/guide/data" element={
-                                    <ProtectedRoute>
-                                        <DataGuide />
-                                    </ProtectedRoute>
-                                } />
-                                <Route path="/guide/memories" element={
-                                    <ProtectedRoute>
-                                        <MemoriesGuide />
-                                    </ProtectedRoute>
-                                } />
+                <ThemeProvider>
+                    <ToastProvider>
+                        <ConfirmProvider>
+                            <Layout>
+                                <Routes>
+                                    <Route path="/" element={
+                                        <ProtectedRoute>
+                                            <Home />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/chat" element={
+                                        <ProtectedRoute>
+                                            <Chat />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/settings" element={
+                                        <ProtectedRoute>
+                                            <Settings />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/data" element={
+                                        <ProtectedRoute>
+                                            <DataPage />
+                                        </ProtectedRoute>
+                                    } />
+                                    
+                                    {/* Guide routes */}
+                                    <Route path="/guide" element={
+                                        <ProtectedRoute>
+                                            <GuideIndex />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/guide/models" element={
+                                        <ProtectedRoute>
+                                            <ModelsGuide />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/guide/chat" element={
+                                        <ProtectedRoute>
+                                            <ChatGuide />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/guide/toolbox" element={
+                                        <ProtectedRoute>
+                                            <ToolboxGuide />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/guide/conversations" element={
+                                        <ProtectedRoute>
+                                            <ConversationsGuide />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/guide/projects" element={
+                                        <ProtectedRoute>
+                                            <ProjectsGuide />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/guide/data" element={
+                                        <ProtectedRoute>
+                                            <DataGuide />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/guide/memories" element={
+                                        <ProtectedRoute>
+                                            <MemoriesGuide />
+                                        </ProtectedRoute>
+                                    } />
 
-                                {/* Auth callback route - redirects to home after auth */}
-                                <Route path="/auth/callback" element={
-                                    <ProtectedRoute>
-                                        <Home />
-                                    </ProtectedRoute>
-                                } />
-                            </Routes>
-                        </Layout>
-                    </ConfirmProvider>
-                </ToastProvider>
+                                    {/* Auth callback route - redirects to home after auth */}
+                                    <Route path="/auth/callback" element={
+                                        <ProtectedRoute>
+                                            <Home />
+                                        </ProtectedRoute>
+                                    } />
+                                </Routes>
+                            </Layout>
+                        </ConfirmProvider>
+                    </ToastProvider>
+                </ThemeProvider>
             </AuthProvider>
         </BrowserRouter>
     );

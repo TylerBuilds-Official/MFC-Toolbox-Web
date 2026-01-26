@@ -2,6 +2,7 @@ import React from 'react';
 import { useConfirm } from '../ConfirmDialog';
 import { useToast } from '../Toast';
 import { useApi } from '../../auth';
+import { useTheme } from '../../hooks';
 
 interface User {
     email: string;
@@ -9,26 +10,19 @@ interface User {
     role: string;
 }
 
-interface Settings {
-    dark_mode: boolean;
-}
-
 interface GeneralTabProps {
     user: User | null;
-    settings: Settings;
     saving: boolean;
-    onToggleChange: (key: keyof Settings, value: boolean) => void;
 }
 
 const GeneralTab: React.FC<GeneralTabProps> = ({
     user,
-    settings,
     saving,
-    onToggleChange,
 }) => {
     const api = useApi();
     const { confirm } = useConfirm();
     const { showToast } = useToast();
+    const { theme, toggleTheme, isLoading: themeSaving } = useTheme();
 
     const handleReset = async () => {
         const confirmed = await confirm({
@@ -47,6 +41,16 @@ const GeneralTab: React.FC<GeneralTabProps> = ({
         } catch (error) {
             console.error("Failed to reset conversation:", error);
             showToast('Failed to reset conversation', 'error');
+        }
+    };
+
+    const handleThemeToggle = async () => {
+        try {
+            await toggleTheme();
+            showToast(`Switched to ${theme === 'dark' ? 'light' : 'dark'} mode`, 'success');
+        } catch (error) {
+            console.error("Failed to toggle theme:", error);
+            showToast('Failed to update theme', 'error');
         }
     };
 
@@ -82,9 +86,9 @@ const GeneralTab: React.FC<GeneralTabProps> = ({
                         <label className="settings-toggle">
                             <input
                                 type="checkbox"
-                                checked={settings.dark_mode}
-                                onChange={(e) => onToggleChange('dark_mode', e.target.checked)}
-                                disabled={saving}
+                                checked={theme === 'dark'}
+                                onChange={handleThemeToggle}
+                                disabled={saving || themeSaving}
                             />
                             <span className="toggle-slider"></span>
                         </label>

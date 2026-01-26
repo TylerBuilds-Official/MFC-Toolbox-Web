@@ -239,9 +239,7 @@ const SettingsPage: React.FC = () => {
             {activeTab === 'general' && (
                 <GeneralTab
                     user={user}
-                    settings={settings}
                     saving={saving}
-                    onToggleChange={handleToggleChange}
                 />
             )}
 

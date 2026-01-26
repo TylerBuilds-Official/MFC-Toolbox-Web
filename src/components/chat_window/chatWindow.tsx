@@ -21,7 +21,7 @@ import {
 } from "../../hooks";
 
 // Components
-import ChatHeader from "./ChatHeader";
+import ChatToolbar from "./ChatToolbar";
 import ChatMessageList from "./ChatMessageList";
 import ChatInputArea from "./ChatInputArea";
 import ChatSettingsModal from "./ChatSettingsModal";
@@ -65,6 +65,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     onMoveToProjects,
     conversationTitle = 'New Conversation',
     conversationCreatedAt,
+
+    // Toolbar actions
+    onNewProject,
+
+    // Scroll state
+    isInitialScrolling,
 
 }) => {
     const { user }      = useAuth();
@@ -461,10 +467,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     return (
         <div className="chat-window-container">
             <div className="chat-window">
-                <ChatHeader
+                <ChatToolbar
                     isStreaming={streaming.isStreaming}
                     onNewChat={handleNewChat}
+                    onNewProject={onNewProject || (() => {})}
                     onOpenSettings={handleOpenSettings}
+                    isInitialScrolling={isInitialScrolling}
                 />
 
                 <ChatMessageList

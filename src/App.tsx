@@ -4,7 +4,7 @@ import { AuthProvider } from "./auth";
 import { ProtectedRoute } from "./auth";
 import { ToastProvider } from "./components/Toast";
 import { ConfirmProvider } from "./components/ConfirmDialog";
-import { ThemeProvider } from "./hooks";
+import { ThemeProvider, NavbarProvider } from "./hooks";
 import Layout from "./layout/layout.tsx";
 import Home from "./pages/home.tsx";
 import Chat from "./pages/chat.tsx";
@@ -29,9 +29,10 @@ function App() {
         <BrowserRouter>
             <AuthProvider>
                 <ThemeProvider>
-                    <ToastProvider>
-                        <ConfirmProvider>
-                            <Layout>
+                    <NavbarProvider>
+                        <ToastProvider>
+                            <ConfirmProvider>
+                                <Layout>
                                 <Routes>
                                     <Route path="/" element={
                                         <ProtectedRoute>
@@ -103,9 +104,10 @@ function App() {
                                         </ProtectedRoute>
                                     } />
                                 </Routes>
-                            </Layout>
-                        </ConfirmProvider>
-                    </ToastProvider>
+                                </Layout>
+                            </ConfirmProvider>
+                        </ToastProvider>
+                    </NavbarProvider>
                 </ThemeProvider>
             </AuthProvider>
         </BrowserRouter>

@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useApi } from '../auth/useApi';
 import { useAuth } from '../auth/AuthContext';
 import { useToast } from '../components/Toast';
+import { useNavbarContext } from '../hooks';
 import MemoriesTab from '../components/settings/MemoriesTab';
 import ConnectorsTab from '../components/settings/ConnectorsTab';
 import ModelTab from '../components/settings/ModelTab';
@@ -24,16 +26,54 @@ type Settings = {
 
 type SettingsTab = 'general' | 'model' | 'memories' | 'connectors';
 
+// Tab display names for navbar context
+const TAB_LABELS: Record<SettingsTab, string> = {
+    general: 'General',
+    model: 'Model',
+    memories: 'Memories',
+    connectors: 'Connectors',
+};
+
+const VALID_TABS: SettingsTab[] = ['general', 'model', 'memories', 'connectors'];
+
+// Type for location state
+interface LocationState {
+    tab?: SettingsTab;
+}
+
 const SettingsPage: React.FC = () => {
     const { user } = useAuth();
     const api = useApi();
     const { showToast } = useToast();
+    const { setPageContext, clearPageContext } = useNavbarContext();
+    const location = useLocation();
+    const hasHandledLocationState = useRef(false);
 
     const [activeTab, setActiveTab] = useState<SettingsTab>('general');
     const [settings, setSettings] = useState<Settings | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+    // Handle location state for tab routing (e.g., from guide pages)
+    useEffect(() => {
+        const state = location.state as LocationState | null;
+        if (!state || hasHandledLocationState.current) return;
+
+        if (state.tab && VALID_TABS.includes(state.tab)) {
+            setActiveTab(state.tab);
+        }
+
+        hasHandledLocationState.current = true;
+        // Clear the state so refreshing doesn't re-apply
+        window.history.replaceState({}, document.title);
+    }, [location.state]);
+
+    // Update navbar context when tab changes
+    useEffect(() => {
+        setPageContext('Settings', TAB_LABELS[activeTab]);
+        return () => clearPageContext();
+    }, [activeTab, setPageContext, clearPageContext]);
 
     useEffect(() => {
         if (user) {

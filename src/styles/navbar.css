@@ -85,6 +85,48 @@
   letter-spacing: 0.05em;
 }
 
+/* Page context - dynamic based on current route */
+.navbar-brand-context {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.navbar-context-label {
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.navbar-context-divider {
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+.navbar-context-description {
+  color: var(--text-secondary);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* ============================================
+   Atlas Logo (containerized for future use)
+   ============================================ */
+
+.navbar-atlas-logo {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  animation: navbarSpin 42s linear infinite;
+}
+
+@keyframes navbarSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 /* ============================================
    Navigation Menu
    ============================================ */

@@ -1,7 +1,9 @@
+import { usePageContext } from '../../../hooks';
 import GuidePage from '../GuidePage';
 import { GuideTip, GuideTryIt } from '../../../components/guide';
 
 const MemoriesGuide = () => {
+    usePageContext('Guide', 'Memories');
     return (
         <GuidePage>
             <header className="guide-page-header">
@@ -66,7 +68,7 @@ const MemoriesGuide = () => {
 
                 <GuideTip 
                     variant="success" 
-                    action={<GuideTryIt to="/settings">Manage Memories</GuideTryIt>}
+                    action={<GuideTryIt to="/settings" state={{ tab: 'memories' }}>Manage Memories</GuideTryIt>}
                 >
                     Periodically review your memories to make sure they're still accurate. 
                     Outdated memories can lead to irrelevant responses.

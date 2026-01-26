@@ -1,0 +1,498 @@
+/* ============================================
+   Chat Toolbar - Anchored below navbar
+   Muted by default, discovered on hover
+   ============================================ */
+
+.chat-toolbar {
+    position: sticky;
+    top: 64px; /* navbar height */
+    z-index: calc(var(--z-sticky) - 1);
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: var(--space-2) var(--space-1) var(--space-2) 0;
+    background-color: transparent;
+    
+    /* Hide/show animation */
+    transform: translateY(0);
+    opacity: 1;
+    transition: 
+        transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hidden state - slides up and fades out */
+.chat-toolbar.hidden {
+    transform: translateY(-100%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Trigger zone - invisible area to hover when toolbar is hidden */
+.chat-toolbar-trigger {
+    position: fixed;
+    top: 64px; /* navbar height */
+    left: 0;
+    right: 0;
+    z-index: calc(var(--z-sticky) - 2);
+    cursor: default;
+    pointer-events: auto;
+}
+
+.chat-toolbar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 900px;
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-lg);
+    
+    /* Glass frame - always present, super subtle */
+    background-color: rgba(255, 255, 255, 0.01);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 
+        inset 0 2px 4px rgba(0, 0, 0, 0.08),
+        inset 0 -1px 2px rgba(255, 255, 255, 0.03);
+    
+    transition: 
+        background-color 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+        border-color 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+        backdrop-filter 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+        box-shadow 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Glass effect on hover - frosted fill activates */
+.chat-toolbar:hover .chat-toolbar-inner,
+.chat-toolbar:focus-within .chat-toolbar-inner {
+    background-color: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    box-shadow: 
+        inset 0 2px 6px rgba(0, 0, 0, 0.12),
+        inset 0 -1px 2px rgba(255, 255, 255, 0.06),
+        0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* Light mode glass */
+[data-theme="light"] .chat-toolbar-inner {
+    background-color: rgba(0, 0, 0, 0.01);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    box-shadow: 
+        inset 0 2px 4px rgba(0, 0, 0, 0.04),
+        inset 0 -1px 2px rgba(255, 255, 255, 0.4);
+}
+
+[data-theme="light"] .chat-toolbar:hover .chat-toolbar-inner,
+[data-theme="light"] .chat-toolbar:focus-within .chat-toolbar-inner {
+    background-color: rgba(255, 255, 255, 0.6);
+    border-color: rgba(0, 0, 0, 0.08);
+    box-shadow: 
+        inset 0 2px 6px rgba(0, 0, 0, 0.06),
+        inset 0 -1px 2px rgba(255, 255, 255, 0.8),
+        0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* ============================================
+   Status Indicator - Clickable Easter Egg
+   ============================================ */
+
+.chat-toolbar-status {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    opacity: 0.5;
+    transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* Make it clickable */
+    background: none;
+    border: none;
+    padding: var(--space-1) var(--space-2);
+    margin: calc(var(--space-1) * -1) calc(var(--space-2) * -1);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    color: inherit;
+    font: inherit;
+}
+
+.chat-toolbar-status:hover {
+    opacity: 0.7;
+}
+
+.chat-toolbar-status:disabled {
+    cursor: default;
+}
+
+.chat-toolbar:hover .chat-toolbar-status,
+.chat-toolbar:focus-within .chat-toolbar-status {
+    opacity: 1;
+}
+
+/* Dot wrapper for pulse positioning */
+.toolbar-status-dot-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+}
+
+.toolbar-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--success);
+    transition: all 0.4s ease;
+    z-index: 1;
+}
+
+.toolbar-status-dot.streaming {
+    background-color: var(--accent-primary);
+    animation: statusPulse 1.5s ease-in-out infinite;
+}
+
+/* Pulse ring animation on click */
+.toolbar-status-pulse {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: transparent;
+    border: 2px solid var(--success);
+    transform: translate(-50%, -50%);
+    animation: statusRingPulse 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes statusRingPulse {
+    0% {
+        width: 6px;
+        height: 6px;
+        opacity: 0.8;
+    }
+    100% {
+        width: 24px;
+        height: 24px;
+        opacity: 0;
+    }
+}
+
+@keyframes statusPulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.6;
+        transform: scale(1.3);
+    }
+}
+
+.toolbar-status-text {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    transition: 
+        color 0.4s ease,
+        opacity 0.4s ease,
+        transform 0.4s ease;
+}
+
+/* Phrase state - subtle color shift for personality */
+.toolbar-status-text.phrase {
+    color: var(--text-secondary);
+    animation: phraseFade 1.8s ease forwards;
+}
+
+@keyframes phraseFade {
+    0% {
+        opacity: 0;
+        transform: translateY(3px);
+    }
+    12% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    75% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(-3px);
+    }
+}
+
+/* Ready fading back in */
+.toolbar-status-text.resetting {
+    animation: readyFadeIn 0.4s ease forwards;
+}
+
+@keyframes readyFadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(3px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.chat-toolbar:hover .toolbar-status-text,
+.chat-toolbar:focus-within .toolbar-status-text {
+    color: var(--text-secondary);
+}
+
+.chat-toolbar:hover .toolbar-status-text.phrase,
+.chat-toolbar:focus-within .toolbar-status-text.phrase {
+    color: var(--text-primary);
+}
+
+/* ============================================
+   Action Buttons Container
+   ============================================ */
+
+.chat-toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    transition: gap 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chat-toolbar:hover .chat-toolbar-actions,
+.chat-toolbar:focus-within .chat-toolbar-actions {
+    gap: var(--space-1);
+}
+
+/* ============================================
+   Action Buttons - Base Styles
+   ============================================ */
+
+.chat-toolbar-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-2);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    background-color: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    
+    /* Base state */
+    opacity: 0.4;
+    transform: translateY(0);
+    
+    transition: 
+        opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.5s cubic-bezier(0.34, 1.4, 0.64, 1),
+        color 0.3s ease,
+        background-color 0.3s ease,
+        border-color 0.3s ease,
+        padding 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+        max-width 0.55s cubic-bezier(0.4, 0, 0.2, 1),
+        margin 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chat-toolbar-btn svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    transition: transform 0.35s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+/* Label - hidden by default */
+.chat-toolbar-btn span {
+    display: inline-block;
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    transform: translateX(-6px);
+    transition: 
+        max-width 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+        opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.45s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+/* ============================================
+   Muted State - Only + and Settings visible
+   New Project is hidden
+   ============================================ */
+
+.chat-toolbar-btn[aria-label="New Project"] {
+    max-width: 0;
+    padding: 0;
+    margin: 0;
+    opacity: 0;
+    border: none;
+    pointer-events: none;
+}
+
+/* ============================================
+   Discovered State (Toolbar Hover)
+   All three buttons visible with labels
+   ============================================ */
+
+.chat-toolbar:hover .chat-toolbar-btn,
+.chat-toolbar:focus-within .chat-toolbar-btn {
+    opacity: 1;
+    transform: translateY(-1px);
+    padding: var(--space-1) var(--space-3);
+    pointer-events: auto;
+}
+
+/* New Project appears - slightly delayed for the split effect */
+.chat-toolbar:hover .chat-toolbar-btn[aria-label="New Project"],
+.chat-toolbar:focus-within .chat-toolbar-btn[aria-label="New Project"] {
+    max-width: 140px;
+    opacity: 1;
+    margin: 0;
+    border: 1px solid transparent;
+    transition-delay: 0.08s;
+}
+
+/* Labels appear with stagger */
+.chat-toolbar:hover .chat-toolbar-btn span,
+.chat-toolbar:focus-within .chat-toolbar-btn span {
+    max-width: 100px;
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Staggered label delays - let buttons settle first */
+.chat-toolbar-btn[aria-label="New Chat"] span {
+    transition-delay: 0.15s;
+}
+
+.chat-toolbar-btn[aria-label="New Project"] span {
+    transition-delay: 0.25s;
+}
+
+.chat-toolbar-btn[aria-label="Settings"] span {
+    transition-delay: 0.3s;
+}
+
+/* Settings button - delay its transform/opacity to sync with the split */
+.chat-toolbar:hover .chat-toolbar-btn[aria-label="Settings"],
+.chat-toolbar:focus-within .chat-toolbar-btn[aria-label="Settings"] {
+    transition-delay: 0.1s;
+}
+
+/* ============================================
+   Individual Button Hover States
+   ============================================ */
+
+.chat-toolbar-btn:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-hover);
+    border-color: var(--border-subtle);
+    transform: translateY(-2px);
+}
+
+.chat-toolbar-btn:hover svg {
+    transform: scale(1.1);
+}
+
+.chat-toolbar-btn:active {
+    transform: translateY(0) scale(0.97);
+    transition-duration: 0.1s;
+}
+
+/* ============================================
+   Button-specific Accent Colors
+   ============================================ */
+
+/* New Chat - blue accent */
+.chat-toolbar-btn[aria-label="New Chat"]:hover {
+    color: var(--accent-primary);
+    border-color: var(--accent-muted);
+}
+
+/* New Project - green/teal accent */
+.chat-toolbar-btn[aria-label="New Project"]:hover {
+    color: var(--success);
+    border-color: rgba(34, 197, 94, 0.2);
+}
+
+/* Settings - neutral, no special accent */
+
+/* ============================================
+   Responsive
+   ============================================ */
+
+@media (max-width: 768px) {
+    .chat-toolbar,
+    .chat-toolbar-trigger {
+        top: 56px;
+    }
+    
+    .chat-toolbar {
+        padding: var(--space-1) var(--space-3);
+    }
+
+    /* Always show expanded state on mobile (no hover) */
+    .chat-toolbar-inner {
+        background-color: rgba(255, 255, 255, 0.03);
+        border-color: rgba(255, 255, 255, 0.06);
+        backdrop-filter: blur(12px) saturate(120%);
+        -webkit-backdrop-filter: blur(12px) saturate(120%);
+    }
+
+    [data-theme="light"] .chat-toolbar-inner {
+        background-color: rgba(0, 0, 0, 0.02);
+        border-color: rgba(0, 0, 0, 0.06);
+    }
+
+    .chat-toolbar-status {
+        opacity: 0.8;
+    }
+
+    .chat-toolbar-actions {
+        gap: var(--space-1);
+    }
+
+    .chat-toolbar-btn {
+        opacity: 0.8;
+        padding: var(--space-1) var(--space-3);
+        pointer-events: auto;
+    }
+
+    .chat-toolbar-btn[aria-label="New Project"] {
+        max-width: 140px;
+        opacity: 0.8;
+        padding: var(--space-1) var(--space-3);
+        border: 1px solid transparent;
+    }
+
+    .chat-toolbar-btn span {
+        max-width: 100px;
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* ============================================
+   Reduced Motion
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+    .chat-toolbar-inner,
+    .chat-toolbar-status,
+    .chat-toolbar-actions,
+    .chat-toolbar-btn,
+    .chat-toolbar-btn svg,
+    .chat-toolbar-btn span,
+    .toolbar-status-dot {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+    }
+}

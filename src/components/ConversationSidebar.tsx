@@ -37,6 +37,8 @@ interface ConversationSidebarProps {
     onDeleteConversation: (conversationId: number) => void;
     onRenameConversation: (conversationId: number, newTitle: string) => void;
     loading: boolean;
+    openProjectModalOnMount?: boolean;
+    onProjectModalOpened?: () => void;
 }
 
 const ConversationSidebar = ({
@@ -49,6 +51,8 @@ const ConversationSidebar = ({
     onDeleteConversation,
     loading,
     onRenameConversation,
+    openProjectModalOnMount,
+    onProjectModalOpened,
 }: ConversationSidebarProps) => {
     const { showToast } = useToast();
 
@@ -91,6 +95,14 @@ const ConversationSidebar = ({
             projectApi.fetchInvites().catch(console.error);
         }
     }, [isOpen]);
+
+    // Handle auto-opening project modal when requested
+    useEffect(() => {
+        if (isOpen && openProjectModalOnMount && !showProjectModal) {
+            setShowProjectModal(true);
+            onProjectModalOpened?.();
+        }
+    }, [isOpen, openProjectModalOnMount]);
 
     // Load conversations when project is expanded
     const handleToggleProject = async (projectId: number) => {

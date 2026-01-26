@@ -20,6 +20,7 @@ const SCROLL_THRESHOLD = 200; // pixels from top to trigger load
 interface LocationState {
     openToolbox?: boolean;
     openConversations?: boolean;
+    openProjectModal?: boolean;
 }
 
 const Chat = () => {
@@ -40,6 +41,7 @@ const Chat = () => {
     const [conversationsOpen, setConversationsOpen] = useState(false);
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [conversationsLoading, setConversationsLoading] = useState(true);
+    const [openProjectModalOnMount, setOpenProjectModalOnMount] = useState(false);
 
     // Active conversation state
     const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
@@ -63,7 +65,7 @@ const Chat = () => {
     const scrollRestorationRef = useRef<{ scrollHeight: number; scrollTop: number } | null>(null);
     
     // Flag to scroll to bottom after initial conversation load
-    const shouldScrollToBottomRef = useRef(false);
+    const [isInitialScrolling, setIsInitialScrolling] = useState(false);
 
     // Load conversations and default model on mount
     useEffect(() => {
@@ -84,6 +86,10 @@ const Chat = () => {
         if (state.openConversations) {
             setConversationsOpen(true);
         }
+        if (state.openProjectModal) {
+            setConversationsOpen(true);
+            setOpenProjectModalOnMount(true);
+        }
 
         hasHandledLocationState.current = true;
         // Clear the state so refreshing doesn't re-open
@@ -92,20 +98,23 @@ const Chat = () => {
 
     // Scroll to bottom after initial conversation load
     useEffect(() => {
-        if (shouldScrollToBottomRef.current && pagination.messages.length > 0) {
+        if (isInitialScrolling && pagination.messages.length > 0) {
             // Use requestAnimationFrame to ensure DOM has updated
             requestAnimationFrame(() => {
                 window.scrollTo(0, document.documentElement.scrollHeight);
-                shouldScrollToBottomRef.current = false;
+                // Give a moment for scroll to complete before clearing flag
+                setTimeout(() => {
+                    setIsInitialScrolling(false);
+                }, 100);
             });
         }
-    }, [pagination.messages.length]);
+    }, [isInitialScrolling, pagination.messages.length]);
 
     // Scroll detection for loading older messages
     useEffect(() => {
         const handleScroll = () => {
             // Don't trigger if we're in the middle of scrolling to bottom
-            if (shouldScrollToBottomRef.current) return;
+            if (isInitialScrolling) return;
             
             // Only trigger if we have more to load and aren't already loading
             if (!pagination.hasMore || pagination.isLoadingMore) return;
@@ -124,7 +133,7 @@ const Chat = () => {
 
         window.addEventListener('scroll', handleScroll, { passive: true });
         return () => window.removeEventListener('scroll', handleScroll);
-    }, [pagination.hasMore, pagination.isLoadingMore, pagination.loadOlderMessages]);
+    }, [isInitialScrolling, pagination.hasMore, pagination.isLoadingMore, pagination.loadOlderMessages]);
 
     // Restore scroll position after prepending messages
     useEffect(() => {
@@ -175,7 +184,7 @@ const Chat = () => {
             );
             
             // Flag to scroll to bottom after messages render
-            shouldScrollToBottomRef.current = true;
+            setIsInitialScrolling(true);
 
             // Check if we need to switch provider/model for this conversation
             if (data.conversation_provider && data.conversation_model) {
@@ -289,6 +298,12 @@ const Chat = () => {
         setPendingPrompt(null);
     };
 
+    // New Project handler - opens sidebar with project modal
+    const handleNewProject = useCallback(() => {
+        setConversationsOpen(true);
+        setOpenProjectModalOnMount(true);
+    }, []);
+
     // Get active conversation details for ChatWindow
     const activeConversation = conversations.find(c => c.id === activeConversationId);
 
@@ -310,6 +325,8 @@ const Chat = () => {
                 onDeleteConversation={handleDeleteConversation}
                 onRenameConversation={handleRenameConversation}
                 loading={conversationsLoading}
+                openProjectModalOnMount={openProjectModalOnMount}
+                onProjectModalOpened={() => setOpenProjectModalOnMount(false)}
             />
 
             {/* Fixed sidebar toggle buttons */}
@@ -332,12 +349,6 @@ const Chat = () => {
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
                 </svg>
             </button>
-
-            {/* Welcome Header */}
-            <div className="welcome-header">
-                <h1>Welcome to FabCore AI</h1>
-                <p>Meet Atlas, your AI-powered assistant for fabrication workflows, document processing, and internal operations.</p>
-            </div>
 
             <div className="chat-section">
                 <ChatWindow
@@ -364,6 +375,10 @@ const Chat = () => {
                     onDeleteConversation={handleDeleteConversation}
                     onRenameConversation={handleRenameConversation}
                     onMoveToProjects={handleMoveToProjects}
+                    // Toolbar actions
+                    onNewProject={handleNewProject}
+                    // Scroll state
+                    isInitialScrolling={isInitialScrolling}
                 />
             </div>
         </div>

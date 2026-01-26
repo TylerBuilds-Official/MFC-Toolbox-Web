@@ -1,7 +1,9 @@
+import { usePageContext } from '../../../hooks';
 import GuidePage from '../GuidePage';
 import { GuideTip, GuideTryIt } from '../../../components/guide';
 
 const ConversationsGuide = () => {
+    usePageContext('Guide', 'Conversations');
     return (
         <GuidePage>
             <header className="guide-page-header">

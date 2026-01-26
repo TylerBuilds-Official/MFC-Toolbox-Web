@@ -9,6 +9,7 @@ import {
     BarChart3,
     Brain
 } from 'lucide-react';
+import { usePageContext } from '../../hooks';
 import GuidePage from './GuidePage';
 
 const quickLinks = [
@@ -57,6 +58,7 @@ const quickLinks = [
 ];
 
 const GuideIndex = () => {
+    usePageContext('Guide', 'Welcome');
     return (
         <GuidePage>
             <div className="guide-welcome">

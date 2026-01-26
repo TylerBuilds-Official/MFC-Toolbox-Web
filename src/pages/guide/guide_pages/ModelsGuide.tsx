@@ -1,8 +1,10 @@
 import { Check } from 'lucide-react';
+import { usePageContext } from '../../../hooks';
 import GuidePage from '../GuidePage';
 import { GuideTip, GuideTryIt } from '../../../components/guide';
 
 const ModelsGuide = () => {
+    usePageContext('Guide', 'Models & Providers');
     return (
         <GuidePage>
             <header className="guide-page-header">
@@ -118,7 +120,7 @@ const ModelsGuide = () => {
                 <GuideTip 
                     variant="success" 
                     title="Pro Tip"
-                    action={<GuideTryIt to="/settings">Go to Settings</GuideTryIt>}
+                    action={<GuideTryIt to="/settings" state={{ tab: 'model' }}>Go to Settings</GuideTryIt>}
                 >
                     If you mostly work with data and reports, set Anthropic as your default. 
                     You can always switch to OpenAI for specific writing tasks without changing your defaults.

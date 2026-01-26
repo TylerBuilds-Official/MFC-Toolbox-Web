@@ -43,6 +43,10 @@ export interface ChatWindowProps {
     onMoveToProjects?: (conversationId: number, projectIds: number[]) => Promise<void>;
     conversationTitle?: string;
     conversationCreatedAt?: string;
+    // Toolbar actions
+    onNewProject?: () => void;
+    // Scroll state
+    isInitialScrolling?: boolean;
 }
 
 export interface StreamingState {

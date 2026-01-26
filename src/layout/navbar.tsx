@@ -12,11 +12,13 @@ const Navbar: React.FC = () => {
         <header className="navbar">
             <div className="container nav-inner">
                 <div className="navbar-brand">
-                    <div className="navbar-brand-icon">FC</div>
-                    <div className="navbar-brand-text">
-                        <span className="navbar-brand-title">FabCore AI</span>
-                        <span className="navbar-brand-subtitle">Internal Tools</span>
-                    </div>
+                    <NavLink to="/" className="navbar-brand-link" onClick={closeMenu}>
+                        <div className="navbar-brand-icon">FC</div>
+                        <div className="navbar-brand-text">
+                            <span className="navbar-brand-title">FabCore AI</span>
+                            <span className="navbar-brand-subtitle">Internal Tools</span>
+                        </div>
+                    </NavLink>
                 </div>
 
                 <button 
@@ -41,6 +43,13 @@ const Navbar: React.FC = () => {
                         onClick={closeMenu}
                     >
                         Home
+                    </NavLink>
+                    <NavLink 
+                        to="/chat" 
+                        className={({ isActive }) => isActive ? "active" : undefined} 
+                        onClick={closeMenu}
+                    >
+                        Chat
                     </NavLink>
                     <NavLink 
                         to="/data" 

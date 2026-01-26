@@ -71,7 +71,7 @@ const ChatGuide = () => {
 
                 <GuideTip 
                     variant="success"
-                    action={<GuideTryIt to="/">Try the Chat</GuideTryIt>}
+                    action={<GuideTryIt to="/chat">Try the Chat</GuideTryIt>}
                 >
                     Try asking for something like "Show me production data for this week" and 
                     click on the resulting data card to see the full visualization.

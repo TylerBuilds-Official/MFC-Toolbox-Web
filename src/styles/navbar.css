@@ -26,11 +26,22 @@
 .navbar-brand {
   display: flex;
   align-items: center;
+}
+
+.navbar-brand-link {
+  display: flex;
+  align-items: center;
   gap: var(--space-3);
   font-weight: 700;
   font-size: 1.125rem;
   color: var(--text-primary);
   letter-spacing: -0.02em;
+  text-decoration: none;
+  transition: opacity var(--transition-fast);
+}
+
+.navbar-brand-link:hover {
+  opacity: 0.85;
 }
 
 .navbar-brand-icon {

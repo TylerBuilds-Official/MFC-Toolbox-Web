@@ -6,6 +6,7 @@ import { ToastProvider } from "./components/Toast";
 import { ConfirmProvider } from "./components/ConfirmDialog";
 import Layout from "./layout/layout.tsx";
 import Home from "./pages/home.tsx";
+import Chat from "./pages/chat.tsx";
 import Settings from "./pages/settings.tsx";
 import { DataPage } from "./components/data";
 
@@ -33,6 +34,11 @@ function App() {
                                 <Route path="/" element={
                                     <ProtectedRoute>
                                         <Home />
+                                    </ProtectedRoute>
+                                } />
+                                <Route path="/chat" element={
+                                    <ProtectedRoute>
+                                        <Chat />
                                     </ProtectedRoute>
                                 } />
                                 <Route path="/settings" element={
@@ -88,7 +94,7 @@ function App() {
                                     </ProtectedRoute>
                                 } />
 
-                                {/* Auth callback route - just redirects to home after auth */}
+                                {/* Auth callback route - redirects to home after auth */}
                                 <Route path="/auth/callback" element={
                                     <ProtectedRoute>
                                         <Home />

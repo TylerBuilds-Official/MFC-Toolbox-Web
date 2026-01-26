@@ -40,7 +40,7 @@ const ProjectsGuide = () => {
                     </p>
                 </div>
 
-                <GuideTip action={<GuideTryIt to="/">Create a Project</GuideTryIt>}>
+                <GuideTip action={<GuideTryIt to="/chat" state={{ openConversations: true }}>Create a Project</GuideTryIt>}>
                     Custom instructions are powerful—you can set context that Atlas will 
                     remember for every conversation in the project, like "This project is 
                     about Job 24123" or "Always format numbers as currency."

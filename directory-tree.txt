@@ -88,7 +88,7 @@ mfc-mcp-webui/
 │   │   ├── layout.tsx
 │   │   └── navbar.tsx
 │   ├── pages/
-│   │   ├── home.tsx
+│   │   ├── chat.tsx
 │   │   └── settings.tsx
 │   ├── services/
 │   │   ├── api.ts

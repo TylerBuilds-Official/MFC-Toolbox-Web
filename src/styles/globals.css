@@ -14,6 +14,7 @@
 
   /* Accent Colors - Professional blue */
   --accent-primary: #3b82f6;
+  --accent-primary-rgb: 59, 130, 246;
   --accent-primary-light: #818cf8;
   --accent-hover: #2563eb;
   --accent-muted: rgba(59, 130, 246, 0.15);

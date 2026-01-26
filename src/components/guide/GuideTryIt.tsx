@@ -3,10 +3,11 @@ import { ArrowRight } from 'lucide-react';
 
 interface GuideTryItProps {
     to: string;
+    state?: Record<string, unknown>;
     children?: string;
 }
 
-const GuideTryIt = ({ to, children = 'Try it' }: GuideTryItProps) => {
+const GuideTryIt = ({ to, state, children = 'Try it' }: GuideTryItProps) => {
     // Check if it's an external link or internal route
     const isExternal = to.startsWith('http');
 
@@ -25,7 +26,7 @@ const GuideTryIt = ({ to, children = 'Try it' }: GuideTryItProps) => {
     }
 
     return (
-        <Link to={to} className="guide-try-it">
+        <Link to={to} state={state} className="guide-try-it">
             {children}
             <ArrowRight size={16} />
         </Link>

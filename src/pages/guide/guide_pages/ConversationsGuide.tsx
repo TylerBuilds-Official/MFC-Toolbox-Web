@@ -26,7 +26,7 @@ const ConversationsGuide = () => {
                     </p>
                 </div>
 
-                <GuideTip action={<GuideTryIt to="/">View Conversations</GuideTryIt>}>
+                <GuideTip action={<GuideTryIt to="/chat" state={{ openConversations: true }}>View Conversations</GuideTryIt>}>
                     The conversation sidebar shows your most recent chats first. 
                     Scroll down to find older conversations.
                 </GuideTip>

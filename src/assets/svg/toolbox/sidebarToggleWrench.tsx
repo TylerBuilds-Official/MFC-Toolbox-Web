@@ -1,6 +1,6 @@
 /**
  * SidebarToggleWrench - Unified wrench icon for sidebar toggle buttons
- * Used on both Home page and Data page toolbox toggles
+ * Used on both Chat page and Data page toolbox toggles
  */
 
 interface SidebarToggleWrenchProps {

@@ -25,7 +25,7 @@ const ToolboxGuide = () => {
                     </p>
                 </div>
 
-                <GuideTip action={<GuideTryIt to="/">Open Toolbox</GuideTryIt>}>
+                <GuideTip action={<GuideTryIt to="/chat" state={{ openToolbox: true }}>Open Toolbox</GuideTryIt>}>
                     The Toolbox wrench is always visible on the left edge of the chat. 
                     Click it anytime to browse available tools.
                 </GuideTip>

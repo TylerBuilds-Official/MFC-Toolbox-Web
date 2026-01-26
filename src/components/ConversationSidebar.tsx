@@ -294,21 +294,23 @@ const ConversationSidebar = ({
             // Update local cache - add to target project
             const conversation = conversations.find(c => c.id === conversationId);
             if (conversation) {
+                const newProjectConvo: ProjectConversation = {
+                    id: conversation.id,
+                    user_id: conversation.user_id,
+                    title: conversation.title,
+                    summary: conversation.summary,
+                    created_at: conversation.created_at,
+                    updated_at: conversation.updated_at,
+                    is_active: conversation.is_active,
+                    last_message_preview: conversation.last_message_preview,
+                    added_to_project_at: new Date().toISOString(),
+                    project_ids: [projectId],
+                };
                 setProjectConversations((prev) => ({
                     ...prev,
                     [projectId]: [
                         ...(prev[projectId] || []),
-                        {
-                            id: conversation.id,
-                            user_id: conversation.user_id,
-                            title: conversation.title,
-                            summary: conversation.summary,
-                            created_at: conversation.created_at,
-                            updated_at: conversation.updated_at,
-                            is_active: conversation.is_active,
-                            last_message_preview: conversation.last_message_preview,
-                            added_at: new Date().toISOString(),
-                        },
+                        newProjectConvo,
                     ],
                 }));
             }

@@ -1,5 +1,5 @@
-import { ReactNode } from 'react';
-import { Lightbulb, Info, CheckCircle, AlertTriangle } from 'lucide-react';
+import { type ReactNode } from 'react';
+import { Lightbulb, CheckCircle, AlertTriangle } from 'lucide-react';
 
 type TipVariant = 'info' | 'success' | 'warning';
 

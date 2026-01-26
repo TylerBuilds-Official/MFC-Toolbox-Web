@@ -1,4 +1,4 @@
-import React, { memo, useState, useCallback, useRef, useEffect } from 'react';
+import React, { memo, useState, useCallback, useRef, useEffect, useImperativeHandle, forwardRef } from 'react';
 import { FolderPlus } from 'lucide-react';
 import { NewChatIcon, SettingsIcon } from '../../assets/svg/chat_window';
 import '../../styles/chatToolbar.css';
@@ -12,14 +12,14 @@ const STATUS_PHRASES = [
     "You poked me!",
     "I'm awake!",
     "Still here!",
-    "At your service",
+    "At your service.",
     "You rang?",
     "*yawns* Oh, hi!",
     "Hello there!",
     "👋",
     "Poke!",
     "Yes?",
-    "Reporting for duty",
+    "Reporting for duty.",
     "All systems go!",
 ];
 
@@ -33,30 +33,34 @@ interface ChatToolbarProps {
     onNewProject: () => void;
     onOpenSettings: () => void;
     isStreaming?: boolean;
-    isInitialScrolling?: boolean; // True while programmatic scroll-to-bottom is happening
+    isInitialScrolling?: boolean;
 }
 
-const ChatToolbar: React.FC<ChatToolbarProps> = ({ 
+export interface ChatToolbarRef {
+    hideIfScrolled: () => void;
+}
+
+const ChatToolbar = forwardRef<ChatToolbarRef, ChatToolbarProps>(({
     onNewChat,
     onNewProject,
     onOpenSettings,
     isStreaming = false,
     isInitialScrolling = false
-}) => {
+}, ref) => {
     // Easter egg state
     const [statusPhrase, setStatusPhrase] = useState<string | null>(null);
     const [isPulsing, setIsPulsing] = useState(false);
     const [isResetting, setIsResetting] = useState(false);
     const [animKey, setAnimKey] = useState(0);
-    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const resetTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const resetTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const lastPhraseIndexRef = useRef<number>(-1);
 
     // Scroll hide/show state
-    const [isHidden, setIsHidden] = useState(false);
-    const [isHoveredWhileHidden, setIsHoveredWhileHidden] = useState(false);
+    const [isHidden, setIsHidden] = useState<boolean>(false);
+    const [isHoveredWhileHidden, setIsHoveredWhileHidden] = useState<boolean>(false);
     const lastScrollY = useRef(0);
-    const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
+    const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
     const ignoreScrollUntil = useRef(0); // Timestamp to ignore scroll events until
 
     // Reset scroll tracking when initial scroll happens
@@ -65,9 +69,26 @@ const ChatToolbar: React.FC<ChatToolbarProps> = ({
             // Ignore scroll events for a brief period during programmatic scroll
             ignoreScrollUntil.current = Date.now() + 500;
             // Also ensure toolbar is visible after scroll completes
-            setIsHidden(false);
+            // Use timeout to avoid synchronous setState in effect
+            const timer = setTimeout(() => {
+                setIsHidden(false);
+            }, 0);
+            return () => clearTimeout(timer);
         }
     }, [isInitialScrolling]);
+
+    // Expose method to hide toolbar if scrolled (for parent to call on chat click)
+    const hideIfScrolled = useCallback(() => {
+        const currentScrollY = window.scrollY;
+        if (currentScrollY > SCROLL_THRESHOLD) {
+            setIsHidden(true);
+            setIsHoveredWhileHidden(false);
+        }
+    }, []);
+
+    useImperativeHandle(ref, () => ({
+        hideIfScrolled
+    }), [hideIfScrolled]);
 
     // Scroll direction detection
     useEffect(() => {
@@ -259,6 +280,8 @@ const ChatToolbar: React.FC<ChatToolbarProps> = ({
             </div>
         </>
     );
-};
+});
+
+ChatToolbar.displayName = 'ChatToolbar';
 
 export default memo(ChatToolbar);

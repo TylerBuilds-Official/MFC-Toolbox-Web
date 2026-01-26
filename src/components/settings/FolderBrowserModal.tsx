@@ -3,9 +3,7 @@ import { useApi } from '../../auth';
 import LoadingSpinner from '../loadingSpinner';
 import {
     FolderIcon,
-    FolderOpenIcon,
     ChevronRightIcon,
-    ChevronDownIcon,
     HomeIcon,
 } from '../../assets/svg/connectors';
 
@@ -35,7 +33,7 @@ const FolderBrowserModal: React.FC<FolderBrowserModalProps> = ({ onSelect, onClo
     const [entries, setEntries] = useState<FolderEntry[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+    // const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
 
     // Load directory contents
     const loadDirectory = async (path: string) => {
@@ -77,22 +75,6 @@ const FolderBrowserModal: React.FC<FolderBrowserModalProps> = ({ onSelect, onClo
     const handleNavigate = (path: string) => {
         setCurrentPath(path);
         loadDirectory(path);
-    };
-
-    // Navigate up one level
-    const handleNavigateUp = () => {
-        if (!currentPath) return;
-
-        const parts = currentPath.split('\\').filter(Boolean);
-        if (parts.length <= 1) {
-            // Going back to drive selection
-            setCurrentPath('');
-            setEntries([]);
-        } else {
-            parts.pop();
-            const newPath = parts.join('\\');
-            handleNavigate(newPath.includes(':') ? newPath : newPath + '\\');
-        }
     };
 
     // Get breadcrumb parts
@@ -144,7 +126,7 @@ const FolderBrowserModal: React.FC<FolderBrowserModalProps> = ({ onSelect, onClo
                         <HomeIcon size={14} />
                         Drives
                     </button>
-                    {getBreadcrumbs().map((crumb, index) => (
+                    {getBreadcrumbs().map((crumb) => (
                         <React.Fragment key={crumb.path}>
                             <ChevronRightIcon size={14} className="breadcrumb-separator" />
                             <button

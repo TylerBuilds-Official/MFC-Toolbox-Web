@@ -1,4 +1,4 @@
-import { useState, useEffect, ReactNode } from 'react';
+import { useState, useEffect, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { GuideSidebar, GuideNav, guideNavItems } from '../../components/guide';
 import '../../styles/guide.css';

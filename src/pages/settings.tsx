@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useApi } from '../auth/useApi';
-import { useAuth } from '../auth/AuthContext';
-import { useToast } from '../components/Toast';
+import { useApi } from '../auth';
+import { useAuth } from '../auth';
 import { useNavbarContext } from '../hooks';
 import MemoriesTab from '../components/settings/MemoriesTab';
 import ConnectorsTab from '../components/settings/ConnectorsTab';
@@ -44,7 +43,6 @@ interface LocationState {
 const SettingsPage: React.FC = () => {
     const { user } = useAuth();
     const api = useApi();
-    const { showToast } = useToast();
     const { setPageContext, clearPageContext } = useNavbarContext();
     const location = useLocation();
     const hasHandledLocationState = useRef(false);

@@ -113,15 +113,15 @@ export function ProjectMembersSection({
     };
 
     // Get initials from name or email
-    const getInitials = (name: string | undefined, email: string): string => {
-        if (name) {
-            const parts = name.split(' ');
-            return parts.length > 1 
-                ? `${parts[0][0]}${parts[1][0]}`.toUpperCase()
-                : name.substring(0, 2).toUpperCase();
-        }
-        return email.substring(0, 2).toUpperCase();
-    };
+    // const getInitials = (name: string | undefined, email: string): string => {
+    //     if (name) {
+    //         const parts = name.split(' ');
+    //         return parts.length > 1
+    //             ? `${parts[0][0]}${parts[1][0]}`.toUpperCase()
+    //             : name.substring(0, 2).toUpperCase();
+    //     }
+    //     return email.substring(0, 2).toUpperCase();
+    // };
 
     // Get status label and class
     const getStatusInfo = (item: MemberOrInvite): { label: string; className: string } => {

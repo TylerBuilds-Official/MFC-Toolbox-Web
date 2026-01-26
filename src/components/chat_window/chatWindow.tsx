@@ -22,9 +22,11 @@ import {
 
 // Components
 import ChatToolbar from "./ChatToolbar";
+import type { ChatToolbarRef } from "./ChatToolbar";
 import ChatMessageList from "./ChatMessageList";
 import ChatInputArea from "./ChatInputArea";
 import ChatSettingsModal from "./ChatSettingsModal";
+import ScrollToBottom from "./ScrollToBottom";
 import LoadingSpinner from "../loadingSpinner";
 import { createWelcomeMessage } from "./constants";
 
@@ -79,6 +81,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     const { confirm }   = useConfirm();
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const toolbarRef = useRef<ChatToolbarRef>(null);
 
 
     // ========================================================================
@@ -437,6 +440,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         streamingRef.current.stopGeneration();
     }, []);
 
+    // Hide toolbar when clicking in chat area (if scrolled down)
+    const handleChatAreaClick = useCallback(() => {
+        toolbarRef.current?.hideIfScrolled();
+    }, []);
+
 
     // ========================================================================
     // Computed Values
@@ -466,8 +474,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
     return (
         <div className="chat-window-container">
-            <div className="chat-window">
+            <div className="chat-window" onClick={handleChatAreaClick}>
                 <ChatToolbar
+                    ref={toolbarRef}
                     isStreaming={streaming.isStreaming}
                     onNewChat={handleNewChat}
                     onNewProject={onNewProject || (() => {})}
@@ -516,6 +525,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                     onCommandSelect={handleCommandSelect}
                     onCloseCommandMenu={chatInput.closeCommandMenu}
                 />
+
+                {/* Scroll to bottom button */}
+                <ScrollToBottom isStreaming={streaming.isStreaming} />
 
                 {/* Settings Modal */}
                 <ChatSettingsModal

@@ -24,7 +24,7 @@ const STATUS_PHRASES = [
 ];
 
 // Scroll behavior constants
-const SCROLL_THRESHOLD = 100; // Start hiding after scrolling this far from top
+const SCROLL_THRESHOLD = 20; // Start hiding after scrolling this far from top
 const SCROLL_DELTA_THRESHOLD = 5; // Minimum scroll delta to register direction change
 const TRIGGER_ZONE_HEIGHT = 50; // Height of invisible trigger zone when hidden
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import ModelSelector from '../modelSelector';
+import GlassySelect from '../GlassySelect';
 
 interface Settings {
     provider: string;
@@ -20,6 +21,12 @@ interface ModelTabProps {
     onNumberChange: (key: keyof Settings, value: number) => void;
     onSettingsUpdate: (updates: Partial<Settings>) => void;
 }
+
+// Provider options for the dropdown
+const providerOptions = [
+    { value: 'anthropic', label: 'Anthropic (Claude)' },
+    { value: 'openai', label: 'OpenAI (GPT)' },
+];
 
 // Map thinking budget to user-friendly levels
 const budgetToLevel = (budget: number): string => {
@@ -93,15 +100,12 @@ const ModelTab: React.FC<ModelTabProps> = ({
 
                     <div className="settings-input-group">
                         <label className="settings-label">Provider</label>
-                        <select
-                            className="settings-input settings-select"
+                        <GlassySelect
                             value={settings.provider}
-                            onChange={(e) => onProviderChange(e.target.value)}
+                            onChange={onProviderChange}
+                            options={providerOptions}
                             disabled={saving}
-                        >
-                            <option value="anthropic">Anthropic (Claude)</option>
-                            <option value="openai">OpenAI (GPT)</option>
-                        </select>
+                        />
                     </div>
 
                     <div className="settings-input-group">

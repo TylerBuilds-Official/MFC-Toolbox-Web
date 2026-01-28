@@ -1,0 +1,295 @@
+/* ============================================
+   GlassySelect - Custom Dropdown Component
+   ============================================ */
+
+.glassy-select {
+    position: relative;
+    width: 100%;
+}
+
+/* ============================================
+   Trigger Button (Closed State)
+   ============================================ */
+
+.glassy-select-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    outline: none !important;
+    
+    /* Recessed well - glassy input styling */
+    background-color: rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 
+        inset 0 2px 4px rgba(0, 0, 0, 0.2),
+        inset 0 -1px 2px rgba(255, 255, 255, 0.02);
+    
+    transition: 
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.glassy-select-trigger:hover:not(:disabled) {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.glassy-select-trigger:focus:not(:disabled) {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 
+        inset 0 2px 6px rgba(0, 0, 0, 0.25),
+        inset 0 -1px 2px rgba(255, 255, 255, 0.03);
+}
+
+.glassy-select-trigger-open {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.glassy-select-trigger:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.glassy-select-value {
+    flex: 1;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.glassy-select-chevron {
+    flex-shrink: 0;
+    color: var(--text-muted);
+    transition: transform 0.2s ease;
+}
+
+.glassy-select-chevron-open {
+    transform: rotate(180deg);
+}
+
+/* ============================================
+   Dropdown Menu (Open State)
+   ============================================ */
+
+.glassy-select-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: var(--z-dropdown, 100);
+    
+    /* Glassy frosted effect */
+    background-color: rgba(21, 27, 35, 0.85);
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    
+    /* Rounded corners */
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+    
+    /* Scrolling */
+    max-height: 240px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    
+    /* Animation */
+    animation: glassySelectOpen 0.15s ease-out;
+}
+
+@keyframes glassySelectOpen {
+    from {
+        opacity: 0;
+        transform: translateY(-8px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Menu scrollbar */
+.glassy-select-menu::-webkit-scrollbar {
+    width: 6px;
+}
+
+.glassy-select-menu::-webkit-scrollbar-track {
+    background: transparent;
+    margin: 4px 0;
+}
+
+.glassy-select-menu::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-full);
+}
+
+.glassy-select-menu::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+/* ============================================
+   Dropdown Items
+   ============================================ */
+
+.glassy-select-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    background-color: transparent;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.glassy-select-item:first-child {
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+
+.glassy-select-item:last-child {
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.glassy-select-item:only-child {
+    border-radius: var(--radius-lg);
+}
+
+.glassy-select-item:hover,
+.glassy-select-item-highlighted {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.glassy-select-item-selected {
+    color: var(--accent-primary);
+    background-color: var(--accent-muted);
+}
+
+.glassy-select-item-selected:hover,
+.glassy-select-item-selected.glassy-select-item-highlighted {
+    background-color: rgba(59, 130, 246, 0.2);
+}
+
+.glassy-select-item svg {
+    flex-shrink: 0;
+    color: var(--accent-primary);
+}
+
+/* ============================================
+   Disabled State
+   ============================================ */
+
+.glassy-select-disabled {
+    pointer-events: none;
+}
+
+.glassy-select-disabled .glassy-select-trigger {
+    opacity: 0.5;
+}
+
+/* ============================================
+   Light Mode Overrides
+   ============================================ */
+
+[data-theme="light"] .glassy-select-trigger {
+    background-color: rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 
+        inset 0 2px 4px rgba(0, 0, 0, 0.08),
+        inset 0 -1px 2px rgba(255, 255, 255, 0.5);
+}
+
+[data-theme="light"] .glassy-select-trigger:hover:not(:disabled) {
+    background-color: rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .glassy-select-trigger:focus:not(:disabled),
+[data-theme="light"] .glassy-select-trigger-open {
+    background-color: rgba(0, 0, 0, 0.06);
+    border-color: rgba(0, 0, 0, 0.15);
+    box-shadow: 
+        inset 0 2px 6px rgba(0, 0, 0, 0.1),
+        inset 0 -1px 2px rgba(255, 255, 255, 0.6);
+}
+
+[data-theme="light"] .glassy-select-menu {
+    background-color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.15),
+        0 0 0 1px rgba(0, 0, 0, 0.05) inset;
+}
+
+[data-theme="light"] .glassy-select-item:hover,
+[data-theme="light"] .glassy-select-item-highlighted {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .glassy-select-item-selected {
+    background-color: var(--accent-muted);
+}
+
+[data-theme="light"] .glassy-select-item-selected:hover,
+[data-theme="light"] .glassy-select-item-selected.glassy-select-item-highlighted {
+    background-color: rgba(37, 99, 235, 0.15);
+}
+
+[data-theme="light"] .glassy-select-menu::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .glassy-select-menu::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.25);
+}
+
+/* ============================================
+   Loading & Empty States
+   ============================================ */
+
+.model-selector-loading,
+.model-selector-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    border-radius: var(--radius-md);
+    
+    /* Match trigger styling */
+    background-color: rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 
+        inset 0 2px 4px rgba(0, 0, 0, 0.2),
+        inset 0 -1px 2px rgba(255, 255, 255, 0.02);
+}
+
+.model-selector-empty p {
+    margin: 0;
+    font-size: 0.8125rem;
+}
+
+[data-theme="light"] .model-selector-loading,
+[data-theme="light"] .model-selector-empty {
+    background-color: rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 
+        inset 0 2px 4px rgba(0, 0, 0, 0.08),
+        inset 0 -1px 2px rgba(255, 255, 255, 0.5);
+}

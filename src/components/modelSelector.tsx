@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, memo } from "react";
 import { useApi } from "../auth";
 import LoadingDots from "./LoadingDots.tsx";
+import GlassySelect, {type SelectOption } from "./GlassySelect";
 
 type ModelSelectorProps = {
     value: string;
@@ -92,6 +93,14 @@ const ModelSelector = ({ value, onChange, provider, disabled }: ModelSelectorPro
         return filtered;
     }, [provider, models]);  // Recalculate when provider or models change
 
+    // Convert to SelectOption array for GlassySelect
+    const selectOptions: SelectOption[] = useMemo(() => {
+        return Object.entries(filteredModels).map(([name, model]) => ({
+            value: model,
+            label: name
+        }));
+    }, [filteredModels]);
+
     if (loading) {
         return (
             <div className="model-selector model-selector-loading">
@@ -108,18 +117,14 @@ const ModelSelector = ({ value, onChange, provider, disabled }: ModelSelectorPro
         );
     }
 
-
     return (
-        <select
+        <GlassySelect
             value={value}
-            onChange={(e) => onChange(e.target.value)}
-            className="model-selector"
+            onChange={onChange}
+            options={selectOptions}
             disabled={disabled}
-        >
-            {Object.entries(filteredModels).map(([name, model]) => (
-                <option key={model} value={model}>{name}</option>
-            ))}
-        </select>
+            placeholder="Select a model..."
+        />
     );
 }
 

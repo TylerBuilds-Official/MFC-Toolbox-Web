@@ -76,7 +76,7 @@ const AdminPage: React.FC = () => {
     // Pagination state
     const [conversationsOffset, setConversationsOffset] = useState(0);
     const [memoriesOffset, setMemoriesOffset] = useState(0);
-    const [auditOffset, setAuditOffset] = useState(0);
+    const [auditOffset, _setAuditOffset] = useState(0);
     const pageSize = 50;
 
     // Update navbar context when tab changes

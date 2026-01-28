@@ -2,7 +2,7 @@
 
 export type ToastVariant = 'success' | 'error' | 'warning' | 'info';
 
-export type UserRole = 'pending' | 'user' | 'admin';
+export type UserRole = 'pending' | 'user' | 'manager' | 'admin';
 
 export interface ToastAction {
     label: string;

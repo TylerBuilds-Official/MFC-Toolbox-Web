@@ -264,6 +264,34 @@
   cursor: not-allowed;
 }
 
+/* Admin Button - same style as Sign Out but with icon */
+.nav-admin-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.nav-admin-btn:hover {
+  background-color: var(--bg-hover);
+  border-color: var(--border-default);
+  color: var(--text-primary);
+}
+
+.nav-admin-btn.active {
+  background-color: var(--accent-muted);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
 /* ============================================
    Mobile Responsive
    ============================================ */
@@ -321,6 +349,12 @@
 
   .nav-auth-btn {
     width: 100%;
+    margin-top: var(--space-2);
+  }
+
+  .nav-admin-btn {
+    width: 100%;
+    justify-content: center;
     margin-top: var(--space-2);
   }
 }

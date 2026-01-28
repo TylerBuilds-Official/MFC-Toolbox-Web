@@ -22,3 +22,36 @@ export {
     isOpenAIModel,
     inferProvider,
 } from './chatService';
+
+// Admin API service
+export { createAdminApi } from './adminApiService';
+export type {
+    // Dashboard
+    DashboardStats,
+    // Users
+    AdminUser,
+    AdminUsersResponse,
+    UserSpecialty,
+    UserSpecialtiesResponse,
+    SpecialtiesListResponse,
+    UsersBySpecialtyResponse,
+    UserActivity,
+    // Conversations
+    AdminConversation,
+    AdminConversationsResponse,
+    // Memories
+    AdminMemory,
+    AdminMemoriesResponse,
+    // Tools
+    ToolStat,
+    DailyTrend,
+    ToolStatsResponse,
+    // Audit
+    AuditEvent,
+    AuditLogResponse,
+    AuditActionsResponse,
+    // Health
+    HealthStatus,
+    // API type
+    AdminApi,
+} from './adminApiService';

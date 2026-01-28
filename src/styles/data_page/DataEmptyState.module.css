@@ -14,15 +14,76 @@
     width: 100%;
 }
 
+.iconContainer {
+    position: relative;
+    width: 100px;
+    height: 100px;
+}
+
 .iconWrapper {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 100px;
-    height: 100px;
+    width: 100%;
+    height: 100%;
     background: var(--bg-hover);
     border-radius: 50%;
     color: var(--text-muted);
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.1s ease;
+}
+
+.iconWrapper:hover {
+    background: var(--bg-elevated);
+}
+
+.iconWrapper:active {
+    transform: scale(0.95);
+}
+
+/* Easter egg animation - jump + spin */
+.iconAnimating {
+    animation: 
+        smoothJump 0.55s cubic-bezier(0.33, 0, 0.67, 1),
+        smoothSpin 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes smoothJump {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-28px); }
+    100% { transform: translateY(0); }
+}
+
+@keyframes smoothSpin {
+    0% { rotate: 0deg; }
+    100% { rotate: 360deg; }
+}
+
+/* Particles */
+.particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    opacity: 0.3;
+    left: var(--particle-x);
+    top: var(--particle-y);
+    pointer-events: none;
+    animation: particleFly 0.6s ease-out forwards;
+    transform: translate(-50%, -50%);
+}
+
+@keyframes particleFly {
+    0% {
+        opacity: 0.35;
+        transform: translate(-50%, -50%) rotate(var(--particle-angle)) translateX(0) rotate(0deg);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) rotate(var(--particle-angle)) translateX(50px) rotate(var(--particle-spin));
+    }
 }
 
 .title {

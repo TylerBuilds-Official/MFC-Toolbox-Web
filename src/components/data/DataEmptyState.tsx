@@ -2,20 +2,79 @@
  * DataEmptyState - Shown when no session is loaded
  */
 
+import { useState, useCallback } from 'react';
 import { useDataStore } from '../../store/useDataStore';
 import styles from '../../styles/data_page/DataEmptyState.module.css';
 
+interface Particle {
+    id: number;
+    x: number;
+    y: number;
+    angle: number;
+    spin: number;
+}
+
 const DataEmptyState = () => {
     const { setSidebarOpen } = useDataStore();
+    const [isAnimating, setIsAnimating] = useState(false);
+    const [particles, setParticles] = useState<Particle[]>([]);
+
+    const handleIconClick = useCallback(() => {
+        if (isAnimating) return;
+        
+        setIsAnimating(true);
+        
+        // Create particles from edge of circle
+        const newParticles: Particle[] = [];
+        const radius = 50; // 50% = edge of the circle
+        const numParticles = 6 + Math.floor(Math.random() * 5); // 6-10 particles
+        for (let i = 0; i < numParticles; i++) {
+            const angle = (360 / numParticles) * i + Math.random() * 30 - 15;
+            const angleRad = (angle * Math.PI) / 180;
+            newParticles.push({
+                id: Date.now() + i,
+                x: 50 + Math.cos(angleRad) * radius,
+                y: 50 + Math.sin(angleRad) * radius,
+                angle: angle,
+                spin: 30 + Math.random() * 60, // 30-90deg, random direction
+            });
+        }
+        setParticles(newParticles);
+
+        // Clear animation and particles after animation completes
+        setTimeout(() => {
+            setIsAnimating(false);
+            setParticles([]);
+        }, 600);
+    }, [isAnimating]);
 
     return (
         <div className={styles.emptyState}>
-            <div className={styles.iconWrapper}>
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="20" x2="18" y2="10" />
-                    <line x1="12" y1="20" x2="12" y2="4" />
-                    <line x1="6" y1="20" x2="6" y2="14" />
-                </svg>
+            <div className={styles.iconContainer}>
+                <div 
+                    className={`${styles.iconWrapper} ${isAnimating ? styles.iconAnimating : ''}`}
+                    onClick={handleIconClick}
+                >
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="20" x2="18" y2="10" />
+                        <line x1="12" y1="20" x2="12" y2="4" />
+                        <line x1="6" y1="20" x2="6" y2="14" />
+                    </svg>
+                </div>
+                
+                {/* Particles - outside iconWrapper so they don't rotate with it */}
+                {particles.map((particle) => (
+                    <span
+                        key={particle.id}
+                        className={styles.particle}
+                        style={{
+                            '--particle-x': `${particle.x}%`,
+                            '--particle-y': `${particle.y}%`,
+                            '--particle-angle': `${particle.angle}deg`,
+                            '--particle-spin': `${particle.spin}deg`,
+                        } as React.CSSProperties}
+                    />
+                ))}
             </div>
             
             <h2 className={styles.title}>No Data Loaded</h2>

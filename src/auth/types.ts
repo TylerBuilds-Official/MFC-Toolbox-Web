@@ -2,7 +2,8 @@ export interface User {
     id: number;
     email: string;
     display_name: string;
-    role: "pending" | "user" | "admin";
+    role: "pending" | "user" | "manager" | "admin";
+    specialty_roles?: string[];
     is_active: boolean;
 }
 

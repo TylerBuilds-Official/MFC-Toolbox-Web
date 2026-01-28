@@ -9,6 +9,7 @@ import Layout from "./layout/layout.tsx";
 import Home from "./pages/home.tsx";
 import Chat from "./pages/chat.tsx";
 import Settings from "./pages/settings.tsx";
+import Admin from "./pages/admin.tsx";
 import { DataPage } from "./components/data";
 
 // Guide pages
@@ -52,6 +53,11 @@ function App() {
                                     <Route path="/data" element={
                                         <ProtectedRoute>
                                             <DataPage />
+                                        </ProtectedRoute>
+                                    } />
+                                    <Route path="/admin" element={
+                                        <ProtectedRoute>
+                                            <Admin />
                                         </ProtectedRoute>
                                     } />
                                     

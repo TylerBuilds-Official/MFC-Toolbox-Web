@@ -39,7 +39,8 @@ export function getAvailableTriggers(userRole?: UserRole, isDev?: boolean): Trig
             const roleHierarchy: Record<UserRole, number> = {
                 'pending': 0,
                 'user': 1,
-                'admin': 2
+                'manager': 2,
+                'admin': 3
             };
 
             const userLevel = roleHierarchy[userRole] ?? 0;

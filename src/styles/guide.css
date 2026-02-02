@@ -416,8 +416,23 @@
     height: 80px;
     margin: 0 auto var(--space-6);
     color: var(--accent-primary);
-    background-color: var(--accent-muted);
+    background: linear-gradient(
+            135deg,
+            var(--accent-muted) 0%,
+            rgba(var(--accent-primary-rgb), 0.15) 100%
+    );
+    border: 1px solid rgba(var(--accent-primary-rgb), 0.2);
     border-radius: var(--radius-xl);
+    box-shadow:
+            inset 0 2px 4px rgba(0, 0, 0, 0.15),
+            inset 0 -1px 2px rgba(255, 255, 255, 0.05),
+            0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.guide-welcome-icon svg {
+    filter:
+            drop-shadow(0 2px 2px rgba(0, 0, 0, 0.2))
+            drop-shadow(0 -1px 1px rgba(255, 255, 255, 0.1));
 }
 
 .guide-welcome-title {

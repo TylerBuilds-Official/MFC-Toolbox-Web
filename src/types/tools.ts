@@ -1,6 +1,6 @@
 export interface ToolParameter {
     name: string;
-    type: "string" | "number";
+    type: "string" | "number" | "boolean";
     required: boolean;
     description?: string;
 }

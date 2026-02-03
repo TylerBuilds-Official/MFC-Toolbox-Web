@@ -352,6 +352,60 @@
 
 
 
+/* Boolean Toggle */
+.toggle-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.toolbox-toggle {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    padding: 2px;
+    background: var(--bg-tertiary, var(--bg-secondary));
+    border: 1px solid var(--border-primary);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+    flex-shrink: 0;
+}
+
+.toolbox-toggle:hover {
+    border-color: var(--text-secondary);
+}
+
+.toolbox-toggle.toggle-on {
+    background: var(--accent-primary);
+    border-color: var(--accent-primary);
+}
+
+.toolbox-toggle.toggle-on:hover {
+    border-color: var(--accent-hover);
+    background: var(--accent-hover);
+}
+
+.toggle-knob {
+    display: block;
+    width: 18px;
+    height: 18px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-on .toggle-knob {
+    transform: translateX(20px);
+}
+
+.toggle-label {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
 .param-submit-btn {
     display: flex;
     align-items: center;

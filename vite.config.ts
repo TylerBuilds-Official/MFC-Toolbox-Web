@@ -20,7 +20,7 @@ export default defineConfig(({ command }) => {
       https: httpsConfig,
       proxy: {
         '/api': {
-          target: 'http://10.0.0.12:6001',
+          target: 'http://localhost:8000',
           changeOrigin: true,
           rewrite: (path) => path.replace(/^\/api/, ''),
         }

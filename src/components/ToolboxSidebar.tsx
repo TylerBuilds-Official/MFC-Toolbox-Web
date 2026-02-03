@@ -170,7 +170,7 @@ const ToolboxSidebar = ({ isOpen, onClose, onToolSelect }: ToolboxSidebarProps) 
                 const fetchedTools: ToolWithCategory[] = (response.tools || []).map(tool => {
                     const parameters: ToolParameter[] = tool.parameters.map(p => ({
                         name: p.name,
-                        type: p.type === "integer" ? "number" : p.type as "string" | "number",
+                        type: p.type === "integer" ? "number" : p.type as "string" | "number" | "boolean",
                         required: p.required,
                         description: p.description
                     }));
@@ -258,8 +258,18 @@ const ToolboxSidebar = ({ isOpen, onClose, onToolSelect }: ToolboxSidebarProps) 
     const handleSubmitParams = (tool: ToolWithCategory) => {
         let finalPrompt = tool.prompt;
         tool.parameters.forEach(param => {
-            const value = paramValues[param.name] || "";
-            finalPrompt = finalPrompt.replace(`{${param.name}}`, value);
+            if (param.type === "boolean") {
+                // For booleans, replace placeholder with natural language
+                const isTrue = paramValues[param.name] === 'true';
+                const label = formatToolName(param.name).toLowerCase();
+                finalPrompt = finalPrompt.replace(
+                    `{${param.name}}`,
+                    isTrue ? `(${label}: yes)` : `(${label}: no)`
+                );
+            } else {
+                const value = paramValues[param.name] || "";
+                finalPrompt = finalPrompt.replace(`{${param.name}}`, value);
+            }
         });
 
         onToolSelect(finalPrompt);
@@ -386,13 +396,32 @@ const ToolboxSidebar = ({ isOpen, onClose, onToolSelect }: ToolboxSidebarProps) 
                                                                         {formatToolName(param.name)}
                                                                         {param.required && <span className="required">*</span>}
                                                                     </label>
-                                                                    <input
-                                                                        id={`param-${param.name}`}
-                                                                        type={param.type === "number" ? "number" : "text"}
-                                                                        placeholder={getParamPlaceholder(tool.id, param)}
-                                                                        value={paramValues[param.name] || ""}
-                                                                        onChange={e => handleParamChange(param.name, e.target.value)}
-                                                                    />
+                                                                    {param.type === "boolean" ? (
+                                                                        <div className="toggle-row">
+                                                                            <button
+                                                                                id={`param-${param.name}`}
+                                                                                type="button"
+                                                                                className={`toolbox-toggle ${paramValues[param.name] === 'true' ? 'toggle-on' : ''}`}
+                                                                                onClick={() => handleParamChange(
+                                                                                    param.name,
+                                                                                    paramValues[param.name] === 'true' ? 'false' : 'true'
+                                                                                )}
+                                                                            >
+                                                                                <span className="toggle-knob" />
+                                                                            </button>
+                                                                            <span className="toggle-label">
+                                                                                {paramValues[param.name] === 'true' ? '| Yes' : '| No'}
+                                                                            </span>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <input
+                                                                            id={`param-${param.name}`}
+                                                                            type={param.type === "number" ? "number" : "text"}
+                                                                            placeholder={getParamPlaceholder(tool.id, param)}
+                                                                            value={paramValues[param.name] || ""}
+                                                                            onChange={e => handleParamChange(param.name, e.target.value)}
+                                                                        />
+                                                                    )}
                                                                 </div>
                                                             ))}
                                                             <button

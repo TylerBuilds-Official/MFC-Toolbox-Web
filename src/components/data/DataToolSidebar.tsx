@@ -116,11 +116,15 @@ const DataToolSidebar = ({ isOpen, onClose }: DataToolSidebarProps) => {
         const params: Record<string, unknown> = {};
         tool.parameters.forEach((param) => {
             const value = paramValues[param.name];
-            if (value !== undefined && value !== '') {
-                // Convert to number if param type is number
-                params[param.name] = param.type === 'number' || param.type === 'integer' 
-                    ? Number(value) 
-                    : value;
+            if (param.type === 'boolean') {
+                // Always send booleans — default to false if never toggled
+                params[param.name] = value === 'true';
+            } else if (value !== undefined && value !== '') {
+                if (param.type === 'number' || param.type === 'integer') {
+                    params[param.name] = Number(value);
+                } else {
+                    params[param.name] = value;
+                }
             }
         });
         runTool(tool.name, params);
@@ -306,14 +310,34 @@ const DataToolSidebar = ({ isOpen, onClose }: DataToolSidebarProps) => {
                                                                         {param.name}
                                                                         {param.required && <span className={styles.required}>*</span>}
                                                                     </label>
-                                                                    <input
-                                                                        id={`param-${param.name}`}
-                                                                        type={param.type === 'number' || param.type === 'integer' ? 'number' : 'text'}
-                                                                        placeholder={param.description || `Enter ${param.name}`}
-                                                                        value={paramValues[param.name] || ''}
-                                                                        onChange={(e) => handleParamChange(param.name, e.target.value)}
-                                                                        disabled={isExecuting}
-                                                                    />
+                                                                    {param.type === 'boolean' ? (
+                                                                        <div className={styles.toggleRow}>
+                                                                            <button
+                                                                                id={`param-${param.name}`}
+                                                                                type="button"
+                                                                                className={`${styles.toggle} ${paramValues[param.name] === 'true' ? styles.toggleOn : ''}`}
+                                                                                onClick={() => handleParamChange(
+                                                                                    param.name,
+                                                                                    paramValues[param.name] === 'true' ? 'false' : 'true'
+                                                                                )}
+                                                                                disabled={isExecuting}
+                                                                            >
+                                                                                <span className={styles.toggleKnob} />
+                                                                            </button>
+                                                                            <span className={styles.toggleLabel}>
+                                                                                | {paramValues[param.name] === 'true' ? 'Yes' : 'No'}
+                                                                            </span>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <input
+                                                                            id={`param-${param.name}`}
+                                                                            type={param.type === 'number' || param.type === 'integer' ? 'number' : 'text'}
+                                                                            placeholder={param.description || `Enter ${param.name}`}
+                                                                            value={paramValues[param.name] || ''}
+                                                                            onChange={(e) => handleParamChange(param.name, e.target.value)}
+                                                                            disabled={isExecuting}
+                                                                        />
+                                                                    )}
                                                                 </div>
                                                             ))}
                                                             <button
